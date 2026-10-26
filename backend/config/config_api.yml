@@ -1,0 +1,34 @@
+# Non-secret settings. Secrets come from environment variables (config/local.env locally, Railway when deployed).
+
+server:
+  readTimeout: 15s
+  writeTimeout: 30s
+  bodyLimitMB: 12 # Fiber default is 4 MB; uploads are up to 10 MB
+
+database:
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: 30m
+
+tourCode:
+  prefix: nidn
+
+revalidation:
+  quiet: 3m
+  maxWait: 15m
+
+media:
+  maxUploadMB: 10
+  maxMegapixels: 50
+  webpQuality: 82
+  decodeConcurrency: 2
+  orphanGracePeriod: 168h # 7 days
+  sweepInterval: 1h
+
+rateLimit:
+  login:
+    max: 10
+    window: 1m
+  inquiry:
+    max: 5
+    window: 1m

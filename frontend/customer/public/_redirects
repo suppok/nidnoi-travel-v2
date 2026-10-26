@@ -1,0 +1,17 @@
+# Legacy 301 map — versioned artifact. Never remove an entry.
+# Country hubs
+/intertours/japan/*    /tours/japan/            301
+/intertours/korea/*    /tours/korea/            301
+/intertours/taiwan/*   /tours/taiwan/           301
+
+# City hubs (some legacy URLs lack the /intertours/ prefix)
+/intertours/tokyo/*    /tours/japan/tokyo/      301
+/intertours/osaka/*    /tours/japan/osaka/      301
+/intertours/nagoya/*   /tours/japan/nagoya/     301
+/intertours/nikko/*    /tours/japan/nikko/      301
+/hokkaido/*            /tours/japan/hokkaido/   301
+
+# Combo pages → country landing; the user can re-filter from there
+/tokyo-osaka/*         /tours/japan/            301
+
+# /tour/<code>/ is NOT redirected — it works natively.

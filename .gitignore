@@ -1,0 +1,67 @@
+# =====================================================================
+# Secrets — NEVER commit. Only *.example templates are allowed.
+# =====================================================================
+
+# Env files: .env, .env.local, .env.production, backend/config/local.env, ...
+.env
+.env.*
+*.env
+!*.example
+
+# Cloudflare Wrangler: local secrets and local state
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+id_rsa*
+id_ed25519*
+
+# Credential files from cloud CLIs / SDKs
+credentials.json
+*credentials*.json
+service-account*.json
+*.secret
+*.secrets
+secrets/
+
+# npm auth tokens (registry tokens live in .npmrc)
+.npmrc
+
+# Database dumps — may contain customer personal data (PDPA). Migrations (*.sql) are fine.
+*.dump
+*.backup
+*.bak
+dumps/
+
+# Claude Code personal settings (team rules live in .claude/settings.json)
+.claude/settings.local.json
+
+# =====================================================================
+# Build output, dependencies, caches
+# =====================================================================
+node_modules/
+dist/
+bin/
+.astro/
+coverage/
+coverage.out
+*.log
+tmp/
+
+# =====================================================================
+# Editors / OS
+# =====================================================================
+# JetBrains: dataSources.local.xml can hold database passwords — ignore the whole folder
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

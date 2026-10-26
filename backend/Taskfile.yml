@@ -1,0 +1,34 @@
+version: "3"
+
+dotenv: ["config/local.env"]
+
+tasks:
+  run-api:
+    desc: Start the API with config/local.env
+    cmds:
+      - go run ./cmd/api
+
+  migrate-up:
+    desc: Apply pending migrations
+    cmds:
+      - go run ./cmd/migrate up
+
+  migrate-down:
+    desc: Roll back the last migration group
+    cmds:
+      - go run ./cmd/migrate down
+
+  migrate-create:
+    desc: "Create an up/down SQL pair (task migrate-create -- <description>)"
+    cmds:
+      - go run ./cmd/migrate create {{.CLI_ARGS}}
+
+  swag:
+    desc: Regenerate Swagger docs
+    cmds:
+      - swag init -g cmd/api/main.go --parseDependency --parseInternal
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...

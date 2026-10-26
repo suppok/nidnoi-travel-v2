@@ -1,0 +1,11 @@
+/* Tailwind for layout only: skip Preflight so it doesn't fight antd's component styles. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
