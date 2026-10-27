@@ -18,14 +18,6 @@
       "Edit(**/*.env)",
       "Edit(**/.dev.vars)",
       "Edit(**/.dev.vars.*)",
-      "Write(**/.env)",
-      "Write(**/.env.local)",
-      "Write(**/.env.development)",
-      "Write(**/.env.production)",
-      "Write(**/.env.*.local)",
-      "Write(**/*.env)",
-      "Write(**/.dev.vars)",
-      "Write(**/.dev.vars.*)",
       "Bash(cat *.env*)",
       "Bash(cat */.env*)"
     ]
