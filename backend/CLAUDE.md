@@ -478,8 +478,37 @@ All unauthenticated. All filter `status = true` in the repository. All return 40
 
 ## Auth and permissions
 
-- `POST /api/v1/auth/login` (rate-limited) returns an access token (JWT, signed with `JWT_SECRET`). `GET /api/v1/auth/me` returns the current user and their permission codes; the backoffice loads it once after login.
-- `jwtAuth.Auth` populates `UserRequestInfo` (user id, role) from the JWT claims.
+- **Users have one or more roles** — fixed set `super_admin`, `admin`, `sales`, `finance` (`pkg/constants/role`), stored as `app_user.roles TEXT[]`. CHECK constraints enforce "at least one" and "known roles only" in the database itself. Login is by email (stored lowercase, unique). A request is allowed when **any** of the user's roles allows it (`pkg/core/auth/permission` enforces Casbin per role). Permissions returned by `/auth/me` are the union.
+- The access token (HS256 JWT) carries **only the user id**. `jwtAuth.Auth` loads the user from the database on every request (`AuthUseCase.ResolveSession`, one primary-key lookup) to build `UserRequestInfo` (id, email, name, roles, mustChangePassword). So deactivation, role changes and a completed password change apply on the next request, not after the token expires.
+- **The first user is the super admin.** `task create-super-admin -- <email> <name>` (`cmd/migrate create-super-admin`) creates them with role `super_admin` and prints a random temporary password once; it must be changed at first login. The command refuses if a super admin already exists, and a partial unique index allows at most one.
+- `super_admin` has every permission (`p, super_admin, *, *`). It can't be granted or removed through the API (`role.Assignable` excludes it), and nobody else can edit, deactivate or reset the super admin (`SUPER_ADMIN_PROTECTED`). The super admin edits their own name/email via `PUT /users` and their password via `/auth/password`. Because the super admin always exists and stays active, user management can't lock itself out (this replaces the earlier `LAST_ADMIN` rule). Recovering a lost super-admin password needs database access — there is no API path.
+- Errors the backoffice branches on: `INVALID_CREDENTIALS` (401, same for unknown email / wrong password / deactivated), `RATE_LIMITED` (429), `INVALID_PASSWORD`, `PASSWORD_CHANGE_REQUIRED` (403), `EMAIL_TAKEN` (409), `CANNOT_MODIFY_SELF` (409), `SUPER_ADMIN_PROTECTED` (409), `SUPER_ADMIN_REQUIRED` (403). Mirrored in `frontend/backoffice/src/constants/errorCodes.ts`.
+
+### Auth endpoints (contract implemented by the backoffice mock, `frontend/backoffice/src/api/mock/`)
+
+| Endpoint | Notes |
+|---|---|
+| `POST /auth/login` `{email, password, rememberMe}` | Rate-limited. → `{accessToken, expiresIn}`; sets the refresh cookie (persistent if `rememberMe`, else session cookie). Updates `lastLoginAt`. |
+| `POST /auth/refresh` | Reads the refresh cookie, **rotates** it, → `{accessToken, expiresIn}`. 401 when missing/revoked/expired. |
+| `POST /auth/logout` | Revokes the refresh token, clears the cookie. No access token required. |
+| `GET /auth/me` | → `{id, email, name, roles, permissions, mustChangePassword}` |
+| `PUT /auth/password` `{currentPassword, newPassword}` | Clears `mustChangePassword`. |
+
+- Lifetimes live in `config_api.yml` (`auth.*`): access 15 min; refresh 30 days with `rememberMe` (persistent cookie), 12 h without (session cookie, server-side expiry). Both slide on every refresh.
+- Refresh tokens are 256-bit random values; table `refresh_token` stores only their SHA-256. Every refresh **rotates** the token (old row: `revoked_at`, `replaced_by`), under `SELECT … FOR UPDATE`. A rotated token presented again within `refreshReuseGrace` (30 s, two tabs racing) just gets 401. After that, it counts as theft and **every session of that user is revoked**.
+- Refresh cookie `nidnoi_refresh`: `HttpOnly; SameSite=Lax; Path=/api/v1/auth`, `Secure` except on `APP_ENV=local`, no `Domain` (host-only on `api.*`). `admin.*` → `api.*` is same-site, so CORS sends `Access-Control-Allow-Credentials: true` with the explicit origin list (`*` is rejected at startup). A failed refresh and logout clear the cookie.
+- While `mustChangePassword` is true, every staff route returns 403 `PASSWORD_CHANGE_REQUIRED`. The exceptions are `GET /auth/me` and `PUT /auth/password` (registered with `jwtAuth.AuthAllowPasswordChange`) and the cookie-only `POST /auth/logout`. Changing the password revokes every other session and keeps the current one.
+- Login: one `INVALID_CREDENTIALS` for unknown email, deactivated user and wrong password, and bcrypt runs in every case (no timing oracle). Rate-limited per client IP (`rateLimit.login`; IP from `server.clientIPHeader` = `CF-Connecting-IP`, falling back to the socket).
+- Password rule (`pkg/modules/shared/services/password`, mirrored in `frontend/backoffice/src/lib/password.ts`): at least 8 characters, at most 72 bytes, at least one ASCII letter and one digit. bcrypt cost `auth.bcryptCost` (12).
+
+### User endpoints
+
+`POST /users/list`, `GET /users/:id`, `POST /users` (`temporaryPassword` required, sets `mustChangePassword`), `PUT /users` (`id, email, name, roles`), `PUT /users/status`, `PUT /users/password` (admin reset: new temporary password, sets `mustChangePassword`). Permissions `user:create|update|list|get|status|password-reset`.
+
+- Deactivating a user or resetting their password **revokes all their refresh tokens**. Their access token stops working on the next request because the middleware reloads the user. Role changes need no revocation for the same reason.
+- `CANNOT_MODIFY_SELF`: staff can't change their own roles or status, or reset their own password through `/users/password` (they use `/auth/password`).
+- `SUPER_ADMIN_PROTECTED`: any change to the super admin by another user. Sending `super_admin` in `roles` is a `VALIDATION` error.
+- `SUPER_ADMIN_REQUIRED` (403): only the super admin may grant the `admin` role (create or update) or edit, deactivate or reset an admin. An admin manages `sales`/`finance` users only — otherwise an admin could reset a fellow admin's password and sign in as them. Checked in the use case (`ensureCanGrant`, `ensureCanManage`) because it depends on the row.
 - Permission codes live in `pkg/constants/apicode/<module>_api_code.go`, format `module:action` with a kebab-case module: `tour-program:create`, `tour-program:status`, `tour-program-period:update`, `country:update`, `media:upload`, `site:rebuild`, …
 - Casbin policy: `config/permissions/policy.csv`, one line per role per code, e.g. `p, sales, tour-program, create`.
 - The backoffice mirrors every code in `frontend/backoffice/src/constants/permissions.ts` — update both in the same PR.
@@ -497,7 +526,7 @@ All unauthenticated. All filter `status = true` in the repository. All return 40
 
 | Registry | Contains |
 |---|---|
-| `CoreRegistry` | Logger, Config, `DBTx`, `AppDB`, JWT |
+| `CoreRegistry` | Logger, Config, `DBTx`, `AppDB`, JWT, Permissions (Casbin checker) |
 | `RepositoryRegistry` | All repositories (built in `pkg/app/initializer/repository_initializer.go`) |
 | `ShareRegistry.ServiceRegistry` | `Revalidator` and other cross-module services |
 | `ShareRegistry.ClientRegistry` | `ObjectStorage`, `DeployHook` |
@@ -549,7 +578,7 @@ CORS origins per environment:
 
 - **Railway**, Singapore region (same region as Supabase). Project `nidnoi-travel` with environments `dev` (branch `develop`) and `production` (branch `main`). Root directory `backend/`, watch paths `backend/**`.
 - One always-on replica per environment. Leave ~1 GB memory headroom for image processing.
-- Migrations run as a separate step before deploy (`go run ./cmd/migrate up`) — never on API startup.
+- Migrations run as a separate step before deploy — never on API startup. **Local and dev share one Supabase database**, so dev is migrated by hand from a local machine (`go run ./cmd/migrate up` with the dev `DATABASE_URL`) before pushing to `develop`. The image also ships `/app/migrate` (usable as a Railway pre-deploy command for prd).
 - The `Dockerfile` is kept so the service can move to Fly.io or a VPS without code changes.
 - Swagger UI (`/swagger/index.html`) is mounted only when `APP_ENV != prd`.
 
@@ -557,9 +586,10 @@ CORS origins per environment:
 
 ## Migrations
 
-- `migrations/<YYYYMMDDHHMMSS>_<description>.up.sql` + `.down.sql`, run by `cmd/migrate` (bun/migrate).
+- `migrations/<YYYYMMDDHHMMSS>_<description>.tx.up.sql` + `.tx.down.sql`, run by `cmd/migrate` (bun/migrate). The `.tx` infix runs each file in a transaction.
 - One concern per migration. Never edit a migration that has already run in dev or prd — add a new one.
-- `task migrate-create -- <description>` creates the pair.
+- **Local = dev database.** Running a migration locally applies it to dev immediately, while dev still runs the previous code until the next deploy. Keep migrations backward compatible (add first; drop or rename only after the code that stops using it is deployed). Try risky or draft migrations against a throwaway Postgres (e.g. Docker) first, and avoid `migrate down` on the shared database. Local testing writes into dev data — fine, since dev never holds prd data.
+- `task migrate-create -- <description>` creates the pair; `task migrate-status` lists applied/pending.
 
 ---
 
@@ -568,7 +598,8 @@ CORS origins per environment:
 ```sh
 cd backend
 task run-api                       # go run ./cmd/api with config/local.env
-task migrate-up                    # also: migrate-down, migrate-create -- <desc>
+task migrate-up                    # also: migrate-down, migrate-status, migrate-create -- <desc>
+task create-super-admin -- <email> <name> # first user (super admin); prints a temporary password once
 task swag                          # swag init -g cmd/api/main.go --parseDependency --parseInternal
 task lint                          # golangci-lint
 go build ./...
@@ -641,6 +672,6 @@ When a field is added, removed or renamed, propagate it through every layer:
 
 - **WebP encoder** — `disintegration/imaging` decodes but cannot encode WebP. Choose an encoder (cgo-based `chai2010/webp` vs a pure-Go/wasm option) and confirm it builds on Railway and on Windows (cgo needs gcc there).
 - **Sales/finance permissions** — rows in `policy.csv` are placeholders; confirm with the business before prd.
-- **Refresh tokens** — access token only for now; decide together with the backoffice token-storage question.
+- **golangci-lint** — the locally installed binary was built with Go 1.25 and refuses this Go 1.26 module; reinstall it with Go 1.26 before relying on `task lint`.
 - **Inquiry spam protection** — rate limiting only for now; consider Cloudflare Turnstile before launch.
 - **Legacy data import** — preserve legacy `code` values and `setval` the tour code sequence past the highest one.

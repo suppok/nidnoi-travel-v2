@@ -1,3 +1,4 @@
+p, super_admin, *, *
 p, admin, *, *
 p, sales, tour-program, create
 p, sales, tour-program, update

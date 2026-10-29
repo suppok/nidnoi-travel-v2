@@ -114,21 +114,31 @@ It does **not**:
 
 ## Authentication
 
-Backend issues a JWT (see `backend/CLAUDE.md`):
+Backend issues a short-lived JWT access token plus a refresh token in an HttpOnly cookie (see `backend/CLAUDE.md`):
 
-1. `POST /api/v1/auth/login` with credentials → access token.
-2. The token is attached as `Authorization: Bearer <token>` on every request.
-3. On `401`, the client wrapper clears the session and redirects to `/login`.
-4. `GET /api/v1/auth/me` is called once after login; the user (id, name, role, permission codes) is held in `AuthProvider`.
+1. `POST /api/v1/auth/login` `{ email, password, rememberMe }` → `{ accessToken, expiresIn }` and sets the refresh cookie.
+2. The access token is attached as `Authorization: Bearer <token>` on every request.
+3. `GET /api/v1/auth/me` is called after login (and after a session restore); the user `{ id, email, name, roles[], permissions[], mustChangePassword }` is held in `AuthProvider`.
+4. On `401`, `client.ts` calls `POST /api/v1/auth/refresh` once (single-flight; the backend rotates the refresh token) and retries. If refresh fails, it clears the session and `RequireAuth` redirects to `/login`.
+5. On page load, `AuthProvider` calls `/auth/refresh` to restore the session from the cookie.
+6. `POST /api/v1/auth/logout` revokes the refresh token and clears the cookie.
 
-### Token storage
+### Token storage (decided 2026-10-29)
 
-Current choice: access token **in memory only** (`AuthProvider` state). A page reload means logging in again until a refresh flow exists.
+- Access token: **in memory only** (`src/auth/token.ts`).
+- Refresh token: **HttpOnly cookie set by the backend**, never readable from JS. Requests use `credentials: 'include'`.
+- "จดจำฉันไว้ในเครื่องนี้" (`rememberMe`) on the login page: checked → persistent cookie (30 days, sliding); unchecked → session cookie (expires server-side after 12 h idle). Access token: 15 min.
+- Never put tokens in `localStorage`/`sessionStorage`. (The mock imitates the cookie with web storage — mock-only.)
 
-- If refresh tokens are added, they go in an **HttpOnly cookie set by the backend** — never readable from JS.
-- Don't use `localStorage` for tokens without an explicit, documented decision.
+### Users and roles (decided 2026-10-29)
 
-Flag the user before changing this.
+- Login identifier is **email**.
+- Roles are **fixed** (`super_admin`, `admin`, `sales`, `finance`), defined in backend `policy.csv` and mirrored in `src/constants/roles.ts`. There is no role editor.
+- **The first user is the super admin** (created by the backend's `create-super-admin` command, at most one). `super_admin` has every permission, is never offered in the user form (`ASSIGNABLE_ROLES`), and only the super admin can edit themselves; the list disables edit/reset/deactivate on their row for everyone else (`SUPER_ADMIN_PROTECTED`).
+- **Every user has one or more roles.** Permissions are the union of the roles' policies. The users screen (`/users`) assigns roles with a checkbox group; at least one is required in both UI and backend.
+- **No self-service password reset** (no email service). An admin sets a temporary password (create user / "รีเซ็ตรหัสผ่าน"); the user is forced to `/change-password` until they replace it. Backend enforces this with `PASSWORD_CHANGE_REQUIRED`.
+- Guard rails: you can't change your own roles or status (`CANNOT_MODIFY_SELF`), and nobody but the super admin can change the super admin (`SUPER_ADMIN_PROTECTED`).
+- **Only the super admin grants `admin` or manages admins.** An admin creates and manages `sales`/`finance` users only; the `admin` checkbox is disabled for them, and edit/reset/deactivate are disabled on admin rows (`SUPER_ADMIN_REQUIRED`, 403). Helpers: `canGrantRole` / `canManageUser` in `src/constants/roles.ts`.
 
 ### Route guards
 
@@ -180,7 +190,7 @@ Never hardcode permission strings in components — always use `Permissions.*`.
 All API calls go through `src/api/client.ts`. Never call `fetch` directly from a component.
 
 - **Base URL:** `VITE_API_BASE_URL` via `src/config/env.ts`.
-- **Mock first:** until the real backend is ready, `client.ts` routes requests to `src/api/mock/`. The mocks follow the real contracts exactly, so switching to the real backend changes only `client.ts`.
+- **Mock first:** with `VITE_API_MOCK=true`, `client.ts` routes requests to `src/api/mock/` (lazy-loaded, so it never ships to users when off; forbidden on prd). The mocks follow the real contracts exactly (paths, status codes, error codes). Seed users: `owner@` (super admin) / `admin@` / `sales@` / `finance@` / `new@nidnoi.test`, password `nidnoi1234`; mock data persists in `localStorage` (`nidnoi.mock.*`).
 - **JWT attach:** the wrapper reads the access token from `AuthProvider`.
 - **401:** wrapper clears the session and redirects to `/login`. Components don't handle 401.
 - **403:** show a "not authorized" message; don't redirect.
@@ -406,6 +416,7 @@ React Router (data router API), wired in `src/App.tsx` or `src/router.tsx`.
 VITE_API_BASE_URL=http://localhost:8080/api/v1
 VITE_APP_NAME=nidnoi Back-Office
 VITE_APP_ENV=local              # local | dev | prd — non-prd shows an environment badge in the header
+VITE_API_MOCK=false             # true = in-browser mock API (src/api/mock/); never on prd
 ```
 
 | Variable | dev | prd |
@@ -487,7 +498,7 @@ Two Workers built from this folder by **Workers Builds**:
 
 Flag the user before assuming:
 
-- **Refresh token flow** — none yet (access token in memory). Sliding session vs fixed expiry; HttpOnly cookie if added.
+- **zod** — the forms so far use antd `rules` only; zod is not installed. Confirm before adding it.
 - **Server-state library** — TanStack Query once the real backend is stable; confirm before installing.
 - **Form/validation library** — antd Form + zod is the working choice; align with the customer site's react-hook-form + zod.
 - **Rich text editor** — needed if descriptions support formatting (TipTap, Lexical). Decide before the first editor is built.

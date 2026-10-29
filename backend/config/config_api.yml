@@ -4,11 +4,24 @@ server:
   readTimeout: 15s
   writeTimeout: 30s
   bodyLimitMB: 12 # Fiber default is 4 MB; uploads are up to 10 MB
+  clientIPHeader: CF-Connecting-IP # real client IP behind Cloudflare; falls back to the socket address
 
 database:
   maxOpenConns: 10
   maxIdleConns: 5
   connMaxLifetime: 30m
+
+auth:
+  accessTokenTTL: 15m
+  refreshTokenTTL: 720h # 30 days, "remember me" (persistent cookie)
+  sessionRefreshTokenTTL: 12h # without "remember me" (session cookie)
+  refreshReuseGrace: 30s # a just-rotated token reused within this window is a benign race, not theft
+  refreshCookieName: nidnoi_refresh
+  bcryptCost: 12
+
+permission:
+  modelPath: config/permissions/model.conf
+  policyPath: config/permissions/policy.csv
 
 tourCode:
   prefix: nidn

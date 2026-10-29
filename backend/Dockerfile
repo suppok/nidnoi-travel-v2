@@ -3,12 +3,12 @@ WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download
 COPY . .
-# TODO: also build ./cmd/migrate once it exists, and copy /out/migrate below.
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
 FROM gcr.io/distroless/static-debian12
 WORKDIR /app
-COPY --from=build /out/api ./
+COPY --from=build /out/api /out/migrate ./
 COPY config/config_api.yml config/config_api.yml
 COPY config/permissions config/permissions
 COPY migrations migrations

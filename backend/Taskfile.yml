@@ -18,6 +18,16 @@ tasks:
     cmds:
       - go run ./cmd/migrate down
 
+  migrate-status:
+    desc: Show applied and pending migrations
+    cmds:
+      - go run ./cmd/migrate status
+
+  create-super-admin:
+    desc: "Bootstrap the first user as super admin with a temporary password (task create-super-admin -- <email> <name>)"
+    cmds:
+      - go run ./cmd/migrate create-super-admin {{.CLI_ARGS}}
+
   migrate-create:
     desc: "Create an up/down SQL pair (task migrate-create -- <description>)"
     cmds:

@@ -1,7 +1,556 @@
 basePath: /api/v1
+definitions:
+  backend_pkg_modules_auth_models.AuthChangePasswordRequest:
+    properties:
+      currentPassword:
+        type: string
+      newPassword:
+        type: string
+    type: object
+  backend_pkg_modules_auth_models.AuthLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      rememberMe:
+        type: boolean
+    type: object
+  backend_pkg_modules_auth_models.AuthLoginResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        description: seconds
+        type: integer
+    type: object
+  backend_pkg_modules_auth_models.AuthMeResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      mustChangePassword:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        description: union of the roles' permission codes
+        items:
+          type: string
+        type: array
+      roles:
+        items:
+          type: string
+        type: array
+    type: object
+  backend_pkg_modules_auth_models.AuthRefreshResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        description: seconds
+        type: integer
+    type: object
+  backend_pkg_modules_user_models.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      roles:
+        description: at least one
+        items:
+          type: string
+        type: array
+      temporaryPassword:
+        description: user must change it at first login
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserCreateResponse:
+    properties:
+      createDate:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      lastLoginAt:
+        type: string
+      mustChangePassword:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserGetResponse:
+    properties:
+      createDate:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      lastLoginAt:
+        type: string
+      mustChangePassword:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserItem:
+    properties:
+      createDate:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      lastLoginAt:
+        type: string
+      mustChangePassword:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserListRequest:
+    properties:
+      keyword:
+        description: matches name or email
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      role:
+        description: empty = any
+        type: string
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_user_models.UserListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_user_models.UserResetPasswordRequest:
+    properties:
+      id:
+        type: string
+      temporaryPassword:
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserUpdateRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      roles:
+        description: at least one
+        items:
+          type: string
+        type: array
+    type: object
+  backend_pkg_modules_user_models.UserUpdateResponse:
+    properties:
+      createDate:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      lastLoginAt:
+        type: string
+      mustChangePassword:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_user_models.UserUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = deactivate (signs the user out everywhere)
+        type: boolean
+    type: object
+  cmd_api_handler.HealthResponse:
+    properties:
+      status:
+        type: string
+    type: object
 info:
   contact: {}
   title: nidnoi travel API
   version: "1.0"
-paths: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Returns a short-lived access token and sets the HttpOnly refresh
+        cookie. Rate-limited.
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLoginResponse'
+        "401":
+          description: INVALID_CREDENTIALS
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: RATE_LIMITED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Log in (backoffice)
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Revokes the refresh cookie's token and clears the cookie. No access
+        token needed.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Log out
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Roles and the union of their permission codes. Allowed while a
+        password change is pending.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthMeResponse'
+        "401":
+          description: UNAUTHENTICATED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Current user
+      tags:
+      - auth
+  /auth/password:
+    put:
+      consumes:
+      - application/json
+      description: Clears mustChangePassword and signs out every other session.
+      parameters:
+      - description: Passwords
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_auth_models.AuthChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: VALIDATION, INVALID_PASSWORD
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change own password
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: Uses and rotates the refresh cookie. 401 clears the cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthRefreshResponse'
+        "401":
+          description: UNAUTHENTICATED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh the access token
+      tags:
+      - auth
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cmd_api_handler.HealthResponse'
+      summary: Liveness check
+      tags:
+      - health
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: The user must replace the temporary password at first login.
+      parameters:
+      - description: User
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_user_models.UserCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: SUPER_ADMIN_REQUIRED (admin role)
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: EMAIL_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a staff user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_user_models.UserUpdateResponse'
+        "403":
+          description: SUPER_ADMIN_REQUIRED
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: EMAIL_TAKEN, CANNOT_MODIFY_SELF, SUPER_ADMIN_PROTECTED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a staff user's email, name and roles
+      tags:
+      - users
+  /users/{id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_user_models.UserGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a staff user
+      tags:
+      - users
+  /users/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_user_models.UserListResponse'
+      security:
+      - BearerAuth: []
+      summary: List staff users
+      tags:
+      - users
+  /users/password:
+    put:
+      consumes:
+      - application/json
+      description: Forces a password change at next login and signs the user out everywhere.
+      parameters:
+      - description: Temporary password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: SUPER_ADMIN_REQUIRED
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CANNOT_MODIFY_SELF, SUPER_ADMIN_PROTECTED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set a temporary password for a staff user
+      tags:
+      - users
+  /users/status:
+    put:
+      consumes:
+      - application/json
+      description: Deactivation signs the user out everywhere.
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_user_models.UserUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: SUPER_ADMIN_REQUIRED
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CANNOT_MODIFY_SELF, SUPER_ADMIN_PROTECTED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate or restore a staff user
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: '"Bearer <access token>"'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
