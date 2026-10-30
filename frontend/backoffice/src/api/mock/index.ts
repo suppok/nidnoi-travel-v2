@@ -4,9 +4,11 @@ import { env } from '../../config/env.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
 import { authRoutes } from './auth.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
+import { taxonomyRoutes } from './taxonomy.ts';
 import { userRoutes } from './users.ts';
+import { wholesaleRoutes } from './wholesales.ts';
 
-const routes: Record<string, MockHandler> = { ...authRoutes, ...userRoutes };
+const routes: Record<string, MockHandler> = { ...authRoutes, ...userRoutes, ...taxonomyRoutes, ...wholesaleRoutes };
 
 const LATENCY_MS = 300;
 

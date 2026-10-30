@@ -13,6 +13,9 @@ export const ErrorCodes = {
   CannotModifySelf: 'CANNOT_MODIFY_SELF',
   SuperAdminProtected: 'SUPER_ADMIN_PROTECTED',
   SuperAdminRequired: 'SUPER_ADMIN_REQUIRED',
+  SlugTaken: 'SLUG_TAKEN',
+  RefIdTaken: 'REF_ID_TAKEN',
+  CodeTaken: 'CODE_TAKEN',
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',
   Unknown: 'UNKNOWN',

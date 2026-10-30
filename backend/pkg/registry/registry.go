@@ -25,8 +25,12 @@ type CoreRegistry struct {
 // RepositoryRegistry holds every repository, bound to the non-transactional DB.
 // Built in pkg/app/initializer/repository_initializer.go.
 type RepositoryRegistry struct {
-	AppUserRepository      repository.AppUserRepository
-	RefreshTokenRepository repository.RefreshTokenRepository
+	AppUserRepository          repository.AppUserRepository
+	RefreshTokenRepository     repository.RefreshTokenRepository
+	CountryRepository          repository.CountryRepository
+	CityRepository             repository.CityRepository
+	WholesaleRepository        repository.WholesaleRepository
+	WholesaleContactRepository repository.WholesaleContactRepository
 }
 
 // ShareRegistry holds cross-module services and outbound clients.

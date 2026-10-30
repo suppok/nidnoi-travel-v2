@@ -206,7 +206,7 @@ All API calls go through `src/api/client.ts`. Never call `fetch` directly from a
 | `GET /api/v1/<resource>/:id` | get one |
 | `PUT /api/v1/<resource>/status` | soft delete / restore |
 
-Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `users`, `inquiries`. Plus `POST /media/upload` and `POST /site/rebuild`.
+Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `users`, `inquiries`. Plus `POST /media/upload` and `POST /site/rebuild`.
 
 ### Errors
 
@@ -311,8 +311,11 @@ Countries and cities drive customer-site landing pages (`/tours/japan/`, `/tours
 
 ### UI surfaces
 
-- `/taxonomy/countries/` — list with reorder; create/edit modal.
-- `/taxonomy/cities/` — list grouped by country, reorder within a country.
+- `/taxonomy/countries/` — list (search, status filter); create/edit modal (`TaxonomyFormModal`). Sidebar group "ฝ่ายขาย". A row opens the country's page.
+- `/taxonomy/countries/:id` — country details plus all its cities (`CityTable`, active and deleted); "เพิ่มเมือง" preselects the country.
+- `/taxonomy/cities/` — list filtered by country (`?country=<id>`), same modal with a country Select.
+- Order is the numeric `sortOrder` field (drag-to-reorder not built). Hero image upload waits for `POST /media/upload`.
+- `sales` sees both pages read-only (`country:list|get`, `city:list|get`); create/edit/delete need the admin permissions.
 
 Create/edit fields: `slug` (create only), `nameTh`, `nameEn`, `description` (long text — SEO copy for the landing page), `heroImage` (upload), `sortOrder`. Cities also have `countryId` (Select).
 

@@ -35,3 +35,14 @@ var (
 	SuperAdminRequired  = ErrCode("SUPER_ADMIN_REQUIRED", "Only the super admin can grant the admin role or manage admins")
 	CannotModifySelf    = ErrCode("CANNOT_MODIFY_SELF", "You cannot change your own roles or status")
 )
+
+// Taxonomy (country, city)
+var (
+	SlugTaken  = ErrCode("SLUG_TAKEN", "Slug is already in use")
+	RefIDTaken = ErrCode("REF_ID_TAKEN", "Ref ID is already in use")
+)
+
+// Wholesale
+var (
+	CodeTaken = ErrCode("CODE_TAKEN", "Code is already in use")
+)

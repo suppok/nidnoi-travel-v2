@@ -330,6 +330,7 @@ Every table has `id` (UUID), `status`, `create_date`, `update_date`, `create_by`
 - **`status bool`** — soft-delete flag only (`true` = active). Never carries workflow meaning.
 - **`state int`** — workflow state (`10` draft, `20` selling, `30` cancelled, …; gaps left for new states). **Deferred.** Until it exists, every active tour is public.
 - Nullable columns use `null.String` / `null.Time` / `null.Float` with `swaggertype`.
+- Strings are `TEXT`, never `VARCHAR(n)` (same storage and speed in Postgres). Length limits live in the use case's `<Action>Validate` (`RuneLength`, which counts characters like Postgres `char_length`). When the database must also guarantee a limit (e.g. before a bulk import), add a `CHECK (char_length(col) <= n)` constraint in a new migration.
 - `bun.BaseModel` always carries `json:"-" swaggerignore:"true"`.
 - Relation fields have no column comment — they are not columns.
 
@@ -339,7 +340,7 @@ DB Table Details
 -------------------------------------
 Table: tour_program
 [ 0] id           UUID         null: false  primary: true
-[ 1] code         VARCHAR(20)  null: false  unique: true
+[ 1] code         TEXT         null: false  unique: true
 [ 2] title_th     TEXT         null: false
 [ 3] title_en     TEXT         null: false
 [ 4] status       BOOLEAN      null: false  default: true
@@ -354,7 +355,7 @@ type TourProgram struct {
     bun.BaseModel `bun:"table:tour_program,alias:tp" json:"-" swaggerignore:"true"`
 
     ID         string    `bun:"id,pk"       json:"id"`         // [0] UUID
-    Code       string    `bun:"code,unique" json:"code"`       // [1] VARCHAR(20)
+    Code       string    `bun:"code,unique" json:"code"`       // [1] TEXT
     TitleTh    string    `bun:"title_th"    json:"titleTh"`    // [2] TEXT
     TitleEn    string    `bun:"title_en"    json:"titleEn"`    // [3] TEXT
     Status     bool      `bun:"status"      json:"status"`     // [4] BOOLEAN
@@ -386,6 +387,12 @@ Country and city — one module each (`pkg/modules/country`, `pkg/modules/city`)
 
 Editable display fields: `name_th`, `name_en`, `description` (SEO copy for the landing page), `hero_image`, `sort_order`.
 
+- `ref_id` (nullable, unique per table) is the legacy site's destination id; it is editable and maps legacy tours on import.
+- Seed data (`migrations/*_seed_country_city`) comes from the legacy destination list: continents and multi-country regions (ยุโรป, สแกนดิเนเวีย, ตะวันออกกลาง) are stored as **countries**; Thai/Vietnamese regions, provinces and sub-country regions (ภาคเหนือ, ฮอกไกโด, ทิเบต) as **cities**. Seeded rows use the nil UUID as `create_by`.
+- Staff endpoints: `POST /countries|/cities` (create), `PUT` (update, no slug), `POST …/list` (`pageSize` up to 500 so dropdowns load every country), `GET …/:id`, `PUT …/status`. Cities embed their country summary. A city's country must be active on create, on country change and on restore (`countryId` VALIDATION error otherwise).
+- Duplicate slug / ref ID → `SLUG_TAKEN` / `REF_ID_TAKEN` (409), mapped from the unique index name.
+- Permissions: `country:list|get|create|update|status`, same for `city`. `sales` has list/get only.
+
 ### Slug rules — strictly enforced
 
 - `slug` appears in customer URLs (`/tours/japan/`, `/tours/japan/tokyo/`). Changing it breaks inbound links and indexed pages.
@@ -396,6 +403,15 @@ Editable display fields: `name_th`, `name_en`, `description` (SEO copy for the l
 > **Phase 2:** a `tag` dimension (`pkg/modules/tag`, junction `tour_program_tag`) following the city pattern. Do not pre-build hooks for it.
 
 ---
+
+## Wholesales
+
+Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale` + `wholesale_contact`).
+
+- Fields: `ref_id` (legacy id, nullable, unique), `code` (stored uppercase, unique, editable — not used in URLs), `name`, `state` (`pkg/constants/wholesalestate`: 10 on request, 20 connected, 30 blocked, 40 declined; default 10), plus the standard columns.
+- Contacts (name + phone, max 20, in display order) are sent with every create/update and **replaced as a whole** (`WholesaleContactRepository.ReplaceForWholesale`), so `wholesale_contact` has no `status`.
+- Has-many relations must load through `.Model(dest)`, not `Scan(ctx, dest)` (Bun rejects the latter).
+- Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `wholesale:create|update|list|get|status`; `sales` has list/get.
 
 ## Periods, prices and seats
 

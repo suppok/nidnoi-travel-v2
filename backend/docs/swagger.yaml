@@ -52,6 +52,396 @@ definitions:
         description: seconds
         type: integer
     type: object
+  backend_pkg_modules_city_models.CityCountry:
+    properties:
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      slug:
+        type: string
+      status:
+        type: boolean
+    type: object
+  backend_pkg_modules_city_models.CityCreateRequest:
+    properties:
+      countryId:
+        description: must be an active country
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: optional legacy destination id
+        type: integer
+      slug:
+        description: locked after create
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  backend_pkg_modules_city_models.CityCreateResponse:
+    properties:
+      country:
+        $ref: '#/definitions/backend_pkg_modules_city_models.CityCountry'
+      countryId:
+        type: string
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_city_models.CityGetResponse:
+    properties:
+      country:
+        $ref: '#/definitions/backend_pkg_modules_city_models.CityCountry'
+      countryId:
+        type: string
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_city_models.CityItem:
+    properties:
+      country:
+        $ref: '#/definitions/backend_pkg_modules_city_models.CityCountry'
+      countryId:
+        type: string
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_city_models.CityListRequest:
+    properties:
+      countryId:
+        description: empty = any
+        type: string
+      keyword:
+        description: matches Thai/English name or slug
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 500
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_city_models.CityListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_city_models.CityUpdateRequest:
+    properties:
+      countryId:
+        description: must be an active country when changed
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        type: integer
+      sortOrder:
+        type: integer
+    type: object
+  backend_pkg_modules_city_models.CityUpdateResponse:
+    properties:
+      country:
+        $ref: '#/definitions/backend_pkg_modules_city_models.CityCountry'
+      countryId:
+        type: string
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_city_models.CityUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
+  backend_pkg_modules_country_models.CountryCreateRequest:
+    properties:
+      description:
+        type: string
+      heroImage:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: optional legacy destination id
+        type: integer
+      slug:
+        description: locked after create
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  backend_pkg_modules_country_models.CountryCreateResponse:
+    properties:
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_country_models.CountryGetResponse:
+    properties:
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_country_models.CountryItem:
+    properties:
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_country_models.CountryListRequest:
+    properties:
+      keyword:
+        description: matches Thai/English name or slug
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 500 (dropdowns load every country)
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_country_models.CountryListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_country_models.CountryUpdateRequest:
+    properties:
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        type: integer
+      sortOrder:
+        type: integer
+    type: object
+  backend_pkg_modules_country_models.CountryUpdateResponse:
+    properties:
+      createDate:
+        type: string
+      description:
+        type: string
+      heroImage:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      refId:
+        description: legacy destination id
+        type: integer
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_country_models.CountryUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
   backend_pkg_modules_user_models.UserCreateRequest:
     properties:
       email:
@@ -219,6 +609,196 @@ definitions:
         description: false = deactivate (signs the user out everywhere)
         type: boolean
     type: object
+  backend_pkg_modules_wholesale_models.WholesaleContactInput:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleContactItem:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleCreateRequest:
+    properties:
+      code:
+        description: stored uppercase, unique
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
+        type: array
+      name:
+        type: string
+      refId:
+        description: optional legacy id
+        type: integer
+      state:
+        description: default 10 (on request)
+        type: integer
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleCreateResponse:
+    properties:
+      code:
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 on request, 20 connected, 30 blocked, 40 declined
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleGetResponse:
+    properties:
+      code:
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 on request, 20 connected, 30 blocked, 40 declined
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleItem:
+    properties:
+      code:
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 on request, 20 connected, 30 blocked, 40 declined
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleListRequest:
+    properties:
+      keyword:
+        description: matches name, code, or a contact's name/phone
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 500
+        type: integer
+      state:
+        description: 0 or omitted = any
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleUpdateRequest:
+    properties:
+      code:
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      refId:
+        type: integer
+      state:
+        type: integer
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleUpdateResponse:
+    properties:
+      code:
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 on request, 20 connected, 30 blocked, 40 declined
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_wholesale_models.WholesaleUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
   cmd_api_handler.HealthResponse:
     properties:
       status:
@@ -346,6 +926,308 @@ paths:
       summary: Refresh the access token
       tags:
       - auth
+  /cities:
+    post:
+      consumes:
+      - application/json
+      description: The slug is locked after create. The country must be active.
+      parameters:
+      - description: City
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_city_models.CityCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: SLUG_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a city
+      tags:
+      - cities
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: City
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_city_models.CityUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a city's country, display fields and ref ID (not the slug)
+      tags:
+      - cities
+  /cities/{id}:
+    get:
+      parameters:
+      - description: City ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_city_models.CityGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a city
+      tags:
+      - cities
+  /cities/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_city_models.CityListResponse'
+      security:
+      - BearerAuth: []
+      summary: List cities
+      tags:
+      - cities
+  /cities/status:
+    put:
+      consumes:
+      - application/json
+      description: Restoring requires the city's country to be active.
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'VALIDATION (countryId: country deleted)'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore a city
+      tags:
+      - cities
+  /countries:
+    post:
+      consumes:
+      - application/json
+      description: The slug is locked after create.
+      parameters:
+      - description: Country
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_country_models.CountryCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: SLUG_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a country
+      tags:
+      - countries
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Country
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_country_models.CountryUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a country's display fields and ref ID (not the slug)
+      tags:
+      - countries
+  /countries/{id}:
+    get:
+      parameters:
+      - description: Country ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_country_models.CountryGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a country
+      tags:
+      - countries
+  /countries/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_country_models.CountryListResponse'
+      security:
+      - BearerAuth: []
+      summary: List countries
+      tags:
+      - countries
+  /countries/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore a country
+      tags:
+      - countries
   /health:
     get:
       produces:
@@ -547,6 +1429,155 @@ paths:
       summary: Deactivate or restore a staff user
       tags:
       - users
+  /wholesales:
+    post:
+      consumes:
+      - application/json
+      description: The code is stored uppercase. State defaults to 10 (on request).
+      parameters:
+      - description: Wholesale
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CODE_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a wholesale
+      tags:
+      - wholesales
+    put:
+      consumes:
+      - application/json
+      description: Replaces every field, including the whole contact list.
+      parameters:
+      - description: Wholesale
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CODE_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a wholesale
+      tags:
+      - wholesales
+  /wholesales/{id}:
+    get:
+      parameters:
+      - description: Wholesale ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a wholesale with its contacts
+      tags:
+      - wholesales
+  /wholesales/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleListResponse'
+      security:
+      - BearerAuth: []
+      summary: List wholesales with their contacts
+      tags:
+      - wholesales
+  /wholesales/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore a wholesale
+      tags:
+      - wholesales
 securityDefinitions:
   BearerAuth:
     description: '"Bearer <access token>"'

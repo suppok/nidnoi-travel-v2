@@ -2,6 +2,8 @@
 package validation
 
 import (
+	"regexp"
+
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
@@ -18,6 +20,8 @@ var (
 	NotNil   = ozzo.NotNil
 	Email    = is.EmailFormat
 	UUID     = is.UUID
+	// Slug is a URL segment: lowercase ASCII kebab-case (length is checked separately).
+	Slug = ozzo.Match(regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)).Error("must be lowercase letters, digits and single hyphens")
 )
 
 func ValidateStruct(structPtr any, fields ...*FieldRules) error {
@@ -39,3 +43,4 @@ func Max(max any) ozzo.ThresholdRule                { return ozzo.Max(max) }
 func In(values ...any) ozzo.InRule                  { return ozzo.In(values...) }
 func Each(rules ...Rule) ozzo.EachRule              { return ozzo.Each(rules...) }
 func By(f ozzo.RuleFunc) Rule                       { return ozzo.By(f) }
+func Match(re *regexp.Regexp) ozzo.MatchRule        { return ozzo.Match(re) }
