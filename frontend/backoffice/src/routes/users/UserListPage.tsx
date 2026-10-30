@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/useAuth.ts';
 import PageHeader from '../../components/PageHeader.tsx';
 import RoleTags from '../../components/RoleTags.tsx';
 import { Permissions } from '../../constants/permissions.ts';
-import { canManageUser, type Role, ROLE_INFO } from '../../constants/roles.ts';
+import { ASSIGNABLE_ROLES, canManageUser, isSuperAdmin, type Role, ROLE_INFO } from '../../constants/roles.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import ResetPasswordModal from '../../features/user/components/ResetPasswordModal.tsx';
@@ -190,7 +190,8 @@ export default function UserListPage() {
             value={filters.role}
             placeholder="ทุกบทบาท"
             allowClear
-            options={ROLE_INFO.map((r) => ({ value: r.value, label: r.label }))}
+            // Only the super admin can see the super admin, so others don't get that filter.
+            options={(isSuperAdmin(me?.roles ?? []) ? ROLE_INFO : ASSIGNABLE_ROLES).map((r) => ({ value: r.value, label: r.label }))}
             onChange={(role) => update({ role })}
             className="w-44"
           />

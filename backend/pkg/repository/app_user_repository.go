@@ -64,6 +64,9 @@ func (r *appUserRepository) List(ctx context.Context, criteria repomodels.AppUse
 	if criteria.Role != "" {
 		q = q.Where("au.roles @> ?", pgdialect.Array([]string{criteria.Role}))
 	}
+	if criteria.ExcludeRole != "" {
+		q = q.Where("NOT au.roles @> ?", pgdialect.Array([]string{criteria.ExcludeRole}))
+	}
 	if criteria.Status != nil {
 		q = q.Where("au.status = ?", *criteria.Status)
 	}

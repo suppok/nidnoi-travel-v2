@@ -78,9 +78,13 @@ func sameRoles(a, b []string) bool {
 	return len(a) == len(b) && !slices.ContainsFunc(a, func(r string) bool { return !slices.Contains(b, r) })
 }
 
+func isSuperAdmin(actor *coremodels.UserRequestInfo) bool {
+	return actor != nil && slices.Contains(actor.Roles, role.SuperAdmin)
+}
+
 // ensureCanGrant fails with SUPER_ADMIN_REQUIRED when a non-super-admin assigns the admin role.
 func ensureCanGrant(actor *coremodels.UserRequestInfo, roles []string) error {
-	if slices.Contains(roles, role.Admin) && !slices.Contains(actor.Roles, role.SuperAdmin) {
+	if slices.Contains(roles, role.Admin) && !isSuperAdmin(actor) {
 		return cerrors.New(http.StatusForbidden, errorcode.SuperAdminRequired)
 	}
 	return nil

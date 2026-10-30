@@ -37,7 +37,7 @@ function BoardingPassStub() {
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="font-display text-[44px] leading-none font-medium">BKK</span>
+          <span className="font-display text-[44px] leading-none font-normal">BKK</span>
           <span className="text-sm text-ink-muted">กรุงเทพฯ</span>
         </div>
         <div aria-hidden="true" className="flex min-w-[60px] flex-auto items-center gap-1.5 text-brand">
@@ -46,7 +46,7 @@ function BoardingPassStub() {
           <div className="flex-auto border-t-2 border-dashed border-brand-line" />
         </div>
         <div className="flex flex-col items-end gap-0.5">
-          <span className="font-display text-[44px] leading-none font-medium">NDN</span>
+          <span className="font-display text-[44px] leading-none font-normal">NDN</span>
           <span className="text-sm text-ink-muted">หลังบ้าน</span>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
 
       <div className="flex flex-[999_1_380px] flex-col gap-5 px-12 py-11 max-md:px-6">
         <div className="flex flex-col gap-2">
-          <h1 className="m-0 font-display text-[32px] font-medium">เข้าสู่ระบบ</h1>
+          <h1 className="m-0 font-display text-[32px] font-normal">เข้าสู่ระบบ</h1>
           <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
             ยินดีต้อนรับกลับ ลงชื่อเข้าใช้เพื่อจัดการทัวร์ รอบเดินทาง และการจองของ nidnoi travel
           </p>

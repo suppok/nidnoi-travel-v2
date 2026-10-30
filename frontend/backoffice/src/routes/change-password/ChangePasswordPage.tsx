@@ -41,7 +41,7 @@ export default function ChangePasswordPage() {
   return (
     <div className="flex w-full max-w-[480px] flex-col gap-5 rounded-[28px] bg-white px-10 py-10 shadow-[0_30px_60px_-30px_rgba(29,43,79,0.28),0_2px_6px_rgba(29,43,79,0.05)] max-md:px-6">
       <div className="flex flex-col gap-2">
-        <h1 className="m-0 font-display text-[28px] font-medium">{forced ? 'ตั้งรหัสผ่านใหม่' : 'เปลี่ยนรหัสผ่าน'}</h1>
+        <h1 className="m-0 font-display text-[28px] font-normal">{forced ? 'ตั้งรหัสผ่านใหม่' : 'เปลี่ยนรหัสผ่าน'}</h1>
         <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
           {forced
             ? `สวัสดี ${user?.name ?? ''} บัญชีนี้ใช้รหัสผ่านชั่วคราว กรุณาตั้งรหัสผ่านของคุณเองก่อนเริ่มใช้งาน`

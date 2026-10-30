@@ -47,14 +47,20 @@ function ensureCanManage(actor: MockUser, user: MockUser) {
   ensureCanGrant(actor, user.roles);
 }
 
+// The super admin is visible only to themselves.
+function visibleTo(actor: MockUser, user: MockUser): boolean {
+  return isSuperAdmin(actor.roles) || !isSuperAdmin(user.roles);
+}
+
 const list: MockHandler = (req) => {
-  authorize(req, 'POST /users/list', Permissions.UserList);
+  const actor = authorize(req, 'POST /users/list', Permissions.UserList);
   const body = asRecord(req.body);
   const keyword = str(body.keyword).toLowerCase();
   const page = Math.max(1, Number(body.page) || 1);
   const pageSize = Math.min(100, Math.max(1, Number(body.pageSize) || 20));
 
   const filtered = users
+    .filter((u) => visibleTo(actor, u))
     .filter((u) => !keyword || u.name.toLowerCase().includes(keyword) || u.email.includes(keyword))
     .filter((u) => !body.role || u.roles.includes(body.role as Role))
     .filter((u) => typeof body.status !== 'boolean' || u.status === body.status)
@@ -69,8 +75,10 @@ const list: MockHandler = (req) => {
 };
 
 const get: MockHandler = (req) => {
-  authorize(req, 'GET /users/:id', Permissions.UserGet);
-  return ok(toUser(findUser(req.params.id)));
+  const actor = authorize(req, 'GET /users/:id', Permissions.UserGet);
+  const user = findUser(req.params.id);
+  if (!visibleTo(actor, user)) throw new MockFail(404, ErrorCodes.NotFound, 'User not found');
+  return ok(toUser(user));
 };
 
 const create: MockHandler = (req) => {

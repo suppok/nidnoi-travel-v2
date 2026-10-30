@@ -1,3 +1,5 @@
+import logoUrl from '../assets/logo.png';
+
 export function PlaneIcon({ size = 22 }: { size?: number }) {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -7,18 +9,18 @@ export function PlaneIcon({ size = 22 }: { size?: number }) {
   );
 }
 
-// Logo tile + "nidnoi travel" wordmark.
+// Logo tile with the "nidnoi travel" wordmark centered underneath.
 export default function BrandMark({ size = 'md', caption }: { size?: 'md' | 'lg'; caption?: string }) {
   const lg = size === 'lg';
   return (
-    <span className="flex items-center gap-3">
-      <span
-        className={`flex flex-none items-center justify-center bg-brand text-white ${lg ? 'h-11 w-11 rounded-[14px]' : 'h-[38px] w-[38px] rounded-xl'}`}
-      >
-        <PlaneIcon size={lg ? 22 : 20} />
-      </span>
-      <span className="flex flex-col">
-        <span className={`font-display leading-tight font-medium ${lg ? 'text-[28px]' : 'text-xl'}`}>
+    <span className="flex flex-col items-center gap-2.5 text-center">
+      <img
+        src={logoUrl}
+        alt=""
+        className={`flex-none object-cover shadow-[0_6px_18px_rgba(29,43,79,0.14)] ${lg ? 'h-24 w-24 rounded-[24px]' : 'h-[72px] w-[72px] rounded-[18px]'}`}
+      />
+      <span className="flex flex-col items-center">
+        <span className={`font-display leading-tight font-normal ${lg ? 'text-[28px]' : 'text-xl'}`}>
           <span className="text-brand">nidnoi</span> <span className="text-ocean">travel</span>
         </span>
         {caption && <span className="text-xs font-medium tracking-[0.08em] text-ink-muted">{caption}</span>}

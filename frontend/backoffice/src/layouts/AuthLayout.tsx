@@ -13,7 +13,7 @@ export default function AuthLayout() {
         backgroundSize: '24px 24px',
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center gap-3">
         <BrandMark size="lg" />
         {env.APP_ENV !== 'prd' && <Tag color="orange">{env.APP_ENV.toUpperCase()}</Tag>}
       </div>
