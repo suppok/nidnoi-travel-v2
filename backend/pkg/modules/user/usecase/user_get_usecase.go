@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"slices"
+
+	"backend/pkg/constants/role"
 
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
@@ -24,7 +27,8 @@ func (u *userUseCase) Get(ctx context.Context, request *models.UserGetRequest) (
 	if err != nil {
 		return nil, cerrors.Wrap(err, "get user")
 	}
-	if found == nil {
+	// The super admin is visible only to themselves.
+	if found == nil || (slices.Contains(found.Roles, role.SuperAdmin) && !isSuperAdmin(request.UserRequestInfo)) {
 		return nil, cerrors.NotFound()
 	}
 	return &models.UserGetResponse{UserItem: models.NewUserItem(found)}, nil

@@ -39,13 +39,18 @@ func (u *userUseCase) List(ctx context.Context, request *models.UserListRequest)
 		request.PageSize = defaultPageSize
 	}
 
-	users, total, err := u.repositoryRegistry.AppUserRepository.List(ctx, repomodels.AppUserListCriteria{
+	criteria := repomodels.AppUserListCriteria{
 		Keyword:  request.Keyword,
 		Role:     request.Role,
 		Status:   request.Status,
 		Page:     request.Page,
 		PageSize: request.PageSize,
-	})
+	}
+	// The super admin is visible only to themselves.
+	if !isSuperAdmin(request.UserRequestInfo) {
+		criteria.ExcludeRole = role.SuperAdmin
+	}
+	users, total, err := u.repositoryRegistry.AppUserRepository.List(ctx, criteria)
 	if err != nil {
 		return nil, cerrors.Wrap(err, "list users")
 	}
