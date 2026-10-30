@@ -1,4 +1,4 @@
-import { DownOutlined, HomeOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -15,6 +15,15 @@ type NavGroup = { key: string; label: string; items: NavItem[] };
 // Add an entry when its page exists. Items the user can't access are hidden (UX only).
 const NAV: NavGroup[] = [
   { key: 'main', label: 'เมนูหลัก', items: [{ path: '/dashboard', label: 'ภาพรวม', icon: <HomeOutlined /> }] },
+  {
+    key: 'sales',
+    label: 'ฝ่ายขาย',
+    items: [
+      { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
+      { path: '/taxonomy/cities', label: 'เมือง', icon: <EnvironmentOutlined />, permission: Permissions.CityList },
+      { path: '/wholesales', label: 'โฮลเซลล์', icon: <ShopOutlined />, permission: Permissions.WholesaleList },
+    ],
+  },
   {
     key: 'system',
     label: 'ระบบ',

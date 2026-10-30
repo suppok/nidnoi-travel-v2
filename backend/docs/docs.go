@@ -190,6 +190,482 @@ const docTemplate = `{
                 }
             }
         },
+        "/cities": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Update a city's country, display fields and ref ID (not the slug)",
+                "parameters": [
+                    {
+                        "description": "City",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The slug is locked after create. The country must be active.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Create a city",
+                "parameters": [
+                    {
+                        "description": "City",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "SLUG_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/cities/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "List cities",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cities/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Restoring requires the city's country to be active.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Soft-delete or restore a city",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION (countryId: country deleted)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/cities/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Get a city",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "City ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/countries": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "countries"
+                ],
+                "summary": "Update a country's display fields and ref ID (not the slug)",
+                "parameters": [
+                    {
+                        "description": "Country",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The slug is locked after create.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "countries"
+                ],
+                "summary": "Create a country",
+                "parameters": [
+                    {
+                        "description": "Country",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "SLUG_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/countries/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "countries"
+                ],
+                "summary": "List countries",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/countries/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "countries"
+                ],
+                "summary": "Soft-delete or restore a country",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/countries/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "countries"
+                ],
+                "summary": "Get a country",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Country ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "produces": [
@@ -504,6 +980,241 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/wholesales": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces every field, including the whole contact list.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wholesales"
+                ],
+                "summary": "Update a wholesale",
+                "parameters": [
+                    {
+                        "description": "Wholesale",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "CODE_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The code is stored uppercase. State defaults to 10 (on request).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wholesales"
+                ],
+                "summary": "Create a wholesale",
+                "parameters": [
+                    {
+                        "description": "Wholesale",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "CODE_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/wholesales/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wholesales"
+                ],
+                "summary": "List wholesales with their contacts",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/wholesales/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wholesales"
+                ],
+                "summary": "Soft-delete or restore a wholesale",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/wholesales/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wholesales"
+                ],
+                "summary": "Get a wholesale with its contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Wholesale ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -583,6 +1294,588 @@ const docTemplate = `{
                 "expiresIn": {
                     "description": "seconds",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityCountry": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityCreateRequest": {
+            "type": "object",
+            "properties": {
+                "countryId": {
+                    "description": "must be an active country",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "description": "locked after create",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityCreateResponse": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "$ref": "#/definitions/backend_pkg_modules_city_models.CityCountry"
+                },
+                "countryId": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityGetResponse": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "$ref": "#/definitions/backend_pkg_modules_city_models.CityCountry"
+                },
+                "countryId": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityItem": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "$ref": "#/definitions/backend_pkg_modules_city_models.CityCountry"
+                },
+                "countryId": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityListRequest": {
+            "type": "object",
+            "properties": {
+                "countryId": {
+                    "description": "empty = any",
+                    "type": "string"
+                },
+                "keyword": {
+                    "description": "matches Thai/English name or slug",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 500",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_city_models.CityItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "countryId": {
+                    "description": "must be an active country when changed",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "type": "integer"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "$ref": "#/definitions/backend_pkg_modules_city_models.CityCountry"
+                },
+                "countryId": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryCreateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "description": "locked after create",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryCreateResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryGetResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryItem": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryListRequest": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "description": "matches Thai/English name or slug",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 500 (dropdowns load every country)",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_country_models.CountryItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "type": "integer"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy destination id",
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
                 }
             }
         },
@@ -833,6 +2126,288 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "false = deactivate (signs the user out everywhere)",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleContactInput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleContactItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleCreateRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "stored uppercase, unique",
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "default 10 (on request)",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleCreateResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 on request, 20 connected, 30 blocked, 40 declined",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleGetResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 on request, 20 connected, 30 blocked, 40 declined",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 on request, 20 connected, 30 blocked, 40 declined",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleListRequest": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "description": "matches name, code, or a contact's name/phone",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 500",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "0 or omitted = any",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactItem"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 on request, 20 connected, 30 blocked, 40 declined",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_wholesale_models.WholesaleUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
                     "type": "boolean"
                 }
             }

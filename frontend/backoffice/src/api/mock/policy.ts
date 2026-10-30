@@ -12,6 +12,12 @@ const POLICY: Record<Role, readonly Permission[]> = {
     Permissions.TourProgramGet,
     Permissions.PeriodUpdate,
     Permissions.MediaUpload,
+    Permissions.CountryList,
+    Permissions.CountryGet,
+    Permissions.CityList,
+    Permissions.CityGet,
+    Permissions.WholesaleList,
+    Permissions.WholesaleGet,
   ],
   [Roles.Finance]: [Permissions.TourProgramList, Permissions.TourProgramGet],
 };

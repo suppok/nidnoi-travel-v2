@@ -6,5 +6,11 @@ p, sales, tour-program, list
 p, sales, tour-program, get
 p, sales, tour-program-period, update
 p, sales, media, upload
+p, sales, country, list
+p, sales, country, get
+p, sales, city, list
+p, sales, city, get
+p, sales, wholesale, list
+p, sales, wholesale, get
 p, finance, tour-program, list
 p, finance, tour-program, get

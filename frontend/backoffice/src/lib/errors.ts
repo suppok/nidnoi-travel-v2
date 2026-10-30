@@ -14,6 +14,9 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.CannotModifySelf]: 'ไม่สามารถเปลี่ยนบทบาทหรือสถานะของบัญชีตัวเองได้',
   [ErrorCodes.SuperAdminProtected]: 'ผู้ดูแลระบบสูงสุดแก้ไขได้โดยตัวเองเท่านั้น',
   [ErrorCodes.SuperAdminRequired]: 'เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่ให้บทบาทผู้ดูแลระบบหรือแก้ไขผู้ดูแลระบบได้',
+  [ErrorCodes.SlugTaken]: 'Slug นี้ถูกใช้แล้ว',
+  [ErrorCodes.RefIdTaken]: 'Ref ID นี้ถูกใช้แล้ว',
+  [ErrorCodes.CodeTaken]: 'รหัสนี้ถูกใช้แล้ว',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

@@ -29,7 +29,10 @@ import (
 	"backend/pkg/registry"
 
 	authusecase "backend/pkg/modules/auth/usecase"
+	cityusecase "backend/pkg/modules/city/usecase"
+	countryusecase "backend/pkg/modules/country/usecase"
 	userusecase "backend/pkg/modules/user/usecase"
+	wholesaleusecase "backend/pkg/modules/wholesale/usecase"
 )
 
 const (
@@ -87,6 +90,9 @@ func New(ctx context.Context) (*App, error) {
 	// Use cases
 	authUseCase := authusecase.NewAuthUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	userUseCase := userusecase.NewUserUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	countryUseCase := countryusecase.NewCountryUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	cityUseCase := cityusecase.NewCityUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	wholesaleUseCase := wholesaleusecase.NewWholesaleUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 
 	// HTTP
 	response := api.NewApiResponseHandler(log)
@@ -120,6 +126,9 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewHealthAPIHandler(v1, apiHandler).Init()
 	handler.NewAuthAPIHandler(v1, apiHandler, cfg, authUseCase).Init(jwtAuth)
 	handler.NewUserAPIHandler(v1, apiHandler, userUseCase).Init(jwtAuth, authPermissions)
+	handler.NewCountryAPIHandler(v1, apiHandler, countryUseCase).Init(jwtAuth, authPermissions)
+	handler.NewCityAPIHandler(v1, apiHandler, cityUseCase).Init(jwtAuth, authPermissions)
+	handler.NewWholesaleAPIHandler(v1, apiHandler, wholesaleUseCase).Init(jwtAuth, authPermissions)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db}, nil
 }

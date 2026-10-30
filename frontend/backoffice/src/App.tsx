@@ -11,7 +11,11 @@ import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx'
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
 import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
+import CityListPage from './routes/taxonomy/cities/CityListPage.tsx';
+import CountryDetailPage from './routes/taxonomy/countries/CountryDetailPage.tsx';
+import CountryListPage from './routes/taxonomy/countries/CountryListPage.tsx';
 import UserListPage from './routes/users/UserListPage.tsx';
+import WholesaleListPage from './routes/wholesales/WholesaleListPage.tsx';
 import { theme } from './theme.ts';
 
 const router = createBrowserRouter([
@@ -31,6 +35,22 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
+          {
+            element: <RequirePermission code={Permissions.CountryList} />,
+            children: [{ path: '/taxonomy/countries', element: <CountryListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.CountryGet} />,
+            children: [{ path: '/taxonomy/countries/:id', element: <CountryDetailPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.CityList} />,
+            children: [{ path: '/taxonomy/cities', element: <CityListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.WholesaleList} />,
+            children: [{ path: '/wholesales', element: <WholesaleListPage /> }],
+          },
           {
             element: <RequirePermission code={Permissions.UserList} />,
             children: [{ path: '/users', element: <UserListPage /> }],
