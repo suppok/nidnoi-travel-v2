@@ -1,5 +1,5 @@
-import { HomeOutlined, KeyOutlined, LogoutOutlined, MoreOutlined, TeamOutlined } from '@ant-design/icons';
-import { Avatar, Button, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
+import { DownOutlined, HomeOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { Avatar, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/useAuth.ts';
@@ -48,7 +48,7 @@ export default function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Layout.Sider width={248} breakpoint="lg" collapsedWidth={0} className="border-r border-line">
+      <Layout.Sider width={248} breakpoint="lg" collapsedWidth={0}>
         <div className="flex h-full flex-col gap-7 px-4 py-6">
           <Link to="/dashboard" className="px-2 no-underline">
             <BrandMark caption="BACKOFFICE" />
@@ -56,32 +56,36 @@ export default function AppLayout() {
 
           <Menu mode="inline" selectedKeys={selected} items={menuItems} style={{ borderInlineEnd: 'none' }} />
 
-          {user && (
-            <div className="mt-auto flex items-center gap-3 rounded-2xl bg-sky-soft p-3">
-              <Avatar size={40} className="flex-none font-semibold" style={{ background: 'var(--color-sky-strong)', color: 'var(--color-ink)' }}>
-                {initials(user.name)}
-              </Avatar>
-              <div className="flex min-w-0 flex-auto flex-col">
-                <span className="truncate text-sm font-semibold">{user.name}</span>
-                <span className="truncate text-[13px] text-ink-muted" title={user.email}>
-                  {user.roles.map((r) => roleInfo(r).label).join(' · ')}
-                </span>
-              </div>
-              <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="topRight">
-                <Button type="text" aria-label="เมนูผู้ใช้" icon={<MoreOutlined />} />
-              </Dropdown>
-            </div>
-          )}
         </div>
       </Layout.Sider>
 
       <Layout>
-        <Layout.Header className="flex h-auto items-center gap-3 border-b border-line px-8 py-3 leading-normal">
+        <Layout.Header className="flex items-center gap-3 border-b border-line">
           {env.APP_ENV !== 'prd' && <Tag color="orange">{env.APP_ENV.toUpperCase()}</Tag>}
           {env.API_MOCK && <Tag color="purple">MOCK API</Tag>}
+          {user && (
+            <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
+              <button
+                type="button"
+                aria-label="เมนูผู้ใช้"
+                className="ml-auto flex cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-transparent px-2 py-1 text-left font-sans text-ink hover:bg-sky-soft"
+              >
+                <Avatar size={32} className="flex-none font-semibold" style={{ background: 'var(--color-sky-strong)', color: 'var(--color-ink)' }}>
+                  {initials(user.name)}
+                </Avatar>
+                <span className="flex min-w-0 flex-col leading-tight max-md:hidden">
+                  <span className="max-w-[200px] truncate text-sm font-semibold">{user.name}</span>
+                  <span className="max-w-[200px] truncate text-xs text-ink-muted" title={user.email}>
+                    {user.roles.map((r) => roleInfo(r).label).join(' · ')}
+                  </span>
+                </span>
+                <DownOutlined className="text-[10px] text-ink-muted" />
+              </button>
+            </Dropdown>
+          )}
         </Layout.Header>
         <Layout.Content>
-          <div className="mx-auto box-border flex w-full max-w-[1280px] flex-col gap-6 p-8 max-md:p-4">
+          <div className="box-border flex w-full flex-col gap-6 p-8 max-md:p-4">
             <Outlet />
           </div>
         </Layout.Content>
