@@ -15,5 +15,11 @@ func NewRepositoryRegistry(db query.AppIDB) *registry.RepositoryRegistry {
 		CityRepository:             repository.NewCityRepository(db),
 		WholesaleRepository:        repository.NewWholesaleRepository(db),
 		WholesaleContactRepository: repository.NewWholesaleContactRepository(db),
+
+		TourProgramRepository:        repository.NewTourProgramRepository(db),
+		TourProgramCountryRepository: repository.NewTourProgramCountryRepository(db),
+		TourProgramCityRepository:    repository.NewTourProgramCityRepository(db),
+		TourProgramImageRepository:   repository.NewTourProgramImageRepository(db),
+		TourProgramPeriodRepository:  repository.NewTourProgramPeriodRepository(db),
 	}
 }

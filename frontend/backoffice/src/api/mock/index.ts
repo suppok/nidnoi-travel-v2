@@ -4,11 +4,20 @@ import { env } from '../../config/env.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
 import { authRoutes } from './auth.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
+import { mediaRoutes } from './media.ts';
 import { taxonomyRoutes } from './taxonomy.ts';
+import { tourProgramRoutes } from './tourPrograms.ts';
 import { userRoutes } from './users.ts';
 import { wholesaleRoutes } from './wholesales.ts';
 
-const routes: Record<string, MockHandler> = { ...authRoutes, ...userRoutes, ...taxonomyRoutes, ...wholesaleRoutes };
+const routes: Record<string, MockHandler> = {
+  ...authRoutes,
+  ...userRoutes,
+  ...taxonomyRoutes,
+  ...wholesaleRoutes,
+  ...mediaRoutes,
+  ...tourProgramRoutes,
+};
 
 const LATENCY_MS = 300;
 
@@ -39,13 +48,13 @@ export async function mockFetch(input: RequestInfo | URL, init?: RequestInit): P
   const path = url.slice(env.API_BASE_URL.length).split('?')[0];
   const headers = new Headers(init?.headers);
   const token = headers.get('Authorization')?.replace(/^Bearer /, '') ?? null;
-  const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+  const body = typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body instanceof FormData ? init.body : undefined;
 
   const found = match(method, path);
   if (!found) return fail(new MockFail(404, ErrorCodes.NotFound, `Mock has no route for ${method} ${path}`));
 
   try {
-    return found.handler({ method, path, params: found.params, body, token });
+    return await found.handler({ method, path, params: found.params, body, token });
   } catch (err) {
     if (err instanceof MockFail) return fail(err);
     throw err;

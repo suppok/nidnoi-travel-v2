@@ -23,6 +23,7 @@ type Config struct {
 	DatabaseURL        string   `mapstructure:"-"`
 	JWTSecret          string   `mapstructure:"-"`
 	CORSAllowedOrigins []string `mapstructure:"-"`
+	R2                 R2Config `mapstructure:"-"`
 
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
@@ -30,6 +31,26 @@ type Config struct {
 	TourCode   TourCodeConfig   `mapstructure:"tourCode"`
 	RateLimit  RateLimitConfig  `mapstructure:"rateLimit"`
 	Permission PermissionConfig `mapstructure:"permission"`
+	Media      MediaConfig      `mapstructure:"media"`
+}
+
+// R2Config comes from R2_* environment variables. Uploads are disabled (STORAGE_UNAVAILABLE) until
+// every value is set, so the API still starts without them.
+type R2Config struct {
+	AccountID       string
+	AccessKeyID     string
+	SecretAccessKey string
+	Bucket          string
+	PublicURL       string // no trailing slash, e.g. https://dev-media.nidnoitravelv2.com
+}
+
+func (r R2Config) Configured() bool {
+	return r.AccountID != "" && r.AccessKeyID != "" && r.SecretAccessKey != "" && r.Bucket != "" && r.PublicURL != ""
+}
+
+type MediaConfig struct {
+	MaxUploadMB   int `mapstructure:"maxUploadMB"`
+	MaxMegapixels int `mapstructure:"maxMegapixels"`
 }
 
 type ServerConfig struct {
@@ -125,6 +146,13 @@ func read(path string) (*Config, error) {
 	cfg.DatabaseURL = os.Getenv("DATABASE_URL")
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	cfg.CORSAllowedOrigins = splitList(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	cfg.R2 = R2Config{
+		AccountID:       os.Getenv("R2_ACCOUNT_ID"),
+		AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+		SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
+		Bucket:          os.Getenv("R2_BUCKET"),
+		PublicURL:       strings.TrimRight(os.Getenv("R2_PUBLIC_URL"), "/"),
+	}
 	return cfg, nil
 }
 
@@ -160,6 +188,15 @@ func (c *Config) validate() error {
 	}
 	if c.Permission.ModelPath == "" || c.Permission.PolicyPath == "" {
 		problems = append(problems, "permission.modelPath and permission.policyPath are required")
+	}
+	if c.Media.MaxUploadMB < 1 || c.Media.MaxUploadMB >= c.Server.BodyLimitMB {
+		problems = append(problems, "media.maxUploadMB must be at least 1 and below server.bodyLimitMB")
+	}
+	if c.Media.MaxMegapixels < 1 {
+		problems = append(problems, "media.maxMegapixels must be at least 1")
+	}
+	if c.R2.PublicURL != "" && !strings.HasPrefix(c.R2.PublicURL, "https://") && !c.IsLocal() {
+		problems = append(problems, "R2_PUBLIC_URL must start with https://")
 	}
 	if len(problems) > 0 {
 		return errors.New("config: " + strings.Join(problems, "; "))

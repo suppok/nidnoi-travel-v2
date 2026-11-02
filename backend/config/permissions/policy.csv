@@ -4,7 +4,10 @@ p, sales, tour-program, create
 p, sales, tour-program, update
 p, sales, tour-program, list
 p, sales, tour-program, get
+p, sales, tour-program-period, create
 p, sales, tour-program-period, update
+p, sales, tour-program-period, list
+p, sales, tour-program-period, status
 p, sales, media, upload
 p, sales, country, list
 p, sales, country, get
@@ -14,3 +17,4 @@ p, sales, wholesale, list
 p, sales, wholesale, get
 p, finance, tour-program, list
 p, finance, tour-program, get
+p, finance, tour-program-period, list

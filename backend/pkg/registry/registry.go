@@ -8,6 +8,7 @@ import (
 	"backend/pkg/core/auth/permission"
 	"backend/pkg/core/config"
 	"backend/pkg/core/database/query"
+	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/repository"
 )
@@ -31,6 +32,12 @@ type RepositoryRegistry struct {
 	CityRepository             repository.CityRepository
 	WholesaleRepository        repository.WholesaleRepository
 	WholesaleContactRepository repository.WholesaleContactRepository
+
+	TourProgramRepository        repository.TourProgramRepository
+	TourProgramCountryRepository repository.TourProgramCountryRepository
+	TourProgramCityRepository    repository.TourProgramCityRepository
+	TourProgramImageRepository   repository.TourProgramImageRepository
+	TourProgramPeriodRepository  repository.TourProgramPeriodRepository
 }
 
 // ShareRegistry holds cross-module services and outbound clients.
@@ -43,4 +50,6 @@ type ServiceRegistry struct {
 	Password password.Service
 }
 
-type ClientRegistry struct{}
+type ClientRegistry struct {
+	ObjectStorage objectstorage.ObjectStorage
+}

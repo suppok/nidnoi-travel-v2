@@ -14,6 +14,9 @@ import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
 import CityListPage from './routes/taxonomy/cities/CityListPage.tsx';
 import CountryDetailPage from './routes/taxonomy/countries/CountryDetailPage.tsx';
 import CountryListPage from './routes/taxonomy/countries/CountryListPage.tsx';
+import TourProgramEditPage from './routes/tour-programs/[id]/edit/TourProgramEditPage.tsx';
+import TourProgramCreatePage from './routes/tour-programs/create/TourProgramCreatePage.tsx';
+import TourProgramListPage from './routes/tour-programs/list/TourProgramListPage.tsx';
 import UserListPage from './routes/users/UserListPage.tsx';
 import WholesaleListPage from './routes/wholesales/WholesaleListPage.tsx';
 import { theme } from './theme.ts';
@@ -35,6 +38,18 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
+          {
+            element: <RequirePermission code={Permissions.TourProgramList} />,
+            children: [{ path: '/tour-programs', element: <TourProgramListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.TourProgramCreate} />,
+            children: [{ path: '/tour-programs/create', element: <TourProgramCreatePage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.TourProgramGet} />,
+            children: [{ path: '/tour-programs/:id/edit', element: <TourProgramEditPage /> }],
+          },
           {
             element: <RequirePermission code={Permissions.CountryList} />,
             children: [{ path: '/taxonomy/countries', element: <CountryListPage /> }],

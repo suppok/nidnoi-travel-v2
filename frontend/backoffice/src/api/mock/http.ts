@@ -7,11 +7,11 @@ export type MockRequest = {
   method: string;
   path: string;
   params: Record<string, string>;
-  body: unknown;
+  body: unknown; // parsed JSON, or the FormData of a multipart request
   token: string | null;
 };
 
-export type MockHandler = (req: MockRequest) => Response;
+export type MockHandler = (req: MockRequest) => Response | Promise<Response>;
 
 export class MockFail extends Error {
   status: number;

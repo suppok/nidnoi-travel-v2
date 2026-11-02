@@ -442,6 +442,676 @@ definitions:
         description: false = soft delete
         type: boolean
     type: object
+  backend_pkg_modules_media_models.MediaUploadResponse:
+    properties:
+      fileName:
+        description: download name for documents; "" for images
+        type: string
+      height:
+        description: 0 for documents
+        type: integer
+      key:
+        type: string
+      mime:
+        type: string
+      size:
+        type: integer
+      url:
+        type: string
+      width:
+        description: 0 for documents
+        type: integer
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramCity:
+    properties:
+      countryId:
+        type: string
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      slug:
+        type: string
+      status:
+        type: boolean
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramCountry:
+    properties:
+      id:
+        type: string
+      nameEn:
+        type: string
+      nameTh:
+        type: string
+      slug:
+        type: string
+      status:
+        type: boolean
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramCreateRequest:
+    properties:
+      airline:
+        type: string
+      bannerImage:
+        description: URL from POST /media/upload (tour-banner), detail page hero
+        type: string
+      cardImage:
+        description: URL from POST /media/upload (tour-card), tour cards
+        type: string
+      cityIds:
+        description: each must belong to one of countryIds
+        items:
+          type: string
+        type: array
+      countryIds:
+        description: one or more, display order
+        items:
+          type: string
+        type: array
+      days:
+        type: integer
+      description:
+        description: plain text
+        type: string
+      docxFile:
+        description: URL from POST /media/upload (tour-docx), staff only
+        type: string
+      highlight:
+        description: short summary for tour cards
+        type: string
+      images:
+        description: gallery URLs (tour-gallery), display order
+        items:
+          type: string
+        type: array
+      internalNote:
+        description: staff only
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        description: URL from POST /media/upload (tour-pdf), public
+        type: string
+      refId:
+        description: optional legacy id
+        type: integer
+      state:
+        description: default 10 (draft)
+        type: integer
+      wholesaleId:
+        type: string
+      wholesaleTourCode:
+        description: the wholesale's own code, staff only
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramCreateResponse:
+    properties:
+      airline:
+        type: string
+      bannerImage:
+        description: tour detail page hero
+        type: string
+      cardImage:
+        description: tour cards on home/listing pages
+        type: string
+      cities:
+        description: display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity'
+        type: array
+      code:
+        description: public, never changes
+        type: string
+      countries:
+        description: display order; the first is the main country
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry'
+        type: array
+      createDate:
+        type: string
+      days:
+        type: integer
+      description:
+        type: string
+      docxFile:
+        type: string
+      highlight:
+        type: string
+      id:
+        type: string
+      images:
+        description: gallery, display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
+        type: array
+      internalNote:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 draft, 20 selling, 30 closed, 40 cancelled
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+      wholesale:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale'
+      wholesaleTourCode:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramGetResponse:
+    properties:
+      airline:
+        type: string
+      bannerImage:
+        description: tour detail page hero
+        type: string
+      cardImage:
+        description: tour cards on home/listing pages
+        type: string
+      cities:
+        description: display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity'
+        type: array
+      code:
+        description: public, never changes
+        type: string
+      countries:
+        description: display order; the first is the main country
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry'
+        type: array
+      createDate:
+        type: string
+      days:
+        type: integer
+      description:
+        type: string
+      docxFile:
+        type: string
+      highlight:
+        type: string
+      id:
+        type: string
+      images:
+        description: gallery, display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
+        type: array
+      internalNote:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 draft, 20 selling, 30 closed, 40 cancelled
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+      wholesale:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale'
+      wholesaleTourCode:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramImage:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramListItem:
+    properties:
+      bannerImage:
+        type: string
+      cardImage:
+        type: string
+      code:
+        type: string
+      countries:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry'
+        type: array
+      createDate:
+        type: string
+      days:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      refId:
+        type: integer
+      state:
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+      wholesale:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale'
+      wholesaleTourCode:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramListRequest:
+    properties:
+      cityId:
+        description: optional
+        type: string
+      countryId:
+        description: optional
+        type: string
+      keyword:
+        description: matches name, code or wholesale tour code
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      state:
+        description: 0 or omitted = any
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+      wholesaleId:
+        description: optional
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest:
+    properties:
+      airline:
+        type: string
+      bannerImage:
+        description: URL from POST /media/upload (tour-banner), detail page hero
+        type: string
+      cardImage:
+        description: URL from POST /media/upload (tour-card), tour cards
+        type: string
+      cityIds:
+        description: each must belong to one of countryIds
+        items:
+          type: string
+        type: array
+      countryIds:
+        description: one or more, display order
+        items:
+          type: string
+        type: array
+      days:
+        type: integer
+      description:
+        description: plain text
+        type: string
+      docxFile:
+        description: URL from POST /media/upload (tour-docx), staff only
+        type: string
+      highlight:
+        description: short summary for tour cards
+        type: string
+      id:
+        type: string
+      images:
+        description: gallery URLs (tour-gallery), display order
+        items:
+          type: string
+        type: array
+      internalNote:
+        description: staff only
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        description: URL from POST /media/upload (tour-pdf), public
+        type: string
+      refId:
+        description: optional legacy id
+        type: integer
+      state:
+        description: default 10 (draft)
+        type: integer
+      wholesaleId:
+        type: string
+      wholesaleTourCode:
+        description: the wholesale's own code, staff only
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramUpdateResponse:
+    properties:
+      airline:
+        type: string
+      bannerImage:
+        description: tour detail page hero
+        type: string
+      cardImage:
+        description: tour cards on home/listing pages
+        type: string
+      cities:
+        description: display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity'
+        type: array
+      code:
+        description: public, never changes
+        type: string
+      countries:
+        description: display order; the first is the main country
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry'
+        type: array
+      createDate:
+        type: string
+      days:
+        type: integer
+      description:
+        type: string
+      docxFile:
+        type: string
+      highlight:
+        type: string
+      id:
+        type: string
+      images:
+        description: gallery, display order
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
+        type: array
+      internalNote:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      state:
+        description: 10 draft, 20 selling, 30 closed, 40 cancelled
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+      wholesale:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale'
+      wholesaleTourCode:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramWholesale:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: boolean
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateRequest:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      deposit:
+        type: integer
+      endDate:
+        description: YYYY-MM-DD, on or after startDate
+        example: "2026-12-05"
+        type: string
+      note:
+        type: string
+      price:
+        description: adult, whole baht
+        type: integer
+      priceBeforeDiscount:
+        description: must be above price
+        type: integer
+      seatsAvailable:
+        description: 0..seatsTotal; 0 = sold out
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        description: YYYY-MM-DD
+        example: "2026-12-01"
+        type: string
+      tourProgramId:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateResponse:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      deposit:
+        type: integer
+      endDate:
+        description: YYYY-MM-DD
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      note:
+        description: staff only
+        type: string
+      price:
+        description: adult, whole baht
+        type: integer
+      priceBeforeDiscount:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        description: YYYY-MM-DD
+        example: "2026-12-01"
+        type: string
+      status:
+        type: boolean
+      tourProgramId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodItem:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      deposit:
+        type: integer
+      endDate:
+        description: YYYY-MM-DD
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      note:
+        description: staff only
+        type: string
+      price:
+        description: adult, whole baht
+        type: integer
+      priceBeforeDiscount:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        description: YYYY-MM-DD
+        example: "2026-12-01"
+        type: string
+      status:
+        type: boolean
+      tourProgramId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListRequest:
+    properties:
+      status:
+        description: omitted = all
+        type: boolean
+      tourProgramId:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodItem'
+        type: array
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateRequest:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      deposit:
+        type: integer
+      endDate:
+        description: YYYY-MM-DD, on or after startDate
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      note:
+        type: string
+      price:
+        description: adult, whole baht
+        type: integer
+      priceBeforeDiscount:
+        description: must be above price
+        type: integer
+      seatsAvailable:
+        description: 0..seatsTotal; 0 = sold out
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        description: YYYY-MM-DD
+        example: "2026-12-01"
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateResponse:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      deposit:
+        type: integer
+      endDate:
+        description: YYYY-MM-DD
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      note:
+        description: staff only
+        type: string
+      price:
+        description: adult, whole baht
+        type: integer
+      priceBeforeDiscount:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        description: YYYY-MM-DD
+        example: "2026-12-01"
+        type: string
+      status:
+        type: boolean
+      tourProgramId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
   backend_pkg_modules_user_models.UserCreateRequest:
     properties:
       email:
@@ -1240,6 +1910,315 @@ paths:
       summary: Liveness check
       tags:
       - health
+  /media/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        multipart/form-data with "file" and "purpose" (tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero).
+        The type is detected from the content: images are JPEG/PNG/WebP with a minimum size per purpose, documents are PDF or DOCX.
+      parameters:
+      - description: File (max media.maxUploadMB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Purpose
+        in: formData
+        name: purpose
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_media_models.MediaUploadResponse'
+        "400":
+          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL
+          schema:
+            additionalProperties: true
+            type: object
+        "413":
+          description: MEDIA_TOO_LARGE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: STORAGE_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload an image or document to R2
+      tags:
+      - media
+  /tour-program-periods:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Period
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a period to a tour program
+      tags:
+      - tour-program-periods
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Period
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a period's dates, prices, seats and note
+      tags:
+      - tour-program-periods
+  /tour-program-periods/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListResponse'
+      security:
+      - BearerAuth: []
+      summary: List the periods of a tour program by departure date
+      tags:
+      - tour-program-periods
+  /tour-program-periods/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore a period
+      tags:
+      - tour-program-periods
+  /tour-programs:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        The public code is generated (tour_code_seq) and never changes. State defaults to 10 (draft).
+        Media fields take URLs returned by POST /media/upload.
+      parameters:
+      - description: Tour program
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a tour program
+      tags:
+      - tour-programs
+    put:
+      consumes:
+      - application/json
+      description: Replaces every editable field, including the country, city and
+        gallery lists. The code never changes.
+      parameters:
+      - description: Tour program
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a tour program
+      tags:
+      - tour-programs
+  /tour-programs/{id}:
+    get:
+      parameters:
+      - description: Tour program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a tour program with its countries, cities and gallery
+      tags:
+      - tour-programs
+  /tour-programs/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListResponse'
+      security:
+      - BearerAuth: []
+      summary: List tour programs
+      tags:
+      - tour-programs
+  /tour-programs/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore a tour program
+      tags:
+      - tour-programs
   /users:
     post:
       consumes:

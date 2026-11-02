@@ -251,3 +251,12 @@ export const taxonomyRoutes: Record<string, MockHandler> = {
     return ok(null);
   },
 };
+
+// Lookups for other mocks (tour programs join countries and cities on read, like the backend).
+export function mockCountry(id: string): Country | undefined {
+  return db.countries.find((c) => c.id === id);
+}
+
+export function mockCity(id: string): StoredCity | undefined {
+  return db.cities.find((c) => c.id === id);
+}

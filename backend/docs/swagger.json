@@ -677,6 +677,485 @@
                 }
             }
         },
+        "/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "multipart/form-data with \"file\" and \"purpose\" (tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero).\nThe type is detected from the content: images are JPEG/PNG/WebP with a minimum size per purpose, documents are PDF or DOCX.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Upload an image or document to R2",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File (max media.maxUploadMB)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Purpose",
+                        "name": "purpose",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_media_models.MediaUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "413": {
+                        "description": "MEDIA_TOO_LARGE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "STORAGE_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-program-periods": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program-periods"
+                ],
+                "summary": "Update a period's dates, prices, seats and note",
+                "parameters": [
+                    {
+                        "description": "Period",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program-periods"
+                ],
+                "summary": "Add a period to a tour program",
+                "parameters": [
+                    {
+                        "description": "Period",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-program-periods/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program-periods"
+                ],
+                "summary": "List the periods of a tour program by departure date",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-program-periods/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program-periods"
+                ],
+                "summary": "Soft-delete or restore a period",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces every editable field, including the country, city and gallery lists. The code never changes.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-programs"
+                ],
+                "summary": "Update a tour program",
+                "parameters": [
+                    {
+                        "description": "Tour program",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The public code is generated (tour_code_seq) and never changes. State defaults to 10 (draft).\nMedia fields take URLs returned by POST /media/upload.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-programs"
+                ],
+                "summary": "Create a tour program",
+                "parameters": [
+                    {
+                        "description": "Tour program",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-programs"
+                ],
+                "summary": "List tour programs",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-programs"
+                ],
+                "summary": "Soft-delete or restore a tour program",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-programs"
+                ],
+                "summary": "Get a tour program with its countries, cities and gallery",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tour program ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "put": {
                 "security": [
@@ -1860,6 +2339,974 @@
             }
         },
         "backend_pkg_modules_country_models.CountryUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_media_models.MediaUploadResponse": {
+            "type": "object",
+            "properties": {
+                "fileName": {
+                    "description": "download name for documents; \"\" for images",
+                    "type": "string"
+                },
+                "height": {
+                    "description": "0 for documents",
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "mime": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "width": {
+                    "description": "0 for documents",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramCity": {
+            "type": "object",
+            "properties": {
+                "countryId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramCountry": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramCreateRequest": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "description": "URL from POST /media/upload (tour-banner), detail page hero",
+                    "type": "string"
+                },
+                "cardImage": {
+                    "description": "URL from POST /media/upload (tour-card), tour cards",
+                    "type": "string"
+                },
+                "cityIds": {
+                    "description": "each must belong to one of countryIds",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countryIds": {
+                    "description": "one or more, display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "plain text",
+                    "type": "string"
+                },
+                "docxFile": {
+                    "description": "URL from POST /media/upload (tour-docx), staff only",
+                    "type": "string"
+                },
+                "highlight": {
+                    "description": "short summary for tour cards",
+                    "type": "string"
+                },
+                "images": {
+                    "description": "gallery URLs (tour-gallery), display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "internalNote": {
+                    "description": "staff only",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "description": "URL from POST /media/upload (tour-pdf), public",
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "default 10 (draft)",
+                    "type": "integer"
+                },
+                "wholesaleId": {
+                    "type": "string"
+                },
+                "wholesaleTourCode": {
+                    "description": "the wholesale's own code, staff only",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramCreateResponse": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "description": "tour detail page hero",
+                    "type": "string"
+                },
+                "cardImage": {
+                    "description": "tour cards on home/listing pages",
+                    "type": "string"
+                },
+                "cities": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity"
+                    }
+                },
+                "code": {
+                    "description": "public, never changes",
+                    "type": "string"
+                },
+                "countries": {
+                    "description": "display order; the first is the main country",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "docxFile": {
+                    "type": "string"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "description": "gallery, display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
+                    }
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 draft, 20 selling, 30 closed, 40 cancelled",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                },
+                "wholesale": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale"
+                },
+                "wholesaleTourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramGetResponse": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "description": "tour detail page hero",
+                    "type": "string"
+                },
+                "cardImage": {
+                    "description": "tour cards on home/listing pages",
+                    "type": "string"
+                },
+                "cities": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity"
+                    }
+                },
+                "code": {
+                    "description": "public, never changes",
+                    "type": "string"
+                },
+                "countries": {
+                    "description": "display order; the first is the main country",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "docxFile": {
+                    "type": "string"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "description": "gallery, display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
+                    }
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 draft, 20 selling, 30 closed, 40 cancelled",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                },
+                "wholesale": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale"
+                },
+                "wholesaleTourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramImage": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramListItem": {
+            "type": "object",
+            "properties": {
+                "bannerImage": {
+                    "type": "string"
+                },
+                "cardImage": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "refId": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                },
+                "wholesale": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale"
+                },
+                "wholesaleTourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramListRequest": {
+            "type": "object",
+            "properties": {
+                "cityId": {
+                    "description": "optional",
+                    "type": "string"
+                },
+                "countryId": {
+                    "description": "optional",
+                    "type": "string"
+                },
+                "keyword": {
+                    "description": "matches name, code or wholesale tour code",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 100",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "0 or omitted = any",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                },
+                "wholesaleId": {
+                    "description": "optional",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "description": "URL from POST /media/upload (tour-banner), detail page hero",
+                    "type": "string"
+                },
+                "cardImage": {
+                    "description": "URL from POST /media/upload (tour-card), tour cards",
+                    "type": "string"
+                },
+                "cityIds": {
+                    "description": "each must belong to one of countryIds",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countryIds": {
+                    "description": "one or more, display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "plain text",
+                    "type": "string"
+                },
+                "docxFile": {
+                    "description": "URL from POST /media/upload (tour-docx), staff only",
+                    "type": "string"
+                },
+                "highlight": {
+                    "description": "short summary for tour cards",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "description": "gallery URLs (tour-gallery), display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "internalNote": {
+                    "description": "staff only",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "description": "URL from POST /media/upload (tour-pdf), public",
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "default 10 (draft)",
+                    "type": "integer"
+                },
+                "wholesaleId": {
+                    "type": "string"
+                },
+                "wholesaleTourCode": {
+                    "description": "the wholesale's own code, staff only",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "description": "tour detail page hero",
+                    "type": "string"
+                },
+                "cardImage": {
+                    "description": "tour cards on home/listing pages",
+                    "type": "string"
+                },
+                "cities": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCity"
+                    }
+                },
+                "code": {
+                    "description": "public, never changes",
+                    "type": "string"
+                },
+                "countries": {
+                    "description": "display order; the first is the main country",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramCountry"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "docxFile": {
+                    "type": "string"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "description": "gallery, display order",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
+                    }
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "10 draft, 20 selling, 30 closed, 40 cancelled",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                },
+                "wholesale": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramWholesale"
+                },
+                "wholesaleTourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramWholesale": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateRequest": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "description": "YYYY-MM-DD, on or after startDate",
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "price": {
+                    "description": "adult, whole baht",
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "description": "must be above price",
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "description": "0..seatsTotal; 0 = sold out",
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodCreateResponse": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "staff only",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "adult, whole baht",
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodItem": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "staff only",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "adult, whole baht",
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodItem"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "description": "YYYY-MM-DD, on or after startDate",
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "price": {
+                    "description": "adult, whole baht",
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "description": "must be above price",
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "description": "0..seatsTotal; 0 = sold out",
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-01"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "staff only",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "adult, whole baht",
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogramperiod_models.TourProgramPeriodUpdateStatusRequest": {
             "type": "object",
             "properties": {
                 "id": {

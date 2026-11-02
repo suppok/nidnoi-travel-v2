@@ -24,7 +24,7 @@ permission:
   policyPath: config/permissions/policy.csv
 
 tourCode:
-  prefix: nidn
+  prefix: NIDN # code = prefix + 6-digit zero-padded number, e.g. NIDN000001
 
 revalidation:
   quiet: 3m
