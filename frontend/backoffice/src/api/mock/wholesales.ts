@@ -136,3 +136,8 @@ export const wholesaleRoutes: Record<string, MockHandler> = {
     return ok(null);
   },
 };
+
+// Lookup for other mocks (tour programs join their wholesale on read).
+export function mockWholesale(id: string): Wholesale | undefined {
+  return wholesales.find((w) => w.id === id);
+}

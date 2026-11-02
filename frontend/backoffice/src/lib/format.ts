@@ -5,6 +5,12 @@ export function formatDateTime(iso: string | null): string {
   return iso ? dateTime.format(new Date(iso)) : '—';
 }
 
+const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
+
+export function formatBaht(amount: number): string {
+  return baht.format(amount);
+}
+
 export function formatLongDate(date: Date): string {
   return longDate.format(date);
 }

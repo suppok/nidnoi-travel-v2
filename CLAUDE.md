@@ -258,6 +258,7 @@ Flag the user before assuming an answer. Subproject-specific questions live in e
 - **Queue infrastructure** — RabbitMQ vs Redis vs none. Not needed while the backend runs as one instance; required before scaling out.
 - **Redis** — not in the stack; add only with a concrete need.
 - **Legacy data import** — bulk import from the old `nidnoitravel.com` data. Must preserve tour `code` values and move the tour code sequence past the highest imported code.
+- **Legacy tour codes** — new codes are `NIDN` + 6 digits (`NIDN000001`); legacy codes appear lowercase in these docs (`nidn261690`). Open: their real casing and number range, and whether the code sequence must start past that range before staff create tours. Details in `backend/CLAUDE.md`.
 - **Analytics / PDPA consent** — Cloudflare Web Analytics (cookieless) vs GA4 vs Plausible, and whether a consent banner is required.
 - **Railway team access** — stay on Hobby (one operator) or move to Pro for workspace members.
 - **WebP encoder** for backend image processing — see `backend/CLAUDE.md`.

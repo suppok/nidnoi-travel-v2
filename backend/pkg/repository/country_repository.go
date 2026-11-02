@@ -17,6 +17,8 @@ type CountryRepository interface {
 	Update(ctx context.Context, obj *domain.Country, columns ...string) (*domain.Country, error)
 	FindByID(ctx context.Context, id string) (*domain.Country, error)
 	List(ctx context.Context, criteria repomodels.CountryListCriteria) ([]domain.Country, int, error)
+	// FindByIDs returns the rows among ids that exist, in no particular order.
+	FindByIDs(ctx context.Context, ids []string) ([]domain.Country, error)
 }
 
 type countryRepository struct{ query query.DB[domain.Country] }
@@ -64,4 +66,13 @@ func (r *countryRepository) List(ctx context.Context, criteria repomodels.Countr
 		return nil, 0, err
 	}
 	return items, int(total), nil
+}
+
+func (r *countryRepository) FindByIDs(ctx context.Context, ids []string) ([]domain.Country, error) {
+	var items []domain.Country
+	if len(ids) == 0 {
+		return items, nil
+	}
+	err := r.query.NewSelect().Where("co.id IN (?)", bun.In(ids)).Scan(ctx, &items)
+	return items, err
 }

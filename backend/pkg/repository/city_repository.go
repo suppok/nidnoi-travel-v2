@@ -19,6 +19,8 @@ type CityRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.City, error)
 	// List returns cities with their Country.
 	List(ctx context.Context, criteria repomodels.CityListCriteria) ([]domain.City, int, error)
+	// FindByIDs returns the rows among ids that exist, in no particular order.
+	FindByIDs(ctx context.Context, ids []string) ([]domain.City, error)
 }
 
 type cityRepository struct{ query query.DB[domain.City] }
@@ -71,4 +73,13 @@ func (r *cityRepository) List(ctx context.Context, criteria repomodels.CityListC
 		return nil, 0, err
 	}
 	return items, int(total), nil
+}
+
+func (r *cityRepository) FindByIDs(ctx context.Context, ids []string) ([]domain.City, error) {
+	var items []domain.City
+	if len(ids) == 0 {
+		return items, nil
+	}
+	err := r.query.NewSelect().Where("ci.id IN (?)", bun.In(ids)).Scan(ctx, &items)
+	return items, err
 }

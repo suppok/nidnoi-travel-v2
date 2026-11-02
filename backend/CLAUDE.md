@@ -328,7 +328,7 @@ Public routes are grouped at the top of `Init()` so it is obvious what is unauth
 Every table has `id` (UUID), `status`, `create_date`, `update_date`, `create_by`, `update_by`.
 
 - **`status bool`** — soft-delete flag only (`true` = active). Never carries workflow meaning.
-- **`state int`** — workflow state (`10` draft, `20` selling, `30` cancelled, …; gaps left for new states). **Deferred.** Until it exists, every active tour is public.
+- **`state int`** — workflow state with gaps left for new states, one constants package per table (`pkg/constants/wholesalestate`, `pkg/constants/tourprogramstate`). Tour programs: `10` draft, `20` selling, `30` closed, `40` cancelled; the customer site shows `tourprogramstate.Public` (20 and 30) only.
 - Nullable columns use `null.String` / `null.Time` / `null.Float` with `swaggertype`.
 - Strings are `TEXT`, never `VARCHAR(n)` (same storage and speed in Postgres). Length limits live in the use case's `<Action>Validate` (`RuneLength`, which counts characters like Postgres `char_length`). When the database must also guarantee a limit (e.g. before a bulk import), add a `CHECK (char_length(col) <= n)` constraint in a new migration.
 - `bun.BaseModel` always carries `json:"-" swaggerignore:"true"`.
@@ -375,7 +375,7 @@ type TourProgram struct {
 ## Tour code
 
 - `code` is the public, stable identifier used in customer URLs (`/tour/nidn261690/`). It never changes after create and is never accepted from a request body.
-- Generated in the create use case from a Postgres sequence (`tour_code_seq`) inside the create transaction: `<prefix><nextval>`. A sequence is race-free; gaps after a rollback are acceptable. The prefix lives in `config_api.yml`.
+- Format: `NIDN` + 6 digits, zero-padded (`NIDN000001`). Generated in the create use case from a Postgres sequence (`tour_code_seq`, `MAXVALUE 999999`) inside the create transaction (`FormatTourCode`). A sequence is race-free; gaps after a rollback are acceptable. The prefix lives in `config_api.yml` (`tourCode.prefix`).
 - The legacy data import sets the sequence past the highest imported code with `setval`.
 - `code` has a unique index. Internal references (foreign keys, audit) always use `id`.
 
@@ -413,6 +413,17 @@ Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale`
 - Has-many relations must load through `.Model(dest)`, not `Scan(ctx, dest)` (Bun rejects the latter).
 - Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `wholesale:create|update|list|get|status`; `sales` has list/get.
 
+## Tour programs
+
+`pkg/modules/tourprogram`, tables `tour_program` + `tour_program_country` / `tour_program_city` (ordered links, first country = main country) + `tour_program_image` (gallery).
+
+- Fields: `ref_id` (legacy, unique), `code` (generated, see "Tour code"), `name`, `wholesale_id` (required), `wholesale_tour_code` (staff only), `state`, `days`, `nights` (`0..days`), `airline`, `highlight` (card/meta summary, ≤ 500), `description` (plain text), `banner_image` (hero of the tour detail page and share image), `card_image` (tour cards on the home and listing pages), `pdf_file` (public download), `docx_file` (**staff only — never expose on public endpoints**), `internal_note` (staff only), plus the standard columns.
+- Countries (1–20), cities (0–50, each must belong to a selected country) and gallery images (≤ 30) are sent with every create/update and **replaced as a whole**. Relations load as has-many links with nested belongs-to (`CountryLinks.Country`), not `m2m`, so their order is kept.
+- Newly selected wholesale / countries / cities must be active; ones the tour already had may stay after they were soft-deleted (same rule on create and update).
+- Media fields accept only URLs under `R2_PUBLIC_URL` with the purpose's key prefix (`tours/banners/`, `tours/cards/`, `tours/gallery/`, `tours/documents/…{.pdf|.docx}`) — i.e. files uploaded through `/media/upload`.
+- Endpoints follow the route conventions (`/tour-programs`, `/list` with keyword/country/city/wholesale/state/status, max `pageSize` 100). Errors: `REF_ID_TAKEN` (409).
+- Public endpoints (`/tour-programs/public…`) are **not built yet**.
+
 ## Periods, prices and seats
 
 `tour_program_period` holds each departure's dates, price and seat availability. This is the data that changes most often (many times a day); tour content rarely changes after it is posted.
@@ -420,7 +431,8 @@ Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale`
 - **Starting price** = the lowest price among a tour's active periods. It is baked into the customer site's static HTML (tour cards, JSON-LD), so a change requires a site rebuild.
 - **Per-period price and seats** are served live to the customer site's period island via `GET /api/v1/tour-programs/public/:code/periods`: small payload (dates, price, seats left, sold-out flag), `Cache-Control: public, max-age=30`. Seat changes never trigger a rebuild.
 - Booking is inquiry-based (no online seat reservation), so up to 30 seconds of staleness is acceptable.
-- Staff edit periods through the `tour-program-periods` resource (standard route conventions; codes `tour-program-period:*`). The update use case compares the old and new row (and the tour's starting price) to decide whether to enqueue a rebuild — see the rebuild table.
+- Staff edit periods through the `tour-program-periods` resource (`pkg/modules/tourprogramperiod`): `POST` create, `PUT` update, `POST /list` (`{tourProgramId, status?}`, every period of one tour by date, no paging), `PUT /status`. Codes `tour-program-period:create|update|list|status`. The update use case compares the old and new row (and the tour's starting price) to decide whether to enqueue a rebuild — see the rebuild table.
+- Columns: `start_date`/`end_date` (`DATE`, wire format `YYYY-MM-DD`, at most 90 days apart), `price` (adult, required), optional `price_before_discount` (must be above `price`), `child_with_bed_price`, `child_no_bed_price`, `single_supplement`, `deposit`, `seats_total` (0–999), `seats_available` (`0..seats_total`, 0 = sold out), `note` (staff only). **Prices are whole baht (`INTEGER`)** — no floats.
 
 ---
 
@@ -462,13 +474,13 @@ Manual trigger: `POST /api/v1/site/rebuild` (`apicode.SiteRebuild`, code `site:r
 
 The backend is the only holder of R2 credentials. Upload flow: backoffice → `POST /api/v1/media/upload` (multipart) → validate → re-encode → R2 → `{ url, key, size, mime }`.
 
-- **Client:** `pkg/modules/shared/client/objectstorage` exposes an `ObjectStorage` interface (`Put`, `Delete`, `PublicURL`); the R2 implementation uses aws-sdk-go-v2 with a custom endpoint. Use cases depend on the interface only.
-- **Form fields:** `file`, `purpose` (`tour-cover | tour-gallery | country-hero | city-hero`), `refId` (optional).
-- **Validation:** `image/jpeg`, `image/png`, `image/webp` only (no SVG/GIF). Max 10 MB, checked server-side. Minimum dimensions: tour cover ≥ 1200×800, hero ≥ 1600×900. Read dimensions from the header first and reject anything over 50 MP before decoding.
-- **Processing:** decode → re-encode as WebP (quality 80–85, original dimensions). Re-encoding also strips EXIF. Limit concurrent decodes with a semaphore (e.g. 2) — a 24 MP image takes roughly 100 MB in memory.
+- **Client:** `pkg/modules/shared/client/objectstorage` exposes an `ObjectStorage` interface (`Put`, `Delete`, `PublicURL`, `PublicBaseURL`); the R2 implementation uses aws-sdk-go-v2 (`service/s3` + `credentials`, region `auto`, endpoint `https://<account>.r2.cloudflarestorage.com`). Use cases depend on the interface only. Until every `R2_*` variable is set, the API still starts (logs a warning) and uploads return `STORAGE_UNAVAILABLE` (503).
+- **Form fields:** `file`, `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero`).
+- **Validation** (`pkg/modules/media/commons`, by content — never the client's name or Content-Type): images `image/jpeg`, `image/png`, `image/webp` only (no SVG/GIF); PDF; DOCX (a zip with `word/document.xml` and the wordprocessingml main type — `.docm` is rejected). Max `media.maxUploadMB` (10 MB). Minimum dimensions: banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900, read from the header without decoding pixels; over `media.maxMegapixels` (50 MP) is rejected. Errors: `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE` (413), `IMAGE_TOO_SMALL` (message carries the sizes), `STORAGE_UNAVAILABLE`.
+- **Processing — current:** files are stored **as uploaded**. **Planned:** decode → re-encode images as WebP (quality 80–85, original dimensions, strips EXIF), with a decode semaphore (e.g. 2 — a 24 MP image takes ~100 MB). Blocked on the WebP encoder decision.
 - **Fiber `BodyLimit`** must be at least 12 MB (Fiber's default is 4 MB).
-- **Keys are immutable:** `tours/<code>/cover-<hash>.webp`, `tours/<code>/gallery/<n>-<hash>.webp`, `countries/<slug>/hero-<hash>.webp`, `cities/<slug>/hero-<hash>.webp`. Replacing an image always creates a new key.
-- **Deletion is soft:** replaced or removed keys go into `media_orphan` with `delete_after = now() + 7 days`; an in-process sweeper (`time.Ticker`) deletes expired keys from R2.
+- **Keys are immutable and content-addressed** (`<hash>` = first 24 hex of SHA-256): `tours/banners/<hash>.<ext>`, `tours/cards/<hash>.<ext>`, `tours/gallery/<hash>.<ext>`, `tours/documents/<hash>/<ascii-name>.{pdf,docx}`, `countries/heroes/<hash>.<ext>`, `cities/heroes/<hash>.<ext>`. Objects get `Cache-Control: public, max-age=31536000, immutable`; documents also get `Content-Disposition` with the original (UTF-8) file name — `inline` for PDF, `attachment` for DOCX. Re-uploading the same bytes reuses the key.
+- **Deletion is soft — not built yet:** replaced or removed keys should go into `media_orphan` with `delete_after = now() + 7 days`, reaped by an in-process sweeper (`time.Ticker`). Until then, unreferenced objects simply stay in R2.
 - **Permission:** `media:upload`.
 
 ---
@@ -691,3 +703,7 @@ When a field is added, removed or renamed, propagate it through every layer:
 - **golangci-lint** — the locally installed binary was built with Go 1.25 and refuses this Go 1.26 module; reinstall it with Go 1.26 before relying on `task lint`.
 - **Inquiry spam protection** — rate limiting only for now; consider Cloudflare Turnstile before launch.
 - **Legacy data import** — preserve legacy `code` values and `setval` the tour code sequence past the highest one.
+- **Legacy tour codes** — open until the legacy data is inspected:
+  - *Casing:* new codes are `NIDN` + 6 digits (`NIDN000001`), but the docs show legacy codes lowercase (`/tour/nidn261690/`). URL paths are case-sensitive, so decide whether imported codes keep their legacy casing, are normalized, or the customer site lowercases codes in URLs (which would need 301s from the other casing).
+  - *Number range:* `tour_code_seq` starts at 1. If staff create tours before the import, a new code could collide with a legacy one (the unique index would then fail the import). Decide whether to `setval` past the legacy range now.
+- **Not built yet:** the deploy-hook revalidator (use cases carry `TODO(revalidator)` where they must enqueue), the media orphan sweeper, and the public tour/period endpoints.

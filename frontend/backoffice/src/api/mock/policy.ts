@@ -10,7 +10,10 @@ const POLICY: Record<Role, readonly Permission[]> = {
     Permissions.TourProgramUpdate,
     Permissions.TourProgramList,
     Permissions.TourProgramGet,
+    Permissions.PeriodCreate,
     Permissions.PeriodUpdate,
+    Permissions.PeriodList,
+    Permissions.PeriodStatus,
     Permissions.MediaUpload,
     Permissions.CountryList,
     Permissions.CountryGet,
@@ -19,7 +22,7 @@ const POLICY: Record<Role, readonly Permission[]> = {
     Permissions.WholesaleList,
     Permissions.WholesaleGet,
   ],
-  [Roles.Finance]: [Permissions.TourProgramList, Permissions.TourProgramGet],
+  [Roles.Finance]: [Permissions.TourProgramList, Permissions.TourProgramGet, Permissions.PeriodList],
 };
 
 // A user is allowed an action when any of their roles allows it.

@@ -17,6 +17,10 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.SlugTaken]: 'Slug นี้ถูกใช้แล้ว',
   [ErrorCodes.RefIdTaken]: 'Ref ID นี้ถูกใช้แล้ว',
   [ErrorCodes.CodeTaken]: 'รหัสนี้ถูกใช้แล้ว',
+  [ErrorCodes.MediaTypeNotAllowed]: 'ไฟล์ประเภทนี้อัปโหลดในช่องนี้ไม่ได้',
+  [ErrorCodes.MediaTooLarge]: 'ไฟล์ใหญ่เกินไป (ไม่เกิน 10 MB)',
+  [ErrorCodes.ImageTooSmall]: 'รูปมีขนาดเล็กเกินไป',
+  [ErrorCodes.StorageUnavailable]: 'ระบบจัดเก็บไฟล์ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

@@ -278,6 +278,16 @@ Ant Design is **only** used in this app — never in code that could end up in `
 
 ## Tour Programs
 
+### Screens
+
+- `/tour-programs` — list (search name/code/wholesale tour code; filters country, wholesale, state, status). Sidebar group "ฝ่ายขาย", first item.
+- `/tour-programs/create` — `TourProgramForm`; on success navigates to the edit page (`#periods`) because periods need the tour id.
+- `/tour-programs/:id/edit` — the same form plus `PeriodTable`. Read-only without `tour-program:update` or while soft-deleted; the periods table shows with `tour-program-period:list`.
+
+Form sections: ข้อมูลโปรแกรม (name, state, days/nights — nights default to days − 1, wholesale, wholesale tour code, airline, Ref ID), ปลายทาง, รายละเอียด (highlight, description — plain text until a rich editor is chosen, internal note), รูปภาพ (banner — hero of the tour detail page; card image — tour cards on the home/listing pages, 4:3; gallery), เอกสารโปรแกรม (PDF — public download; DOCX — staff only). Deleted wholesales/countries/cities stay selectable only when the tour already uses them.
+
+States (`src/constants/tourProgramStates.ts`, mirrors `tourprogramstate`): ร่าง 10, เปิดขาย 20, ปิดรับ/เต็ม 30, ยกเลิก 40. Only 20 and 30 appear on the customer site.
+
 ### Assigning taxonomy
 
 - **Countries** — multi-select (`mode="multiple"`), **required (at least one)**. A tour can span several countries.
@@ -294,8 +304,9 @@ Ant Design is **only** used in this app — never in code that could end up in `
 
 Editing seats and prices is the most frequent staff task — optimize this screen for speed.
 
-- The tour edit page has a **periods table** (`features/tour-program/components/PeriodTable.tsx`): antd editable `Table` with inline `InputNumber` for price and seats, and `DatePicker.RangePicker` for dates.
-- Save per row through `PUT /tour-program-periods`. Disable the row's save while pending; keep the user on the page.
+- The tour edit page has a **periods table** (`features/tour-program/components/PeriodTable.tsx`): antd editable `Table` with inline `InputNumber` for prices and seats (ว่าง / ทั้งหมด), and `DatePicker.RangePicker` for dates (picking the departure fills the return date from the tour's days). Prices are whole baht.
+- "เพิ่มรอบ" adds an unsaved row prefilled with the latest active period's prices and seats. Save per row through `POST` / `PUT /tour-program-periods`. Disable the row's save while pending; keep the user on the page. Deleted periods are hidden behind a "แสดงรอบที่ลบแล้ว" switch and can be restored.
+- Dates use `dayjs` (antd's date library, a direct dependency for `DatePicker` values).
 - Feedback after save:
   - **Seats only:** "บันทึกแล้ว — หน้าเว็บอัปเดตภายในประมาณ 30 วินาที" (served live by the customer site's period island; no rebuild).
   - **Price, dates, or adding/removing a period:** "บันทึกแล้ว — หน้าเว็บจะอัปเดตภายในไม่กี่นาที" (may change the starting price, which triggers a debounced rebuild).
@@ -349,15 +360,16 @@ All media is uploaded through the **backend**, which validates it, re-encodes it
 
 antd `<Upload>` with a `customRequest` that goes through `src/api/client.ts` (`POST /media/upload`, `FormData`):
 
-- `name` = `"file"`.
-- Extra fields: `purpose` (`tour-cover | tour-gallery | country-hero | city-hero`), `refId`.
-- `accept` = `"image/jpeg,image/png,image/webp"` (no SVG, no GIF).
-- `maxCount` = 1 for cover/hero; unlimited for galleries.
-- `beforeUpload` = client-side guard (≤ 10 MB, image types only). The backend re-checks size, type and minimum dimensions (cover ≥ 1200×800, hero ≥ 1600×900).
+- `name` = `"file"`, plus `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero`) — `src/api/media.ts`.
+- `accept` = `"image/jpeg,image/png,image/webp"` for images (no SVG, no GIF), PDF / DOCX for the document purposes.
+- Components in `features/tour-program/components/`: `ImageUploadField` (one image), `GalleryField` (multi-upload, reorder, max 30), `DocumentUploadField` (one PDF/DOCX). Each is a Form control whose value is the URL.
+- `beforeUpload` = client-side guard (≤ 10 MB, accepted types). The backend re-checks size, type (by content) and minimum dimensions (banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900) and answers `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE`, `IMAGE_TOO_SMALL` or `STORAGE_UNAVAILABLE`.
+- `fetch` has no upload progress events, so fields show an uploading state rather than a percentage.
+- The mock (`src/api/mock/media.ts`) returns `blob:` URLs that stop working after a reload.
 
 ### Response handling
 
-The backend returns `{ url, key, size, mime }` (`mime` is `image/webp`). Store `url` in form state — it is what the tour/country/city update sends. Preview with the same URL (`media.*` on prd, `dev-media.*` on dev).
+The backend returns `{ url, key, size, mime, fileName, width, height }` (`mime` is the stored type — WebP re-encoding is planned, not built). Store `url` in form state — it is what the tour/country/city update sends. Preview with the same URL (`media.*` on prd, `dev-media.*` on dev).
 
 ### UX rules
 

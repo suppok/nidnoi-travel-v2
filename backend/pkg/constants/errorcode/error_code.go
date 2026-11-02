@@ -46,3 +46,11 @@ var (
 var (
 	CodeTaken = ErrCode("CODE_TAKEN", "Code is already in use")
 )
+
+// Media upload
+var (
+	MediaTypeNotAllowed = ErrCode("MEDIA_TYPE_NOT_ALLOWED", "This file type is not allowed for this purpose")
+	MediaTooLarge       = ErrCode("MEDIA_TOO_LARGE", "The file is too large")
+	ImageTooSmall       = ErrCode("IMAGE_TOO_SMALL", "The image is smaller than the minimum size")
+	StorageUnavailable  = ErrCode("STORAGE_UNAVAILABLE", "File storage is not configured")
+)
