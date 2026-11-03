@@ -1,5 +1,152 @@
 basePath: /api/v1
 definitions:
+  backend_pkg_modules_airline_models.AirlineCreateRequest:
+    properties:
+      code:
+        description: IATA (2) or ICAO (3); stored uppercase
+        type: string
+      logo:
+        description: URL from POST /media/upload (airline-logo)
+        type: string
+      name:
+        type: string
+      refId:
+        description: optional legacy id
+        type: integer
+    type: object
+  backend_pkg_modules_airline_models.AirlineCreateResponse:
+    properties:
+      code:
+        description: IATA/ICAO, uppercase
+        type: string
+      createDate:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_airline_models.AirlineGetResponse:
+    properties:
+      code:
+        description: IATA/ICAO, uppercase
+        type: string
+      createDate:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_airline_models.AirlineItem:
+    properties:
+      code:
+        description: IATA/ICAO, uppercase
+        type: string
+      createDate:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_airline_models.AirlineListRequest:
+    properties:
+      keyword:
+        description: matches name or code
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 500 (dropdowns load every airline)
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_airline_models.AirlineListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_airline_models.AirlineUpdateRequest:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      refId:
+        type: integer
+    type: object
+  backend_pkg_modules_airline_models.AirlineUpdateResponse:
+    properties:
+      code:
+        description: IATA/ICAO, uppercase
+        type: string
+      createDate:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      refId:
+        description: legacy id
+        type: integer
+      status:
+        type: boolean
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_airline_models.AirlineUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
   backend_pkg_modules_auth_models.AuthChangePasswordRequest:
     properties:
       currentPassword:
@@ -462,6 +609,19 @@ definitions:
         description: 0 for documents
         type: integer
     type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAirline:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      status:
+        type: boolean
+    type: object
   backend_pkg_modules_tourprogram_models.TourProgramCity:
     properties:
       countryId:
@@ -492,7 +652,8 @@ definitions:
     type: object
   backend_pkg_modules_tourprogram_models.TourProgramCreateRequest:
     properties:
-      airline:
+      airlineId:
+        description: optional airline master id
         type: string
       bannerImage:
         description: URL from POST /media/upload (tour-banner), detail page hero
@@ -551,7 +712,9 @@ definitions:
   backend_pkg_modules_tourprogram_models.TourProgramCreateResponse:
     properties:
       airline:
-        type: string
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline'
+        description: null when the tour has no airline
       bannerImage:
         description: tour detail page hero
         type: string
@@ -614,7 +777,9 @@ definitions:
   backend_pkg_modules_tourprogram_models.TourProgramGetResponse:
     properties:
       airline:
-        type: string
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline'
+        description: null when the tour has no airline
       bannerImage:
         description: tour detail page hero
         type: string
@@ -758,7 +923,8 @@ definitions:
     type: object
   backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest:
     properties:
-      airline:
+      airlineId:
+        description: optional airline master id
         type: string
       bannerImage:
         description: URL from POST /media/upload (tour-banner), detail page hero
@@ -819,7 +985,9 @@ definitions:
   backend_pkg_modules_tourprogram_models.TourProgramUpdateResponse:
     properties:
       airline:
-        type: string
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline'
+        description: null when the tour has no airline
       bannerImage:
         description: tour detail page hero
         type: string
@@ -1479,6 +1647,156 @@ info:
   title: nidnoi travel API
   version: "1.0"
 paths:
+  /airlines:
+    post:
+      consumes:
+      - application/json
+      description: The code (IATA, or ICAO when there is none) is stored uppercase.
+        The logo must be uploaded first through POST /media/upload (purpose airline-logo).
+      parameters:
+      - description: Airline
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CODE_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an airline
+      tags:
+      - airlines
+    put:
+      consumes:
+      - application/json
+      description: Replaces every editable field.
+      parameters:
+      - description: Airline
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: CODE_TAKEN, REF_ID_TAKEN
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an airline
+      tags:
+      - airlines
+  /airlines/{id}:
+    get:
+      parameters:
+      - description: Airline ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get an airline
+      tags:
+      - airlines
+  /airlines/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineListResponse'
+      security:
+      - BearerAuth: []
+      summary: List airlines
+      tags:
+      - airlines
+  /airlines/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_airline_models.AirlineUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft-delete or restore an airline
+      tags:
+      - airlines
   /auth/login:
     post:
       consumes:

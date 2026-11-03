@@ -15,6 +15,241 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/airlines": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces every editable field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "airlines"
+                ],
+                "summary": "Update an airline",
+                "parameters": [
+                    {
+                        "description": "Airline",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "CODE_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The code (IATA, or ICAO when there is none) is stored uppercase. The logo must be uploaded first through POST /media/upload (purpose airline-logo).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "airlines"
+                ],
+                "summary": "Create an airline",
+                "parameters": [
+                    {
+                        "description": "Airline",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "CODE_TAKEN, REF_ID_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/airlines/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "airlines"
+                ],
+                "summary": "List airlines",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/airlines/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "airlines"
+                ],
+                "summary": "Soft-delete or restore an airline",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/airlines/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "airlines"
+                ],
+                "summary": "Get an airline",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Airline ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Returns a short-lived access token and sets the HttpOnly refresh cookie. Rate-limited.",
@@ -1697,6 +1932,223 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "backend_pkg_modules_airline_models.AirlineCreateRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA (2) or ICAO (3); stored uppercase",
+                    "type": "string"
+                },
+                "logo": {
+                    "description": "URL from POST /media/upload (airline-logo)",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "optional legacy id",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineCreateResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA/ICAO, uppercase",
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineGetResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA/ICAO, uppercase",
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA/ICAO, uppercase",
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineListRequest": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "description": "matches name or code",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 500 (dropdowns load every airline)",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_airline_models.AirlineItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA/ICAO, uppercase",
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "description": "legacy id",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_airline_models.AirlineUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
+                }
+            }
+        },
         "backend_pkg_modules_auth_models.AuthChangePasswordRequest": {
             "type": "object",
             "properties": {
@@ -2387,6 +2839,26 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_tourprogram_models.TourProgramAirline": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
         "backend_pkg_modules_tourprogram_models.TourProgramCity": {
             "type": "object",
             "properties": {
@@ -2433,7 +2905,8 @@ const docTemplate = `{
         "backend_pkg_modules_tourprogram_models.TourProgramCreateRequest": {
             "type": "object",
             "properties": {
-                "airline": {
+                "airlineId": {
+                    "description": "optional airline master id",
                     "type": "string"
                 },
                 "bannerImage": {
@@ -2515,7 +2988,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "airline": {
-                    "type": "string"
+                    "description": "null when the tour has no airline",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline"
+                        }
+                    ]
                 },
                 "bannerImage": {
                     "description": "tour detail page hero",
@@ -2606,7 +3084,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "airline": {
-                    "type": "string"
+                    "description": "null when the tour has no airline",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline"
+                        }
+                    ]
                 },
                 "bannerImage": {
                     "description": "tour detail page hero",
@@ -2817,7 +3300,8 @@ const docTemplate = `{
         "backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest": {
             "type": "object",
             "properties": {
-                "airline": {
+                "airlineId": {
+                    "description": "optional airline master id",
                     "type": "string"
                 },
                 "bannerImage": {
@@ -2902,7 +3386,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "airline": {
-                    "type": "string"
+                    "description": "null when the tour has no airline",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAirline"
+                        }
+                    ]
                 },
                 "bannerImage": {
                     "description": "tour detail page hero",

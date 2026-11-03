@@ -4,13 +4,15 @@ import { TOUR_PROGRAM_STATE_INFO, type TourProgramState, TourProgramStates } fro
 import type { ListResponse } from '../../types/api.ts';
 import type { TourProgram, TourProgramCity, TourProgramCountry, TourProgramListItem, TourProgramPeriod } from '../../types/tourProgram.ts';
 import { asRecord, authorize, type MockHandler, MockFail, ok, str, validation } from './http.ts';
+import { mockAirline } from './airlines.ts';
 import { mockCity, mockCountry } from './taxonomy.ts';
 import { mockWholesale } from './wholesales.ts';
 
 // Mock-only persistence for tour programs and periods. Like the backend, tours store ids and join
-// the wholesale, countries and cities on read.
-type StoredTour = Omit<TourProgram, 'wholesale' | 'countries' | 'cities' | 'images'> & {
+// the wholesale, airline, countries and cities on read.
+type StoredTour = Omit<TourProgram, 'wholesale' | 'airline' | 'countries' | 'cities' | 'images'> & {
   wholesaleId: string;
+  airlineId?: string | null; // missing on tours stored before airlines were linked
   countryIds: string[];
   cityIds: string[];
   images: string[];
@@ -52,11 +54,18 @@ function citySummary(id: string): TourProgramCity {
   return { id, countryId: c?.countryId ?? '', slug: c?.slug ?? '', nameTh: c?.nameTh ?? '', nameEn: c?.nameEn ?? '', status: c?.status ?? false };
 }
 
-function toTour({ wholesaleId, countryIds, cityIds, images, ...t }: StoredTour): TourProgram {
+function airlineSummary(id: string | null | undefined): TourProgram['airline'] {
+  if (!id) return null;
+  const a = mockAirline(id);
+  return { id, code: a?.code ?? '', name: a?.name ?? '', logo: a?.logo ?? null, status: a?.status ?? false };
+}
+
+function toTour({ wholesaleId, airlineId, countryIds, cityIds, images, ...t }: StoredTour): TourProgram {
   const w = mockWholesale(wholesaleId);
   return {
     ...t,
     wholesale: { id: wholesaleId, code: w?.code ?? '', name: w?.name ?? '', status: w?.status ?? false },
+    airline: airlineSummary(airlineId),
     countries: countryIds.map(countrySummary),
     cities: cityIds.map(citySummary),
     images: images.map((url, i) => ({ id: `${t.id}-${i}`, url })),
@@ -90,6 +99,7 @@ function parseTour(body: Record<string, unknown>, previous: StoredTour | null) {
   const name = str(body.name);
   const refId = optionalNumber(body.refId);
   const wholesaleId = str(body.wholesaleId);
+  const airlineId = str(body.airlineId) || null;
   const state = (body.state === undefined || body.state === 0 ? TourProgramStates.Draft : Number(body.state)) as TourProgramState;
   const days = Number(body.days);
   const nights = Number(body.nights);
@@ -109,6 +119,11 @@ function parseTour(body: Record<string, unknown>, previous: StoredTour | null) {
 
   const ws = mockWholesale(wholesaleId);
   if (!ws || (!ws.status && previous?.wholesaleId !== wholesaleId)) fields.wholesaleId = 'wholesale not found or deleted';
+
+  if (airlineId) {
+    const al = mockAirline(airlineId);
+    if (!al || (!al.status && previous?.airlineId !== airlineId)) fields.airlineId = 'airline not found or deleted';
+  }
 
   if (countryIds.length === 0) fields.countryIds = 'select at least one country';
   else if (countryIds.some((id) => !mockCountry(id) || (!mockCountry(id)?.status && !previous?.countryIds.includes(id)))) fields.countryIds = 'a country was not found or is deleted';
@@ -130,7 +145,7 @@ function parseTour(body: Record<string, unknown>, previous: StoredTour | null) {
     state,
     days,
     nights,
-    airline: str(body.airline),
+    airlineId,
     highlight: str(body.highlight),
     description: str(body.description),
     bannerImage: str(body.bannerImage) || null,

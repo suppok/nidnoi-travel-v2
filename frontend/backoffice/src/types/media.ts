@@ -1,5 +1,5 @@
 // POST /media/upload purposes. Mirrors backend pkg/modules/media/models.
-export type MediaPurpose = 'tour-banner' | 'tour-card' | 'tour-gallery' | 'tour-pdf' | 'tour-docx' | 'country-hero' | 'city-hero';
+export type MediaPurpose = 'tour-banner' | 'tour-card' | 'tour-gallery' | 'tour-pdf' | 'tour-docx' | 'country-hero' | 'city-hero' | 'airline-logo';
 
 export type MediaUploadResponse = {
   url: string;

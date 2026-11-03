@@ -15,6 +15,14 @@ type TourProgramWholesale struct {
 	Status bool   `json:"status"`
 }
 
+type TourProgramAirline struct {
+	ID     string      `json:"id"`
+	Code   string      `json:"code"`
+	Name   string      `json:"name"`
+	Logo   null.String `json:"logo" swaggertype:"string"`
+	Status bool        `json:"status"`
+}
+
 type TourProgramCountry struct {
 	ID     string `json:"id"`
 	Slug   string `json:"slug"`
@@ -48,7 +56,7 @@ type TourProgramItem struct {
 	State             int                  `json:"state"` // 10 draft, 20 selling, 30 closed, 40 cancelled
 	Days              int                  `json:"days"`
 	Nights            int                  `json:"nights"`
-	Airline           string               `json:"airline"`
+	Airline           *TourProgramAirline  `json:"airline"` // null when the tour has no airline
 	Highlight         string               `json:"highlight"`
 	Description       string               `json:"description"`
 	BannerImage       null.String          `json:"bannerImage" swaggertype:"string"` // tour detail page hero
@@ -90,6 +98,13 @@ func newWholesale(w *domain.Wholesale) TourProgramWholesale {
 	return TourProgramWholesale{ID: w.ID, Code: w.Code, Name: w.Name, Status: w.Status}
 }
 
+func newAirline(a *domain.Airline) *TourProgramAirline {
+	if a == nil {
+		return nil
+	}
+	return &TourProgramAirline{ID: a.ID, Code: a.Code, Name: a.Name, Logo: a.Logo, Status: a.Status}
+}
+
 func newCountries(links []domain.TourProgramCountry) []TourProgramCountry {
 	out := make([]TourProgramCountry, 0, len(links))
 	for _, l := range links {
@@ -114,7 +129,7 @@ func newCities(links []domain.TourProgramCity) []TourProgramCity {
 	return out
 }
 
-// NewTourProgramItem expects the Wholesale, CountryLinks.Country, CityLinks.City and Images to be
+// NewTourProgramItem expects the Wholesale, Airline, CountryLinks.Country, CityLinks.City and Images to be
 // loaded in display order (TourProgramRepository.FindByID).
 func NewTourProgramItem(t *domain.TourProgram) TourProgramItem {
 	images := make([]TourProgramImage, len(t.Images))
@@ -131,7 +146,7 @@ func NewTourProgramItem(t *domain.TourProgram) TourProgramItem {
 		State:             t.State,
 		Days:              t.Days,
 		Nights:            t.Nights,
-		Airline:           t.Airline,
+		Airline:           newAirline(t.Airline),
 		Highlight:         t.Highlight,
 		Description:       t.Description,
 		BannerImage:       t.BannerImage,

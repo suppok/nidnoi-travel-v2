@@ -6,6 +6,7 @@ import { TOUR_PROGRAM_STATE_INFO, type TourProgramState, TourProgramStates } fro
 import { applyFieldErrors, errorMessage } from '../../../lib/errors.ts';
 import type { TourProgram, TourProgramCreateRequest } from '../../../types/tourProgram.ts';
 import { useCountryOptions } from '../../taxonomy/hooks/useCountryOptions.ts';
+import { useAirlineOptions } from '../hooks/useAirlineOptions.ts';
 import { useCityOptions } from '../hooks/useCityOptions.ts';
 import { useWholesaleOptions } from '../hooks/useWholesaleOptions.ts';
 import DocumentUploadField from './DocumentUploadField.tsx';
@@ -26,7 +27,7 @@ const EMPTY: FormValues = {
   state: TourProgramStates.Draft,
   days: null,
   nights: null,
-  airline: '',
+  airlineId: null,
   highlight: '',
   description: '',
   bannerImage: null,
@@ -48,7 +49,7 @@ function toValues(tour: TourProgram): FormValues {
     state: tour.state,
     days: tour.days,
     nights: tour.nights,
-    airline: tour.airline,
+    airlineId: tour.airline?.id ?? null,
     highlight: tour.highlight,
     description: tour.description,
     bannerImage: tour.bannerImage,
@@ -86,6 +87,7 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
 
   const { countries, loading: countriesLoading } = useCountryOptions();
   const { wholesales, loading: wholesalesLoading } = useWholesaleOptions();
+  const { airlines, loading: airlinesLoading } = useAirlineOptions();
   const { cities, loading: citiesLoading } = useCityOptions(countryIds);
 
   useEffect(() => {
@@ -102,6 +104,9 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
   const wholesaleOptions = wholesales
     .filter((w) => w.status || w.id === tour?.wholesale.id)
     .map((w) => ({ value: w.id, label: `${w.name} (${w.code})${w.status ? '' : ' — ลบแล้ว'}` }));
+  const airlineOptions = airlines
+    .filter((a) => a.status || a.id === tour?.airline?.id)
+    .map((a) => ({ value: a.id, label: `${a.name} (${a.code})${a.status ? '' : ' — ลบแล้ว'}`, logo: a.logo }));
   const cityOptions = countryIds.map((countryId) => {
     const country = countries.find((c) => c.id === countryId);
     return {
@@ -143,7 +148,7 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
         nights: values.nights ?? 0,
         name: values.name.trim(),
         wholesaleTourCode: values.wholesaleTourCode.trim(),
-        airline: values.airline.trim(),
+        airlineId: values.airlineId ?? null,
         highlight: values.highlight.trim(),
         description: values.description.trim(),
         internalNote: values.internalNote.trim(),
@@ -219,8 +224,23 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
           <Form.Item label="รหัสทัวร์ของโฮลเซลล์" name="wholesaleTourCode" rules={[{ max: 50, message: 'ยาวได้ไม่เกิน 50 ตัวอักษร' }]} extra="เห็นเฉพาะพนักงาน">
             <Input autoComplete="off" spellCheck={false} className="font-mono" placeholder="เช่น GO1TYO-XJ001" />
           </Form.Item>
-          <Form.Item label="สายการบิน" name="airline" rules={[{ max: 100, message: 'ยาวได้ไม่เกิน 100 ตัวอักษร' }]}>
-            <Input autoComplete="off" placeholder="เช่น Thai Airways (TG)" />
+          <Form.Item label="สายการบิน" name="airlineId" extra="ไม่บังคับ (เว้นว่างได้ถ้าไม่มีเที่ยวบิน)">
+            <Select
+              showSearch
+              allowClear
+              optionFilterProp="label"
+              options={airlineOptions}
+              loading={airlinesLoading}
+              placeholder="เลือกสายการบิน"
+              optionRender={(option) => (
+                <span className="flex items-center gap-2">
+                  <span className="flex h-5 w-12 shrink-0 items-center justify-center">
+                    {option.data.logo && <img src={option.data.logo} alt="" className="max-h-full max-w-full object-contain" />}
+                  </span>
+                  {option.label}
+                </span>
+              )}
+            />
           </Form.Item>
         </div>
 

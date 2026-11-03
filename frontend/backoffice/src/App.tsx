@@ -7,6 +7,7 @@ import RequirePermission from './auth/RequirePermission.tsx';
 import { Permissions } from './constants/permissions.ts';
 import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
+import AirlineListPage from './routes/airlines/AirlineListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
@@ -65,6 +66,10 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.WholesaleList} />,
             children: [{ path: '/wholesales', element: <WholesaleListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.AirlineList} />,
+            children: [{ path: '/airlines', element: <AirlineListPage /> }],
           },
           {
             element: <RequirePermission code={Permissions.UserList} />,

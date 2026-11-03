@@ -413,13 +413,21 @@ Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale`
 - Has-many relations must load through `.Model(dest)`, not `Scan(ctx, dest)` (Bun rejects the latter).
 - Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `wholesale:create|update|list|get|status`; `sales` has list/get.
 
+## Airlines
+
+Airline master (`pkg/modules/airline`, table `airline`). Seeded (`migrations/*_seed_airline`) with 99 airlines from the legacy airline list (`ref_id` = legacy id, NULL for 7 rows; the legacy "(code)" name suffix dropped; no logos). Seeded rows use the nil UUID as `create_by`.
+
+- Fields: `ref_id` (legacy id, nullable, unique), `code` (IATA designator, or the 3-letter ICAO code when there is none; `^[A-Z0-9]{2,3}$`, stored uppercase, unique, editable), `name`, `logo` (nullable URL under `R2_PUBLIC_URL` + `airlines/logos/`, uploaded with purpose `airline-logo`), plus the standard columns.
+- Endpoints follow the route conventions (`/airlines`, `/list` with keyword/status, max `pageSize` 500 for dropdowns). Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `airline:create|update|list|get|status`; `sales` has list/get.
+- Tours link to an airline through `tour_program.airline_id` (optional); tour responses embed `airline: {id, code, name, logo, status} | null`.
+
 ## Tour programs
 
 `pkg/modules/tourprogram`, tables `tour_program` + `tour_program_country` / `tour_program_city` (ordered links, first country = main country) + `tour_program_image` (gallery).
 
-- Fields: `ref_id` (legacy, unique), `code` (generated, see "Tour code"), `name`, `wholesale_id` (required), `wholesale_tour_code` (staff only), `state`, `days`, `nights` (`0..days`), `airline`, `highlight` (card/meta summary, ≤ 500), `description` (plain text), `banner_image` (hero of the tour detail page and share image), `card_image` (tour cards on the home and listing pages), `pdf_file` (public download), `docx_file` (**staff only — never expose on public endpoints**), `internal_note` (staff only), plus the standard columns.
+- Fields: `ref_id` (legacy, unique), `code` (generated, see "Tour code"), `name`, `wholesale_id` (required), `wholesale_tour_code` (staff only), `state`, `days`, `nights` (`0..days`), `airline_id` (optional, FK `airline`), `highlight` (card/meta summary, ≤ 500), `description` (plain text), `banner_image` (hero of the tour detail page and share image), `card_image` (tour cards on the home and listing pages), `pdf_file` (public download), `docx_file` (**staff only — never expose on public endpoints**), `internal_note` (staff only), plus the standard columns.
 - Countries (1–20), cities (0–50, each must belong to a selected country) and gallery images (≤ 30) are sent with every create/update and **replaced as a whole**. Relations load as has-many links with nested belongs-to (`CountryLinks.Country`), not `m2m`, so their order is kept.
-- Newly selected wholesale / countries / cities must be active; ones the tour already had may stay after they were soft-deleted (same rule on create and update).
+- Newly selected wholesale / airline / countries / cities must be active; ones the tour already had may stay after they were soft-deleted (same rule on create and update).
 - Media fields accept only URLs under `R2_PUBLIC_URL` with the purpose's key prefix (`tours/banners/`, `tours/cards/`, `tours/gallery/`, `tours/documents/…{.pdf|.docx}`) — i.e. files uploaded through `/media/upload`.
 - Endpoints follow the route conventions (`/tour-programs`, `/list` with keyword/country/city/wholesale/state/status, max `pageSize` 100). Errors: `REF_ID_TAKEN` (409).
 - Public endpoints (`/tour-programs/public…`) are **not built yet**.
@@ -475,11 +483,11 @@ Manual trigger: `POST /api/v1/site/rebuild` (`apicode.SiteRebuild`, code `site:r
 The backend is the only holder of R2 credentials. Upload flow: backoffice → `POST /api/v1/media/upload` (multipart) → validate → re-encode → R2 → `{ url, key, size, mime }`.
 
 - **Client:** `pkg/modules/shared/client/objectstorage` exposes an `ObjectStorage` interface (`Put`, `Delete`, `PublicURL`, `PublicBaseURL`); the R2 implementation uses aws-sdk-go-v2 (`service/s3` + `credentials`, region `auto`, endpoint `https://<account>.r2.cloudflarestorage.com`). Use cases depend on the interface only. Until every `R2_*` variable is set, the API still starts (logs a warning) and uploads return `STORAGE_UNAVAILABLE` (503).
-- **Form fields:** `file`, `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero`).
-- **Validation** (`pkg/modules/media/commons`, by content — never the client's name or Content-Type): images `image/jpeg`, `image/png`, `image/webp` only (no SVG/GIF); PDF; DOCX (a zip with `word/document.xml` and the wordprocessingml main type — `.docm` is rejected). Max `media.maxUploadMB` (10 MB). Minimum dimensions: banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900, read from the header without decoding pixels; over `media.maxMegapixels` (50 MP) is rejected. Errors: `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE` (413), `IMAGE_TOO_SMALL` (message carries the sizes), `STORAGE_UNAVAILABLE`.
+- **Form fields:** `file`, `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero | airline-logo`).
+- **Validation** (`pkg/modules/media/commons`, by content — never the client's name or Content-Type): images `image/jpeg`, `image/png`, `image/webp` only (no SVG/GIF); PDF; DOCX (a zip with `word/document.xml` and the wordprocessingml main type — `.docm` is rejected). Max `media.maxUploadMB` (10 MB). Minimum dimensions: banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900, airline logo ≥ 120×40, read from the header without decoding pixels; over `media.maxMegapixels` (50 MP) is rejected. Errors: `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE` (413), `IMAGE_TOO_SMALL` (message carries the sizes), `STORAGE_UNAVAILABLE`.
 - **Processing — current:** files are stored **as uploaded**. **Planned:** decode → re-encode images as WebP (quality 80–85, original dimensions, strips EXIF), with a decode semaphore (e.g. 2 — a 24 MP image takes ~100 MB). Blocked on the WebP encoder decision.
 - **Fiber `BodyLimit`** must be at least 12 MB (Fiber's default is 4 MB).
-- **Keys are immutable and content-addressed** (`<hash>` = first 24 hex of SHA-256): `tours/banners/<hash>.<ext>`, `tours/cards/<hash>.<ext>`, `tours/gallery/<hash>.<ext>`, `tours/documents/<hash>/<ascii-name>.{pdf,docx}`, `countries/heroes/<hash>.<ext>`, `cities/heroes/<hash>.<ext>`. Objects get `Cache-Control: public, max-age=31536000, immutable`; documents also get `Content-Disposition` with the original (UTF-8) file name — `inline` for PDF, `attachment` for DOCX. Re-uploading the same bytes reuses the key.
+- **Keys are immutable and content-addressed** (`<hash>` = first 24 hex of SHA-256): `tours/banners/<hash>.<ext>`, `tours/cards/<hash>.<ext>`, `tours/gallery/<hash>.<ext>`, `tours/documents/<hash>/<ascii-name>.{pdf,docx}`, `countries/heroes/<hash>.<ext>`, `cities/heroes/<hash>.<ext>`, `airlines/logos/<hash>.<ext>`. Objects get `Cache-Control: public, max-age=31536000, immutable`; documents also get `Content-Disposition` with the original (UTF-8) file name — `inline` for PDF, `attachment` for DOCX. Re-uploading the same bytes reuses the key.
 - **Deletion is soft — not built yet:** replaced or removed keys should go into `media_orphan` with `delete_after = now() + 7 days`, reaped by an in-process sweeper (`time.Ticker`). Until then, unreferenced objects simply stay in R2.
 - **Permission:** `media:upload`.
 

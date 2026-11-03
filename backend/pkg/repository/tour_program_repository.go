@@ -17,7 +17,7 @@ type TourProgramRepository interface {
 	NextCodeNumber(ctx context.Context) (int64, error)
 	Create(ctx context.Context, obj *domain.TourProgram) (*domain.TourProgram, error)
 	Update(ctx context.Context, obj *domain.TourProgram, columns ...string) (*domain.TourProgram, error)
-	// FindByID loads the tour with its Wholesale, countries, cities (with their Country) and images,
+	// FindByID loads the tour with its Wholesale, Airline, countries, cities (with their Country) and images,
 	// each in display order.
 	FindByID(ctx context.Context, id string) (*domain.TourProgram, error)
 	// List returns tours with their Wholesale and countries, most recently updated first.
@@ -68,6 +68,7 @@ func (r *tourProgramRepository) FindByID(ctx context.Context, id string) (*domai
 	// Has-many relations need the destination as Model, not a Scan argument.
 	err := r.query.NewSelect().Model(obj).
 		Relation("Wholesale").
+		Relation("Airline").
 		Relation("CountryLinks", orderedCountryLinks).
 		Relation("CountryLinks.Country").
 		Relation("CityLinks", orderedCityLinks).
