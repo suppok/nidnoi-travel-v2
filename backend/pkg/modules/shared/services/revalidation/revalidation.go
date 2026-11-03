@@ -12,6 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"backend/pkg/constants/sitebuild"
 	"backend/pkg/core/config"
 	"backend/pkg/core/utils"
 	"backend/pkg/modules/shared/client/deployhook"
@@ -27,7 +28,8 @@ type Revalidator interface {
 	// Enqueue records changed customer-site paths. Non-blocking; never fails (paths are only logged).
 	Enqueue(ctx context.Context, paths []string)
 	// RebuildNow fires the hook immediately, bypassing the debounce (manual "rebuild" button).
-	RebuildNow(ctx context.Context) error
+	// actorID is recorded in the build history.
+	RebuildNow(ctx context.Context, actorID string) error
 }
 
 // Worker is the Revalidator plus its background loop, started once from app.go.
@@ -41,6 +43,7 @@ const shutdownFlushTimeout = 5 * time.Second
 
 type deployHookRevalidator struct {
 	hook        deployhook.DeployHook
+	builds      BuildLog
 	log         *zap.Logger
 	quiet       time.Duration
 	maxWait     time.Duration
@@ -54,10 +57,12 @@ type deployHookRevalidator struct {
 	wake    chan struct{}
 }
 
-// New builds the deploy-hook revalidator. Config is validated at startup.
-func New(hook deployhook.DeployHook, log *zap.Logger, cfg config.RevalidationConfig) Worker {
+// New builds the deploy-hook revalidator. Config is validated at startup. Every trigger (and skip)
+// is recorded in builds.
+func New(hook deployhook.DeployHook, builds BuildLog, log *zap.Logger, cfg config.RevalidationConfig) Worker {
 	return &deployHookRevalidator{
 		hook:        hook,
+		builds:      builds,
 		log:         log,
 		quiet:       cfg.Quiet,
 		maxWait:     cfg.MaxWait,
@@ -151,28 +156,50 @@ func (r *deployHookRevalidator) Run(ctx context.Context) {
 	}
 }
 
+// triggerOf labels a debounced batch: daily when it holds only the scheduled marker, auto otherwise.
+// The marker itself is dropped from the recorded paths.
+func triggerOf(paths []string) (string, []string) {
+	content := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if p != DailyPath {
+			content = append(content, p)
+		}
+	}
+	if len(content) == 0 {
+		return sitebuild.TriggerDaily, content
+	}
+	return sitebuild.TriggerAuto, content
+}
+
 // fire triggers the hook, retrying with backoff. A final failure is logged with the paths it carried.
-func (r *deployHookRevalidator) fire(ctx context.Context, paths []string) {
+func (r *deployHookRevalidator) fire(ctx context.Context, batch []string) {
+	trigger, paths := triggerOf(batch)
 	if !r.hook.Configured() {
-		r.log.Info("site rebuild skipped: CLOUDFLARE_DEPLOY_HOOK_URL is not set", zap.Strings("paths", paths))
+		r.log.Info("site rebuild skipped: CLOUDFLARE_DEPLOY_HOOK_URL is not set", zap.String("trigger", trigger), zap.Strings("paths", paths))
+		r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeSkipped, Paths: paths})
 		return
 	}
 	var err error
-	for attempt := 0; ; attempt++ {
+	attempts := 0
+	for {
+		attempts++
 		if err = r.hook.Trigger(ctx); err == nil {
-			r.log.Info("site rebuild triggered", zap.Strings("paths", paths), zap.Int("attempt", attempt+1))
+			r.log.Info("site rebuild triggered", zap.String("trigger", trigger), zap.Strings("paths", paths), zap.Int("attempt", attempts))
+			r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeTriggered, Paths: paths, Attempts: attempts})
 			return
 		}
-		if attempt >= len(r.retryDelays) || ctx.Err() != nil {
+		if attempts > len(r.retryDelays) || ctx.Err() != nil {
 			break
 		}
-		r.log.Warn("site rebuild trigger failed, retrying", zap.Error(err), zap.Duration("in", r.retryDelays[attempt]))
+		delay := r.retryDelays[attempts-1]
+		r.log.Warn("site rebuild trigger failed, retrying", zap.Error(err), zap.Duration("in", delay))
 		select {
 		case <-ctx.Done():
-		case <-time.After(r.retryDelays[attempt]):
+		case <-time.After(delay):
 		}
 	}
-	r.log.Error("site rebuild trigger failed", zap.Error(err), zap.Strings("paths", paths))
+	r.log.Error("site rebuild trigger failed", zap.Error(err), zap.String("trigger", trigger), zap.Strings("paths", paths))
+	r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeFailed, Paths: paths, Attempts: attempts, Error: err.Error()})
 }
 
 // flush fires a still-pending batch once on shutdown, so a redeploy right after an edit loses nothing.
@@ -180,33 +207,40 @@ func (r *deployHookRevalidator) flush() {
 	if _, ok := r.due(); !ok {
 		return
 	}
-	paths := r.take()
+	trigger, paths := triggerOf(r.take())
 	if !r.hook.Configured() {
 		r.log.Info("site rebuild skipped on shutdown: CLOUDFLARE_DEPLOY_HOOK_URL is not set", zap.Strings("paths", paths))
+		r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeSkipped, Paths: paths})
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownFlushTimeout)
 	defer cancel()
 	if err := r.hook.Trigger(ctx); err != nil {
 		r.log.Error("site rebuild trigger failed on shutdown", zap.Error(err), zap.Strings("paths", paths))
+		r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeFailed, Paths: paths, Attempts: 1, Error: err.Error()})
 		return
 	}
 	r.log.Info("site rebuild triggered on shutdown", zap.Strings("paths", paths))
+	r.builds.Record(Build{Trigger: trigger, Outcome: sitebuild.OutcomeTriggered, Paths: paths, Attempts: 1})
 }
 
-func (r *deployHookRevalidator) RebuildNow(ctx context.Context) error {
+func (r *deployHookRevalidator) RebuildNow(ctx context.Context, actorID string) error {
 	if !r.hook.Configured() {
+		r.builds.Record(Build{Trigger: sitebuild.TriggerManual, Outcome: sitebuild.OutcomeSkipped, ActorID: actorID})
 		return ErrNotConfigured
 	}
 	// The manual build covers everything pending; put it back if the trigger fails.
-	paths := r.take()
+	batch := r.take()
+	_, paths := triggerOf(batch)
 	if err := r.hook.Trigger(ctx); err != nil {
-		if len(paths) > 0 {
-			r.Enqueue(ctx, paths)
+		if len(batch) > 0 {
+			r.Enqueue(ctx, batch)
 		}
+		r.builds.Record(Build{Trigger: sitebuild.TriggerManual, Outcome: sitebuild.OutcomeFailed, Paths: paths, Attempts: 1, Error: err.Error(), ActorID: actorID})
 		return err
 	}
 	r.log.Info("site rebuild triggered manually", zap.Strings("pending", paths))
+	r.builds.Record(Build{Trigger: sitebuild.TriggerManual, Outcome: sitebuild.OutcomeTriggered, Paths: paths, Attempts: 1, ActorID: actorID})
 	return nil
 }
 

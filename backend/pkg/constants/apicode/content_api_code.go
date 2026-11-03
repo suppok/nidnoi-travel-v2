@@ -25,4 +25,5 @@ var (
 	CityGet           = ApiCode("city:get", "Get a city")
 	MediaUpload       = ApiCode("media:upload", "Upload media")
 	SiteRebuild       = ApiCode("site:rebuild", "Trigger a customer site rebuild")
+	SiteBuildList     = ApiCode("site-build:list", "View the customer site build history")
 )

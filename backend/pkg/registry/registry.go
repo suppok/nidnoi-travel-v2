@@ -41,6 +41,8 @@ type RepositoryRegistry struct {
 	TourProgramCityRepository    repository.TourProgramCityRepository
 	TourProgramImageRepository   repository.TourProgramImageRepository
 	TourProgramPeriodRepository  repository.TourProgramPeriodRepository
+
+	SiteBuildRepository repository.SiteBuildRepository
 }
 
 // ShareRegistry holds cross-module services and outbound clients.

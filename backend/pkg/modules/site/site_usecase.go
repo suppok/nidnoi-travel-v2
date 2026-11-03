@@ -8,4 +8,5 @@ import (
 
 type SiteUseCase interface {
 	Rebuild(ctx context.Context, request *models.SiteRebuildRequest) (*models.SiteRebuildResponse, error)
+	BuildList(ctx context.Context, request *models.SiteBuildListRequest) (*models.SiteBuildListResponse, error)
 }

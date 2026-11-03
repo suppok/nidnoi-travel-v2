@@ -93,7 +93,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 	repositoryRegistry := initializer.NewRepositoryRegistry(db)
 	deployHook := deployhook.New(cfg.DeployHookURL)
-	revalidator := revalidation.New(deployHook, log, cfg.Revalidation)
+	revalidator := revalidation.New(deployHook, revalidation.NewRepositoryBuildLog(repositoryRegistry.SiteBuildRepository, log), log, cfg.Revalidation)
 	shareRegistry := &registry.ShareRegistry{
 		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
 		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook},

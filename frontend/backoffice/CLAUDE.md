@@ -206,7 +206,7 @@ All API calls go through `src/api/client.ts`. Never call `fetch` directly from a
 | `GET /api/v1/<resource>/:id` | get one |
 | `PUT /api/v1/<resource>/status` | soft delete / restore |
 
-Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `airlines`, `users`, `inquiries`. Plus `POST /media/upload` and `POST /site/rebuild`.
+Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `airlines`, `users`, `inquiries`. Plus `POST /media/upload`, `POST /site/rebuild` and `POST /site-builds/list`.
 
 ### Errors
 
@@ -353,7 +353,8 @@ The customer site is fully static on Cloudflare Workers. **The backend** rebuild
 
 - This app never calls the deploy hook or any customer-site endpoint.
 - After a successful save, show a normal success toast with the hint from the Periods section. Don't poll.
-- **Manual rebuild:** `SiteRebuildButton` in the header ("อัปเดตหน้าเว็บตอนนี้"), visible only with `Permissions.SiteRebuild`. It confirms with `Modal.confirm`, calls `POST /api/v1/site/rebuild`, then disables itself for 60 seconds.
+- **Manual rebuild:** `SiteRebuildButton` (`src/features/site/components/`) in the header and on the build history page ("อัปเดตหน้าเว็บตอนนี้"), visible only with `Permissions.SiteRebuild`. It confirms with `Modal.confirm`, calls `POST /api/v1/site/rebuild`, then disables itself for 60 seconds (shared across instances) and fires `SITE_REBUILT_EVENT`.
+- **Build history:** `/site-builds` ("ประวัติอัปเดตหน้าเว็บ", menu group ระบบ), guarded by `Permissions.SiteBuildList` (admins only). Lists `POST /site-builds/list`: manual, auto (content edits) and daily builds the backend triggered — not code deploys. "สั่งสร้างแล้ว" means Cloudflare accepted the trigger; the build result itself is only in Cloudflare.
 
 ---
 

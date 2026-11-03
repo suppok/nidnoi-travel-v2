@@ -12,6 +12,7 @@ import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx'
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
 import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
+import SiteBuildListPage from './routes/site-builds/SiteBuildListPage.tsx';
 import CityListPage from './routes/taxonomy/cities/CityListPage.tsx';
 import CountryDetailPage from './routes/taxonomy/countries/CountryDetailPage.tsx';
 import CountryListPage from './routes/taxonomy/countries/CountryListPage.tsx';
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.UserList} />,
             children: [{ path: '/users', element: <UserListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.SiteBuildList} />,
+            children: [{ path: '/site-builds', element: <SiteBuildListPage /> }],
           },
         ],
       },

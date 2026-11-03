@@ -1,4 +1,4 @@
-import { CompassOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { CloudSyncOutlined, CompassOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -7,6 +7,7 @@ import BrandMark from '../components/BrandMark.tsx';
 import { env } from '../config/env.ts';
 import { type Permission, Permissions } from '../constants/permissions.ts';
 import { roleInfo } from '../constants/roles.ts';
+import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
 import { initials } from '../lib/format.ts';
 
 type NavItem = { path: string; label: string; icon: ReactNode; permission?: Permission };
@@ -29,7 +30,10 @@ const NAV: NavGroup[] = [
   {
     key: 'system',
     label: 'ระบบ',
-    items: [{ path: '/users', label: 'ผู้ใช้และสิทธิ์', icon: <TeamOutlined />, permission: Permissions.UserList }],
+    items: [
+      { path: '/users', label: 'ผู้ใช้และสิทธิ์', icon: <TeamOutlined />, permission: Permissions.UserList },
+      { path: '/site-builds', label: 'ประวัติอัปเดตหน้าเว็บ', icon: <CloudSyncOutlined />, permission: Permissions.SiteBuildList },
+    ],
   },
 ];
 
@@ -74,26 +78,29 @@ export default function AppLayout() {
         <Layout.Header className="flex items-center gap-3 border-b border-line">
           {env.APP_ENV !== 'prd' && <Tag color="orange">{env.APP_ENV.toUpperCase()}</Tag>}
           {env.API_MOCK && <Tag color="purple">MOCK API</Tag>}
-          {user && (
-            <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
-              <button
-                type="button"
-                aria-label="เมนูผู้ใช้"
-                className="ml-auto flex cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-transparent px-2 py-1 text-left font-sans text-ink hover:bg-sky-soft"
-              >
-                <Avatar size={32} className="flex-none font-semibold" style={{ background: 'var(--color-sky-strong)', color: 'var(--color-ink)' }}>
-                  {initials(user.name)}
-                </Avatar>
-                <span className="flex min-w-0 flex-col leading-tight max-md:hidden">
-                  <span className="max-w-[200px] truncate text-sm font-semibold">{user.name}</span>
-                  <span className="max-w-[200px] truncate text-xs text-ink-muted" title={user.email}>
-                    {user.roles.map((r) => roleInfo(r).label).join(' · ')}
+          <div className="ml-auto flex items-center gap-3">
+            <SiteRebuildButton className="max-md:hidden" />
+            {user && (
+              <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
+                <button
+                  type="button"
+                  aria-label="เมนูผู้ใช้"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-transparent px-2 py-1 text-left font-sans text-ink hover:bg-sky-soft"
+                >
+                  <Avatar size={32} className="flex-none font-semibold" style={{ background: 'var(--color-sky-strong)', color: 'var(--color-ink)' }}>
+                    {initials(user.name)}
+                  </Avatar>
+                  <span className="flex min-w-0 flex-col leading-tight max-md:hidden">
+                    <span className="max-w-[200px] truncate text-sm font-semibold">{user.name}</span>
+                    <span className="max-w-[200px] truncate text-xs text-ink-muted" title={user.email}>
+                      {user.roles.map((r) => roleInfo(r).label).join(' · ')}
+                    </span>
                   </span>
-                </span>
-                <DownOutlined className="text-[10px] text-ink-muted" />
-              </button>
-            </Dropdown>
-          )}
+                  <DownOutlined className="text-[10px] text-ink-muted" />
+                </button>
+              </Dropdown>
+            )}
+          </div>
         </Layout.Header>
         <Layout.Content>
           <div className="box-border flex w-full flex-col gap-6 p-8 max-md:p-4">
