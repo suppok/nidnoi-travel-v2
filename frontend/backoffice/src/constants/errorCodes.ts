@@ -20,6 +20,8 @@ export const ErrorCodes = {
   MediaTooLarge: 'MEDIA_TOO_LARGE',
   ImageTooSmall: 'IMAGE_TOO_SMALL',
   StorageUnavailable: 'STORAGE_UNAVAILABLE',
+  SiteRebuildUnavailable: 'SITE_REBUILD_UNAVAILABLE',
+  SiteRebuildFailed: 'SITE_REBUILD_FAILED',
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',
   Unknown: 'UNKNOWN',

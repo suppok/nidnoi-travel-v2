@@ -24,6 +24,9 @@ type Config struct {
 	JWTSecret          string   `mapstructure:"-"`
 	CORSAllowedOrigins []string `mapstructure:"-"`
 	R2                 R2Config `mapstructure:"-"`
+	// DeployHookURL is the customer Worker's Cloudflare Deploy Hook (the URL is the credential).
+	// Optional: without it, rebuilds are logged and skipped (local).
+	DeployHookURL string `mapstructure:"-"`
 
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
@@ -32,6 +35,19 @@ type Config struct {
 	RateLimit  RateLimitConfig  `mapstructure:"rateLimit"`
 	Permission PermissionConfig `mapstructure:"permission"`
 	Media      MediaConfig      `mapstructure:"media"`
+
+	Revalidation RevalidationConfig `mapstructure:"revalidation"`
+}
+
+// RevalidationConfig drives the debounced customer-site rebuild.
+type RevalidationConfig struct {
+	// Quiet: fire once no new change has arrived for this long.
+	Quiet time.Duration `mapstructure:"quiet"`
+	// MaxWait: fire at most this long after the first pending change, even while changes keep coming.
+	MaxWait time.Duration `mapstructure:"maxWait"`
+	// DailyAt ("HH:MM", Thailand time) rebuilds once a day because "upcoming" periods move with the
+	// calendar. Empty disables it.
+	DailyAt string `mapstructure:"dailyAt"`
 }
 
 // R2Config comes from R2_* environment variables. Uploads are disabled (STORAGE_UNAVAILABLE) until
@@ -153,6 +169,7 @@ func read(path string) (*Config, error) {
 		Bucket:          os.Getenv("R2_BUCKET"),
 		PublicURL:       strings.TrimRight(os.Getenv("R2_PUBLIC_URL"), "/"),
 	}
+	cfg.DeployHookURL = strings.TrimSpace(os.Getenv("CLOUDFLARE_DEPLOY_HOOK_URL"))
 	return cfg, nil
 }
 
@@ -197,6 +214,17 @@ func (c *Config) validate() error {
 	}
 	if c.R2.PublicURL != "" && !strings.HasPrefix(c.R2.PublicURL, "https://") && !c.IsLocal() {
 		problems = append(problems, "R2_PUBLIC_URL must start with https://")
+	}
+	if c.DeployHookURL != "" && !strings.HasPrefix(c.DeployHookURL, "https://") && !c.IsLocal() {
+		problems = append(problems, "CLOUDFLARE_DEPLOY_HOOK_URL must start with https://")
+	}
+	if c.Revalidation.Quiet <= 0 || c.Revalidation.MaxWait < c.Revalidation.Quiet {
+		problems = append(problems, "revalidation.quiet must be positive and revalidation.maxWait at least quiet")
+	}
+	if c.Revalidation.DailyAt != "" {
+		if _, err := time.Parse("15:04", c.Revalidation.DailyAt); err != nil {
+			problems = append(problems, "revalidation.dailyAt must be HH:MM")
+		}
 	}
 	if len(problems) > 0 {
 		return errors.New("config: " + strings.Join(problems, "; "))

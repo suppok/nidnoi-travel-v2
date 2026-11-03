@@ -4,9 +4,11 @@ import (
 	"context"
 	"time"
 
+	"backend/pkg/constants/tourprogramstate"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/modules/tourprogram/models"
 )
 
@@ -23,6 +25,7 @@ func (u *tourProgramUseCase) UpdateStatus(ctx context.Context, request *models.T
 		return nil, cerrors.Validation(err)
 	}
 
+	var affected []string // set when the change shows or hides a public tour
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		target, err := u.load(ctx, appDB, request.ID)
 		if err != nil {
@@ -32,6 +35,9 @@ func (u *tourProgramUseCase) UpdateStatus(ctx context.Context, request *models.T
 			return nil
 		}
 
+		if tourprogramstate.IsPublic(target.State) {
+			affected = revalidation.PathsForTour(target)
+		}
 		stripRelations(target)
 		target.Status = *request.Status
 		target.UpdateDate = time.Now()
@@ -43,6 +49,8 @@ func (u *tourProgramUseCase) UpdateStatus(ctx context.Context, request *models.T
 		return nil, cerrors.Wrap(err, "update tour program status")
 	}
 
-	// TODO(revalidator): enqueue a customer-site rebuild once the deploy-hook revalidator exists.
+	if affected != nil {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, affected)
+	}
 	return nil, nil
 }

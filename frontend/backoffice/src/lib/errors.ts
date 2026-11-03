@@ -21,6 +21,8 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.MediaTooLarge]: 'ไฟล์ใหญ่เกินไป (ไม่เกิน 10 MB)',
   [ErrorCodes.ImageTooSmall]: 'รูปมีขนาดเล็กเกินไป',
   [ErrorCodes.StorageUnavailable]: 'ระบบจัดเก็บไฟล์ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
+  [ErrorCodes.SiteRebuildUnavailable]: 'ยังไม่ได้ตั้งค่าการอัปเดตหน้าเว็บ กรุณาติดต่อผู้ดูแลระบบ',
+  [ErrorCodes.SiteRebuildFailed]: 'สั่งอัปเดตหน้าเว็บไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

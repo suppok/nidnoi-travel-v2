@@ -7,6 +7,7 @@ import (
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
+	"backend/pkg/domain"
 	"backend/pkg/modules/country/models"
 )
 
@@ -24,6 +25,7 @@ func (u *countryUseCase) UpdateStatus(ctx context.Context, request *models.Count
 		return nil, cerrors.Validation(err)
 	}
 
+	var changed *domain.Country
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		target, err := u.findForUpdate(ctx, appDB, request.ID)
 		if err != nil {
@@ -36,11 +38,14 @@ func (u *countryUseCase) UpdateStatus(ctx context.Context, request *models.Count
 		target.Status = *request.Status
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
-		_, err = u.repositoryRegistry.CountryRepository.WithTx(appDB).Update(ctx, target, "status", "update_date", "update_by")
+		changed, err = u.repositoryRegistry.CountryRepository.WithTx(appDB).Update(ctx, target, "status", "update_date", "update_by")
 		return err
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "update country status")
+	}
+	if changed != nil {
+		u.enqueueIfShown(ctx, changed)
 	}
 	return nil, nil
 }

@@ -1,14 +1,19 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
 
 	"github.com/guregu/null/v5"
 
+	"backend/pkg/core/database/query"
+	"backend/pkg/core/utils"
 	"backend/pkg/core/validation"
 	"backend/pkg/domain"
+	"backend/pkg/domain/domainmodels"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/modules/tourprogramperiod"
 	"backend/pkg/modules/tourprogramperiod/models"
 	"backend/pkg/registry"
@@ -112,3 +117,63 @@ var editableColumns = []string{
 // Customer-site rebuild rules (backend/CLAUDE.md "When to enqueue"), applied once the revalidator
 // exists: create / delete / date change → yes; price change → only if the tour's starting price
 // changes; seat change → never.
+
+// summaryWatch decides whether a period change needs a customer-site rebuild: only when the tour is
+// public and its baked summary (starting price, next departure, period count) changes. Seat changes
+// and prices above the starting price are served live by the period table instead.
+type summaryWatch struct {
+	tour   *domain.TourProgram // nil when the tour is not public
+	before domainmodels.PublicPeriodSummary
+}
+
+func (u *tourProgramPeriodUseCase) publicSummary(ctx context.Context, appDB query.AppIDB, tourID string) (domainmodels.PublicPeriodSummary, error) {
+	periods, err := u.repositoryRegistry.TourProgramPeriodRepository.WithTx(appDB).
+		ListPublicByTours(ctx, []string{tourID}, utils.TodayInThailand(time.Now()))
+	if err != nil {
+		return domainmodels.PublicPeriodSummary{}, err
+	}
+	return domainmodels.SummarizePublicPeriods(periods), nil
+}
+
+// watch snapshots the summary before the change. tour must be loaded with its relations (FindByID).
+func (u *tourProgramPeriodUseCase) watch(ctx context.Context, appDB query.AppIDB, tour *domain.TourProgram) (*summaryWatch, error) {
+	if !revalidation.TourVisible(tour) {
+		return &summaryWatch{}, nil
+	}
+	before, err := u.publicSummary(ctx, appDB, tour.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &summaryWatch{tour: tour, before: before}, nil
+}
+
+// changedPaths compares after the change (inside the same transaction); nil means no rebuild.
+func (u *tourProgramPeriodUseCase) changedPaths(ctx context.Context, appDB query.AppIDB, w *summaryWatch) ([]string, error) {
+	if w.tour == nil {
+		return nil, nil
+	}
+	after, err := u.publicSummary(ctx, appDB, w.tour.ID)
+	if err != nil || after == w.before {
+		return nil, err
+	}
+	return revalidation.PathsForTour(w.tour), nil
+}
+
+// enqueue is called after the transaction commits.
+func (u *tourProgramPeriodUseCase) enqueue(ctx context.Context, paths []string) {
+	if paths != nil {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, paths)
+	}
+}
+
+// loadTour reads the period's tour with the relations PathsForTour needs.
+func (u *tourProgramPeriodUseCase) loadTour(ctx context.Context, appDB query.AppIDB, tourID string) (*domain.TourProgram, error) {
+	tour, err := u.repositoryRegistry.TourProgramRepository.WithTx(appDB).FindByID(ctx, tourID)
+	if err != nil {
+		return nil, err
+	}
+	if tour == nil {
+		return nil, errors.New("period references a missing tour program")
+	}
+	return tour, nil
+}

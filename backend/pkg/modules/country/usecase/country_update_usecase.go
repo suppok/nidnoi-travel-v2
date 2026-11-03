@@ -52,5 +52,6 @@ func (u *countryUseCase) Update(ctx context.Context, request *models.CountryUpda
 	if err != nil {
 		return nil, cerrors.Wrap(err, "update country")
 	}
+	u.enqueueIfShown(ctx, updated)
 	return &models.CountryUpdateResponse{CountryItem: models.NewCountryItem(updated)}, nil
 }

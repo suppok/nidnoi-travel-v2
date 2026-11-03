@@ -7,6 +7,7 @@ import (
 
 	"backend/pkg/constants/tourprogramstate"
 	"backend/pkg/domain"
+	"backend/pkg/domain/domainmodels"
 )
 
 // publicDateLayout is the wire format of public period dates.
@@ -131,17 +132,12 @@ func NewTourProgramPublicItem(t *domain.TourProgram, periods []domain.TourProgra
 		}
 	}
 
-	var cheapest *domain.TourProgramPeriod
-	for i := range periods {
-		// Strictly lower keeps the earliest departure on a tie.
-		if cheapest == nil || periods[i].Price < cheapest.Price {
-			cheapest = &periods[i]
-		}
-	}
-	if cheapest != nil {
-		item.StartingPrice = null.IntFrom(int64(cheapest.Price))
-		item.StartingPriceBeforeDiscount = cheapest.PriceBeforeDiscount
-		item.NextDepartureDate = null.StringFrom(periods[0].StartDate.Format(publicDateLayout))
+	// Same summary the rebuild trigger compares, so the API and the rebuild decision never disagree.
+	summary := domainmodels.SummarizePublicPeriods(periods)
+	item.StartingPrice = summary.StartingPrice
+	item.StartingPriceBeforeDiscount = summary.StartingPriceBeforeDiscount
+	if summary.NextDepartureDate != "" {
+		item.NextDepartureDate = null.StringFrom(summary.NextDepartureDate)
 	}
 	return item
 }

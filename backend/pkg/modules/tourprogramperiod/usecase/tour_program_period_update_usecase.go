@@ -25,6 +25,7 @@ func (u *tourProgramPeriodUseCase) Update(ctx context.Context, request *models.T
 	}
 
 	var updated *domain.TourProgramPeriod
+	var rebuild []string
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		repo := u.repositoryRegistry.TourProgramPeriodRepository.WithTx(appDB)
 		target, err := repo.FindByID(ctx, request.ID)
@@ -34,15 +35,27 @@ func (u *tourProgramPeriodUseCase) Update(ctx context.Context, request *models.T
 		if target == nil {
 			return cerrors.NotFound()
 		}
+		tour, err := u.loadTour(ctx, appDB, target.TourProgramID)
+		if err != nil {
+			return err
+		}
+		w, err := u.watch(ctx, appDB, tour)
+		if err != nil {
+			return err
+		}
 
 		applyFields(target, &request.TourProgramPeriodFields)
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
-		updated, err = repo.Update(ctx, target, editableColumns...)
+		if updated, err = repo.Update(ctx, target, editableColumns...); err != nil {
+			return err
+		}
+		rebuild, err = u.changedPaths(ctx, appDB, w)
 		return err
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "update tour program period")
 	}
+	u.enqueue(ctx, rebuild)
 	return &models.TourProgramPeriodUpdateResponse{TourProgramPeriodItem: models.NewTourProgramPeriodItem(updated)}, nil
 }
