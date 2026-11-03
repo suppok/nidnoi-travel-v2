@@ -1,0 +1,34 @@
+---
+// Visible breadcrumb. The matching BreadcrumbList JSON-LD is passed to the layout by the page.
+import type { Crumb } from '../../lib/seo';
+import Icon from './Icon.astro';
+
+type Props = { crumbs: Crumb[]; tone?: 'light' | 'dark' };
+const { crumbs, tone = 'dark' } = Astro.props;
+---
+
+<nav aria-label="breadcrumb" class:list={['text-sm', tone === 'light' ? 'text-white/85' : 'text-ink-muted']}>
+  <ol class="flex flex-wrap items-center gap-2">
+    {
+      crumbs.map((c, i) => {
+        const last = i === crumbs.length - 1;
+        return (
+          <li class="flex items-center gap-2">
+            {last ? (
+              <span aria-current="page" class:list={['font-semibold', tone === 'light' ? 'text-white' : 'text-ink']}>
+                {c.name}
+              </span>
+            ) : (
+              <>
+                <a href={c.path} class="underline-offset-4 hover:underline">
+                  {c.name}
+                </a>
+                <Icon name="chevron-right" size={12} />
+              </>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>

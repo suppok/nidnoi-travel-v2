@@ -52,7 +52,6 @@ frontend/customer/
 │   │   ├── tour/                 # TourCard, TourHero, TourPriceBlock, ...
 │   │   └── layout/               # Header, Footer, Nav
 │   ├── islands/                  # React components that hydrate (interactive only)
-│   │   ├── PeriodTable.tsx       # Live seats + per-period prices on /tour/<code>/
 │   │   ├── TourFilters.tsx       # Filters on /tour-programs/
 │   │   ├── InquiryForm.tsx       # Lead capture
 │   │   └── ImageGallery.tsx      # Lightbox / carousel
@@ -124,7 +123,7 @@ Every page is prerendered at build time (`output: 'static'`, no adapter).
 | Data | Where it lives | How it updates |
 |---|---|---|
 | Tour content, taxonomy, starting price, landing pages | Static HTML | Backend fires the deploy hook (debounced: 3 min quiet, max 15 min) → Workers Builds rebuilds → typically live within minutes |
-| Per-period dates, prices, seats left, sold-out | `PeriodTable` island | Fetched on view from `GET /tour-programs/public/:code/periods` (cached ~30 s) |
+| Per-period dates, prices, seats left, sold-out | `PeriodTable` (inline script) | Fetched on view from `GET /tour-programs/public/:code/periods` (cached ~30 s) |
 | About / contact / terms | Static HTML | Rebuilt on every deploy |
 
 Build rules:
@@ -149,19 +148,19 @@ export default defineConfig({
 
 ---
 
-## Period Island (seats & prices)
+## Period Table (seats & prices)
 
-`src/islands/PeriodTable.tsx` renders the departures table on `/tour/<code>/`.
+`src/components/tour/PeriodTable.astro` renders the departures table on `/tour/<code>/`. It is **not** a React island: React's runtime alone (~65 KB gzipped) breaks the 50 KB JS budget, so it is an Astro component with a small inline `<script>` (~2 KB gzipped).
 
 ```astro
-<PeriodTable client:visible code={tour.code} initialPeriods={tour.periods} />
+<PeriodTable code={tour.code} tourName={tour.name} periods={tour.periods} />
 ```
 
-- The table is rendered **at build time** with `initialPeriods`, so bots and no-JS visitors see real data and nothing shifts on hydration (CLS).
-- On hydration it fetches `GET /tour-programs/public/:code/periods` once and replaces the rows. On error it keeps the build-time data silently.
+- The table is rendered **at build time** with `periods`, so bots and no-JS visitors see real data.
+- On page load the script fetches `GET /tour-programs/public/:code/periods` once and replaces the rows. On error it keeps the build-time data silently.
 - No polling. One request per page view.
-- Keep the markup identical between the static render and the hydrated render (same columns, same row height).
-- Cards and JSON-LD show the **starting price** from build time, labelled "ราคาเริ่มต้น". On the detail page, the island's numbers are the source of truth.
+- Row, price and detail markup comes from `src/lib/period-view.ts`, used by both the build and the script, so static and live HTML are identical (no CLS). Change markup there, never in only one place.
+- Cards and JSON-LD show the **starting price** from build time, labelled "ราคาเริ่มต้น". On the detail page, the period table's numbers are the source of truth.
 
 ---
 
@@ -413,7 +412,7 @@ The first 8 weeks have an explicit "ranking dip is acceptable" budget. After tha
 - **Hydration directives:**
   - `client:load` — above-the-fold and immediately interactive (rare; requires a justification comment).
   - `client:idle` — most cases.
-  - `client:visible` — below-the-fold islands (period table, gallery).
+  - `client:visible` — below-the-fold islands (gallery).
   - `client:media` — breakpoint-conditional islands.
 - **Images** — always through `CfImage` and the presets (see Images).
 - **Fonts** — self-hosted in `public/fonts/`, `font-display: swap`, at most two families, subset to Thai + Latin.

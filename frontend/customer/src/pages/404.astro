@@ -1,5 +1,9 @@
 ---
+import Icon from '../components/ui/Icon.astro';
 import PageLayout from '../layouts/PageLayout.astro';
+import { listPublicCountries } from '../lib/api/taxonomy';
+
+const countries = (await listPublicCountries()).filter((c) => c.tourCount > 0).slice(0, 6);
 ---
 
 <PageLayout
@@ -7,10 +11,30 @@ import PageLayout from '../layouts/PageLayout.astro';
   description="ไม่พบหน้าที่คุณต้องการ หน้านี้อาจถูกย้ายหรือลบไปแล้ว กลับไปหน้าแรกเพื่อดูโปรแกรมทัวร์ต่างประเทศทั้งหมดของเรา"
   path="/404/"
 >
-  <section class="mx-auto max-w-xl px-4 py-24 text-center">
-    <p class="text-6xl font-bold text-primary-700">404</p>
-    <h1 class="mt-4 text-2xl font-bold">ไม่พบหน้าที่คุณต้องการ</h1>
-    <p class="mt-2 text-slate-600">หน้านี้อาจถูกย้ายหรือลบไปแล้ว</p>
-    <a href="/" class="mt-8 inline-block font-semibold text-primary-700 underline">กลับหน้าแรก</a>
+  <section class="nf relative overflow-hidden py-24 text-center md:py-32">
+    <div class="halo halo-primary -top-1/4 left-1/2 h-[560px] w-[560px] -translate-x-1/2 opacity-70"></div>
+    <div class="container-site relative max-w-2xl">
+      <p class="font-display text-7xl leading-none font-semibold text-primary-deep">404</p>
+      <h1 class="h-section mt-6 mb-3">ไม่พบหน้าที่คุณต้องการ</h1>
+      <p class="body-lg m-0 text-ink-soft">หน้านี้อาจถูกย้ายหรือลบไปแล้ว ลองเลือกปลายทางด้านล่าง หรือกลับไปหน้าแรก</p>
+      <ul class="mt-10 flex flex-wrap justify-center gap-2.5">
+        {
+          countries.map((c) => (
+            <li>
+              <a href={`/tours/${c.slug}/`} class="chip chip-tint px-4 py-2 text-sm">
+                ทัวร์{c.nameTh}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a href="/" class="btn btn-primary mt-10">กลับหน้าแรก <Icon name="arrow-right" size={14} /></a>
+    </div>
   </section>
 </PageLayout>
+
+<style>
+  .nf {
+    background: linear-gradient(180deg, var(--color-primary-tint) 0%, var(--color-white) 70%);
+  }
+</style>

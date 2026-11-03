@@ -1,0 +1,26 @@
+---
+// Every active tour of the destination, rendered in the initial HTML (lazy images, never lazy markup).
+import type { TourProgramPublicItem } from '../../types/tour-program';
+import TourCard from '../tour/TourCard.astro';
+
+type Props = { heading: string; tours: TourProgramPublicItem[] };
+const { heading, tours } = Astro.props;
+---
+
+<section id="tours" class="scroll-mt-20 bg-cream pt-14 pb-24">
+  <div class="container-site">
+    <div class="mb-8 flex flex-wrap items-baseline justify-between gap-4">
+      <h2 class="h-section m-0 text-[clamp(24px,3vw,36px)]">{heading}</h2>
+      <span class="text-[15px] text-ink-soft">พบ <b class="font-semibold text-ink">{tours.length}</b> โปรแกรม</span>
+    </div>
+    <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+      {
+        tours.map((t) => (
+          <li class="flex">
+            <TourCard tour={t} columns={3} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

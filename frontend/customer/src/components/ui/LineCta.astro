@@ -1,0 +1,42 @@
+---
+// Replaces the design's email newsletter: there is no subscription backend, LINE is the real channel.
+import { contact } from '../../config/site';
+import Icon from './Icon.astro';
+
+const [phone] = contact.phones;
+---
+
+<section class="line-cta relative overflow-hidden text-white section">
+  <div class="halo halo-primary -top-1/3 -right-[10%] h-[600px] w-[600px] opacity-40"></div>
+  <div class="container-site relative grid items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
+    <div>
+      <p class="eyebrow mb-4 text-white/90">LINE · {contact.lineId}</p>
+      <h2 class="h-section mb-5 text-white">
+        โปรไฟไหม้<em class="text-highlight">ส่งตรงถึงคุณ</em><br />ก่อนใครบน LINE
+      </h2>
+      <p class="body-lg m-0 max-w-lg text-white/90">
+        แอด LINE รับโปรโมชันและโปรแกรมทัวร์ใหม่ก่อนใคร สอบถามวันเดินทางหรือจองที่นั่งกับทีมงานได้ทันที
+      </p>
+    </div>
+    <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
+      <a href={contact.lineUrl} rel="noopener" target="_blank" class="btn btn-white">
+        <Icon name="line" size={16} class="text-success" /> แอด LINE {contact.lineId}
+      </a>
+      <a href={`tel:${phone.tel}`} class="btn border-white/50 text-white hover:bg-white/10">
+        <Icon name="phone" size={15} /> โทร {phone.display}
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .line-cta {
+    background: linear-gradient(135deg, var(--color-primary-deep) 0%, var(--color-primary-darker) 100%);
+  }
+  .line-cta .h-section {
+    color: var(--color-white);
+  }
+  .line-cta .h-section em {
+    color: var(--color-highlight);
+  }
+</style>

@@ -1,0 +1,89 @@
+---
+import CityChips from '../../../components/landing/CityChips.astro';
+import DestinationStrip from '../../../components/landing/DestinationStrip.astro';
+import LandingHero from '../../../components/landing/LandingHero.astro';
+import TourList from '../../../components/landing/TourList.astro';
+import LineCta from '../../../components/ui/LineCta.astro';
+import { DEFAULT_HERO_IMAGE } from '../../../config/site';
+import PageLayout from '../../../layouts/PageLayout.astro';
+import { formatPrice } from '../../../lib/format';
+import { byNextDeparture, listPublicTours } from '../../../lib/api/tour-programs';
+import { listPublicCities, listPublicCountries } from '../../../lib/api/taxonomy';
+import { ogImageUrl } from '../../../lib/image';
+import { breadcrumbJsonLd, metaDescription, type Crumb } from '../../../lib/seo';
+import type { CityPublic, CountryPublic } from '../../../types/taxonomy';
+
+export async function getStaticPaths() {
+  const [countries, cities] = await Promise.all([listPublicCountries(), listPublicCities()]);
+  // Only (country, city) pairs where the city belongs to that country and has active tours.
+  return cities.flatMap((city) => {
+    const country = countries.find((c) => c.slug === city.countrySlug);
+    if (!country || city.tourCount === 0) return [];
+    return [{ params: { country: country.slug, city: city.slug }, props: { country, city } }];
+  });
+}
+
+type Props = { country: CountryPublic; city: CityPublic };
+const { country, city } = Astro.props;
+
+const [allTours, allCities] = await Promise.all([listPublicTours(), listPublicCities()]);
+const tours = allTours.filter((t) => t.cities.some((c) => c.slug === city.slug)).sort(byNextDeparture);
+const siblings = allCities.filter((c) => c.countrySlug === country.slug && c.tourCount > 0);
+
+const countryPath = `/tours/${country.slug}/`;
+const path = `${countryPath}${city.slug}/`;
+const crumbs: Crumb[] = [
+  { name: 'หน้าแรก', path: '/' },
+  { name: `ทัวร์${country.nameTh}`, path: countryPath },
+  { name: `ทัวร์${city.nameTh}`, path },
+];
+const priceText = city.startingPrice !== null ? ` เริ่มต้น ${formatPrice(city.startingPrice)} บาท` : '';
+const description = metaDescription(
+  city.description ||
+    `รวมโปรแกรมทัวร์${city.nameTh} ${country.nameTh} ${tours.length} โปรแกรม${priceText} เช็กวันเดินทางและที่นั่งว่างได้ทันที`,
+);
+---
+
+<PageLayout
+  title={`ทัวร์${city.nameTh} ${country.nameTh}${priceText}`}
+  description={description}
+  path={path}
+  ogImage={ogImageUrl(city.heroImage ?? country.heroImage ?? DEFAULT_HERO_IMAGE)}
+  jsonLd={[breadcrumbJsonLd(crumbs)]}
+>
+  <LandingHero
+    crumbs={crumbs}
+    nameTh={city.nameTh}
+    nameEn={`${city.nameEn} · ${country.nameEn}`}
+    description={city.description}
+    heroImage={city.heroImage ?? country.heroImage}
+    tourCount={tours.length}
+    startingPrice={city.startingPrice}
+  />
+  <CityChips country={country} cities={siblings} activeCitySlug={city.slug} />
+  <TourList heading={`โปรแกรมทัวร์${city.nameTh}`} tours={tours} />
+
+  <DestinationStrip
+    eyebrow={`เมืองอื่นใน${country.nameTh}`}
+    title={`เที่ยว${country.nameTh}เมืองอื่น`}
+    cta={{ label: `ทัวร์${country.nameTh}ทั้งหมด`, href: countryPath }}
+    items={siblings
+      .filter((c) => c.slug !== city.slug)
+      .map((c) => ({
+        href: `${countryPath}${c.slug}/`,
+        nameTh: c.nameTh,
+        nameEn: c.nameEn,
+        image: c.heroImage,
+        tourCount: c.tourCount,
+        startingPrice: c.startingPrice,
+      }))}
+  />
+
+  <section class="section-tight bg-cream text-center">
+    <div class="container-site">
+      <a href={countryPath} class="btn btn-ghost">ดูโปรแกรมทัวร์{country.nameTh}ทั้งหมด {country.tourCount} โปรแกรม</a>
+    </div>
+  </section>
+
+  <LineCta />
+</PageLayout>

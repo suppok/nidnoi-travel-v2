@@ -1,0 +1,34 @@
+---
+// Grid of destination tiles (cities of a country, or other countries).
+import DestinationCard from '../tour/DestinationCard.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+
+type Item = {
+  href: string;
+  nameTh: string;
+  nameEn: string;
+  image: string | null;
+  tourCount: number;
+  startingPrice: number | null;
+};
+
+type Props = { eyebrow: string; title: string; items: Item[]; cta?: { label: string; href: string }; tone?: 'white' | 'cream' };
+const { eyebrow, title, items, cta, tone = 'white' } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <section class:list={['section-tight', tone === 'cream' ? 'bg-cream' : 'bg-white']}>
+      <div class="container-site">
+        <SectionHeader eyebrow={eyebrow} title={title} cta={cta} />
+        <ul class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {items.map((it) => (
+            <li class="aspect-[4/3]">
+              <DestinationCard {...it} sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" class="h-full" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}

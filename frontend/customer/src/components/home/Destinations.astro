@@ -1,0 +1,65 @@
+---
+import type { CountryPublic } from '../../types/taxonomy';
+import DestinationCard from '../tour/DestinationCard.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+
+type Props = { countries: CountryPublic[] };
+const { countries } = Astro.props;
+// Mosaic: tile 1 spans two rows, so 7 tiles fill two rows of four. The picker above lists every country.
+const featured = countries.slice(0, 7);
+---
+
+<section id="destinations" class="section scroll-mt-20 bg-cream">
+  <div class="container-site">
+    <SectionHeader
+      eyebrow={`${countries.length} ปลายทาง`}
+      sub="เลือกประเทศที่อยากไป แล้วดูโปรแกรม วันเดินทาง และราคาเริ่มต้นของทุกทัวร์ในประเทศนั้น"
+    >
+      <Fragment slot="title">ปลายทาง<em>ยอดนิยม</em></Fragment>
+    </SectionHeader>
+
+    <ul class="dest-grid">
+      {
+        featured.map((c, i) => (
+          <li>
+            <DestinationCard
+              href={`/tours/${c.slug}/`}
+              nameTh={c.nameTh}
+              nameEn={c.nameEn}
+              image={c.heroImage}
+              tourCount={c.tourCount}
+              startingPrice={c.startingPrice}
+              size={i === 0 ? 'lg' : 'md'}
+              sizes="(min-width: 900px) 25vw, (min-width: 560px) 50vw, 100vw"
+              class="h-full"
+            />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .dest-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: 220px;
+    grid-auto-flow: dense;
+    gap: 16px;
+  }
+  @media (min-width: 560px) {
+    .dest-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 900px) {
+    .dest-grid {
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 240px;
+    }
+    .dest-grid > li:nth-child(1) {
+      grid-row: span 2;
+    }
+  }
+</style>

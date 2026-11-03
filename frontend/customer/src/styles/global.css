@@ -1,24 +1,234 @@
 @import 'tailwindcss';
 
-/* Design tokens — use these, never inline hex values. */
+/* Self-hosted fonts (Thai + Latin via unicode-range): Prompt for display, IBM Plex Sans Thai for body. */
+@import '@fontsource/prompt/500.css';
+@import '@fontsource/prompt/600.css';
+@import '@fontsource/ibm-plex-sans-thai/400.css';
+@import '@fontsource/ibm-plex-sans-thai/500.css';
+@import '@fontsource/ibm-plex-sans-thai/600.css';
+
+/*
+ * Design tokens — "Clean & Bright": sky blue primary, pink accent, ink neutrals.
+ * The default Tailwind palette is removed so only these colors exist. Never inline hex values.
+ * Text/fill shades marked AA pass 4.5:1 against white (or white text on them).
+ */
 @theme {
-  --font-sans: 'Noto Sans Thai', 'Sarabun', 'Leelawadee UI', system-ui, sans-serif;
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-  --color-primary-50: #f0fdfa;
-  --color-primary-100: #ccfbf1;
-  --color-primary-600: #0d9488;
-  --color-primary-700: #0f766e;
-  --color-primary-800: #115e59;
-  --color-primary-900: #134e4a;
+  /* Primary — bright sky blue */
+  --color-primary: #2e9ee0; /* decorative only: icons, dots, borders, large text */
+  --color-primary-deep: #1670a8; /* AA: buttons, links, small text */
+  --color-primary-darker: #135e8e; /* hover */
+  --color-primary-light: #bfe0f4;
+  --color-primary-tint: #e6f3fb;
 
-  --color-accent-400: #fbbf24;
-  --color-accent-500: #f59e0b;
+  /* Accent — pink, used sparingly */
+  --color-accent: #f06aa5; /* decorative only */
+  --color-accent-deep: #c2397a; /* AA: discount badges, emphasis text */
+  --color-accent-tint: #fce0ee;
+
+  /* Neutrals */
+  --color-ink: #15233a;
+  --color-ink-soft: #3b4a63;
+  --color-ink-muted: #64708a; /* AA on white */
+  --color-line: #e4ecf5;
+  --color-line-soft: #f1f5fa;
+  --color-cream: #f7fafd;
+  --color-cream-deep: #eef5fb;
+
+  /* State */
+  --color-success: #1f7a50;
+  --color-danger: #c0392b;
+  --color-highlight: #ffedb8;
+
+  --font-sans: 'IBM Plex Sans Thai', 'Prompt', system-ui, sans-serif;
+  --font-display: 'Prompt', 'IBM Plex Sans Thai', system-ui, sans-serif;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-sm: 0 1px 2px rgb(21 35 58 / 0.04), 0 1px 3px rgb(21 35 58 / 0.03);
+  --shadow-md: 0 4px 12px rgb(21 35 58 / 0.06), 0 2px 4px rgb(21 35 58 / 0.04);
+  --shadow-lg: 0 16px 32px rgb(21 35 58 / 0.08), 0 6px 12px rgb(21 35 58 / 0.05);
+  --shadow-xl: 0 28px 56px rgb(21 35 58 / 0.12), 0 12px 24px rgb(21 35 58 / 0.06);
+  --shadow-primary: 0 18px 40px rgb(46 158 224 / 0.22);
+  --shadow-accent: 0 18px 40px rgb(240 106 165 / 0.22);
+
+  --container-site: 1320px;
 }
 
 @layer base {
   html {
-    @apply bg-white font-sans text-slate-800 antialiased;
-    font-size: 17px;
+    @apply bg-white font-sans text-ink antialiased;
+    font-size: 16px;
     line-height: 1.7;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-primary-deep text-white;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary-deep);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Shared building blocks from the design. Component-specific styles stay in scoped <style>. */
+@layer components {
+  .container-site {
+    width: 100%;
+    max-width: var(--container-site);
+    margin-inline: auto;
+    padding-inline: clamp(16px, 4vw, 56px);
+  }
+
+  .section {
+    padding-block: clamp(64px, 8vw, 112px);
+  }
+
+  .section-tight {
+    padding-block: clamp(40px, 5vw, 72px);
+  }
+
+  .eyebrow {
+    @apply text-primary-deep;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .h-display,
+  .h-section {
+    @apply font-display text-ink;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .h-display {
+    font-size: clamp(36px, 5.8vw, 76px);
+    line-height: 1.12;
+  }
+
+  .h-section {
+    font-size: clamp(26px, 3.6vw, 44px);
+    line-height: 1.2;
+  }
+
+  .h-display em,
+  .h-section em {
+    @apply text-accent-deep;
+    font-style: normal;
+  }
+
+  .body-lg {
+    font-size: 18px;
+    line-height: 1.75;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-transparent font-semibold whitespace-nowrap;
+    padding: 13px 24px;
+    font-size: 15px;
+    line-height: 1.2;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .btn-sm {
+    padding: 9px 18px;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    @apply bg-primary-deep text-white shadow-primary;
+  }
+  .btn-primary:hover {
+    @apply bg-primary-darker;
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    @apply border-ink bg-transparent text-ink;
+  }
+  .btn-ghost:hover {
+    @apply bg-cream;
+  }
+
+  .btn-white {
+    @apply bg-white text-ink shadow-md;
+  }
+  .btn-white:hover {
+    @apply shadow-lg;
+    transform: translateY(-1px);
+  }
+
+  .btn-line {
+    @apply bg-success text-white;
+  }
+  .btn-line:hover {
+    filter: brightness(0.92);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-cream text-ink;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .chip-light {
+    @apply border-transparent text-ink;
+    background: rgb(255 255 255 / 0.95);
+    backdrop-filter: blur(8px);
+  }
+
+  .chip-tint {
+    @apply border-primary-light bg-primary-tint text-primary-deep;
+  }
+
+  .chip-accent {
+    @apply border-transparent bg-accent-tint text-accent-deep;
+  }
+
+  .halo {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(40px);
+  }
+  .halo-primary {
+    background: radial-gradient(circle, var(--color-primary-light) 0%, transparent 70%);
+  }
+  .halo-accent {
+    background: radial-gradient(circle, var(--color-accent-tint) 0%, transparent 70%);
   }
 }

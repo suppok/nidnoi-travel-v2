@@ -1,0 +1,33 @@
+---
+// Every R2 image goes through this component (edge-resized via Cloudflare Image Transformations).
+import type { HTMLAttributes } from 'astro/types';
+import { cfImageSrcset, type ImagePreset } from '../../lib/image';
+
+type Props = Omit<HTMLAttributes<'img'>, 'src' | 'srcset' | 'width' | 'height' | 'alt'> & {
+  src: string;
+  alt: string;
+  preset: ImagePreset;
+  /** Intrinsic ratio for layout (prevents CLS); the box itself is sized by CSS. */
+  width: number;
+  height: number;
+  sizes: string;
+  /** Hero / LCP image: eager + high fetch priority. Everything else stays lazy. */
+  priority?: boolean;
+};
+
+const { src, alt, preset, width, height, sizes, priority = false, ...rest } = Astro.props;
+const { src: fallback, srcset } = cfImageSrcset(src, preset);
+---
+
+<img
+  src={fallback}
+  srcset={srcset}
+  sizes={sizes}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={priority ? 'eager' : 'lazy'}
+  decoding={priority ? 'sync' : 'async'}
+  fetchpriority={priority ? 'high' : 'auto'}
+  {...rest}
+/>

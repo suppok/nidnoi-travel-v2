@@ -1,0 +1,79 @@
+---
+// Image tile linking to a country or city landing page.
+import { formatPrice } from '../../lib/format';
+import CfImage from '../ui/CfImage.astro';
+import Icon from '../ui/Icon.astro';
+
+type Props = {
+  href: string;
+  nameTh: string;
+  nameEn: string;
+  image: string | null;
+  tourCount: number;
+  startingPrice: number | null;
+  /** Larger title for featured tiles. */
+  size?: 'md' | 'lg';
+  sizes: string;
+  class?: string;
+};
+
+const { href, nameTh, nameEn, image, tourCount, startingPrice, size = 'md', sizes, class: className } = Astro.props;
+---
+
+<a href={href} class:list={['dest-card relative isolate block overflow-hidden rounded-md bg-ink text-white', className]}>
+  {
+    image && (
+      <CfImage
+        src={image}
+        alt=""
+        preset="card"
+        width={400}
+        height={400}
+        sizes={sizes}
+        class="dest-img absolute inset-0 h-full w-full object-cover"
+      />
+    )
+  }
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-ink/80"></div>
+
+  <div class="absolute inset-0 flex flex-col justify-between p-5">
+    <div class="flex items-start justify-between gap-2">
+      <span class="chip chip-light text-[12px]">{tourCount} โปรแกรม</span>
+      <span class="dest-arrow flex h-8 w-8 items-center justify-center rounded-full bg-primary-deep" aria-hidden="true">
+        <Icon name="arrow-up-right" size={15} />
+      </span>
+    </div>
+    <div>
+      <span class:list={['mb-2 block font-display leading-tight font-semibold', size === 'lg' ? 'text-3xl sm:text-4xl' : 'text-[22px] sm:text-[28px]']}>
+        ทัวร์{nameTh}
+      </span>
+      <div class="flex items-end justify-between gap-2">
+        <span class="text-xs font-medium tracking-[0.18em] uppercase opacity-85">{nameEn}</span>
+        {
+          startingPrice !== null && (
+            <span class="text-sm">
+              เริ่ม <b class="font-display font-semibold">{formatPrice(startingPrice)}</b> บาท
+            </span>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</a>
+
+<style>
+  .dest-img {
+    transition: transform 0.7s ease;
+  }
+  .dest-card:hover .dest-img {
+    transform: scale(1.06);
+  }
+  .dest-arrow {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .dest-card:hover .dest-arrow,
+  .dest-card:focus-visible .dest-arrow {
+    opacity: 1;
+  }
+</style>

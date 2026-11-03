@@ -1,0 +1,63 @@
+---
+// City navigation for a country. Real links (internal linking for SEO), not client-side filters.
+import type { CityPublic, CountryPublic } from '../../types/taxonomy';
+
+type Props = { country: CountryPublic; cities: CityPublic[]; activeCitySlug?: string };
+const { country, cities, activeCitySlug } = Astro.props;
+---
+
+{
+  cities.length > 0 && (
+    <nav aria-label={`เมืองใน${country.nameTh}`} class="border-b border-line-soft bg-white py-6">
+      <div class="container-site flex flex-wrap items-center gap-2">
+        <span class="mr-1.5 text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">เมือง:</span>
+        <a
+          href={`/tours/${country.slug}/`}
+          class="city-chip"
+          aria-current={activeCitySlug ? undefined : 'page'}
+        >
+          ทั้งหมด <span class="count">{country.tourCount}</span>
+        </a>
+        {cities.map((c) => (
+          <a
+            href={`/tours/${country.slug}/${c.slug}/`}
+            class="city-chip"
+            aria-current={c.slug === activeCitySlug ? 'page' : undefined}
+          >
+            {c.nameTh} <span class="count">{c.tourCount}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+<style>
+  .city-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14.5px;
+    font-weight: 500;
+    border: 1px solid var(--color-line);
+    border-radius: 9999px;
+    background: var(--color-white);
+    color: var(--color-ink);
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
+  .city-chip:hover {
+    border-color: var(--color-ink);
+  }
+  .city-chip[aria-current='page'] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-white);
+  }
+  .count {
+    font-size: 12px;
+    opacity: 0.75;
+  }
+</style>
