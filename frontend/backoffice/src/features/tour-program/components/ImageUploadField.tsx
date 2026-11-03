@@ -10,10 +10,11 @@ type Props = {
   purpose: MediaPurpose;
   disabled?: boolean;
   aspect?: string; // CSS aspect-ratio of the preview, e.g. "1200 / 630"
+  fit?: 'cover' | 'contain'; // contain for logos, which must not be cropped
 };
 
 // A single image (banner / hero) as a Form control: value is the uploaded URL.
-export default function ImageUploadField({ value, onChange, purpose, disabled, aspect = '1200 / 630' }: Props) {
+export default function ImageUploadField({ value, onChange, purpose, disabled, aspect = '1200 / 630', fit = 'cover' }: Props) {
   const { message } = App.useApp();
   const [uploading, setUploading] = useState(false);
 
@@ -56,7 +57,7 @@ export default function ImageUploadField({ value, onChange, purpose, disabled, a
 
   return (
     <div className="flex max-w-[560px] flex-col gap-2">
-      <Image src={value} alt="" className="rounded-xl object-cover" style={{ aspectRatio: aspect, width: '100%' }} />
+      <Image src={value} alt="" className={`rounded-xl ${fit === 'contain' ? 'border border-line bg-white object-contain p-3' : 'object-cover'}`} style={{ aspectRatio: aspect, width: '100%' }} />
       <div className="flex gap-2">
         {upload}
         <Button icon={<DeleteOutlined />} danger disabled={disabled || uploading} onClick={() => onChange?.(null)}>

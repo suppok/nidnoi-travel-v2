@@ -2,6 +2,7 @@
 // contracts (paths, status codes, error codes), so switching to the backend changes only client.ts.
 import { env } from '../../config/env.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
+import { airlineRoutes } from './airlines.ts';
 import { authRoutes } from './auth.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
 import { mediaRoutes } from './media.ts';
@@ -15,6 +16,7 @@ const routes: Record<string, MockHandler> = {
   ...userRoutes,
   ...taxonomyRoutes,
   ...wholesaleRoutes,
+  ...airlineRoutes,
   ...mediaRoutes,
   ...tourProgramRoutes,
 };

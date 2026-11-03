@@ -20,7 +20,6 @@ Table: tour_program
 [ 6] state                INTEGER      null: false  default: 10  (pkg/constants/tourprogramstate)
 [ 7] days                 INTEGER      null: false
 [ 8] nights               INTEGER      null: false
-[ 9] airline              TEXT         null: false  default: ''
 [10] highlight            TEXT         null: false  default: ''
 [11] description          TEXT         null: false  default: ''
 [12] banner_image         TEXT         null: true   (tour detail page hero)
@@ -33,6 +32,7 @@ Table: tour_program
 [19] create_by            UUID         null: false
 [20] update_by            UUID         null: false
 [21] card_image           TEXT         null: true   (tour cards on home/listing pages)
+[22] airline_id           UUID         null: true   (FK airline.id)
 */
 
 // TourProgram is a row of the tour_program table.
@@ -48,7 +48,7 @@ type TourProgram struct {
 	State             int         `bun:"state"               json:"state"`                            // [ 6] INTEGER
 	Days              int         `bun:"days"                json:"days"`                             // [ 7] INTEGER
 	Nights            int         `bun:"nights"              json:"nights"`                           // [ 8] INTEGER
-	Airline           string      `bun:"airline"             json:"airline"`                          // [ 9] TEXT
+	AirlineID         null.String `bun:"airline_id"          json:"airlineId" swaggertype:"string"`   // [22] UUID
 	Highlight         string      `bun:"highlight"           json:"highlight"`                        // [10] TEXT
 	Description       string      `bun:"description"         json:"description"`                      // [11] TEXT
 	BannerImage       null.String `bun:"banner_image"        json:"bannerImage" swaggertype:"string"` // [12] TEXT
@@ -63,6 +63,7 @@ type TourProgram struct {
 	UpdateBy          string      `bun:"update_by"           json:"updateBy"`                         // [20] UUID
 
 	Wholesale    *Wholesale           `bun:"rel:belongs-to,join:wholesale_id=id"   json:"wholesale,omitempty"`
+	Airline      *Airline             `bun:"rel:belongs-to,join:airline_id=id"     json:"airline,omitempty"`
 	CountryLinks []TourProgramCountry `bun:"rel:has-many,join:id=tour_program_id" json:"countryLinks,omitempty"`
 	CityLinks    []TourProgramCity    `bun:"rel:has-many,join:id=tour_program_id" json:"cityLinks,omitempty"`
 	Images       []TourProgramImage   `bun:"rel:has-many,join:id=tour_program_id" json:"images,omitempty"`

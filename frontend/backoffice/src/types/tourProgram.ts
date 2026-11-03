@@ -2,6 +2,7 @@ import type { TourProgramState } from '../constants/tourProgramStates.ts';
 import type { Paging } from './api.ts';
 
 export type TourProgramWholesale = { id: string; code: string; name: string; status: boolean };
+export type TourProgramAirline = { id: string; code: string; name: string; logo: string | null; status: boolean };
 export type TourProgramCountry = { id: string; slug: string; nameTh: string; nameEn: string; status: boolean };
 export type TourProgramCity = TourProgramCountry & { countryId: string };
 export type TourProgramImage = { id: string; url: string };
@@ -16,7 +17,7 @@ export type TourProgram = {
   state: TourProgramState;
   days: number;
   nights: number;
-  airline: string;
+  airline: TourProgramAirline | null; // null = no airline
   highlight: string;
   description: string;
   bannerImage: string | null; // tour detail page hero
@@ -56,7 +57,7 @@ export type TourProgramCreateRequest = {
   state: TourProgramState;
   days: number;
   nights: number;
-  airline: string;
+  airlineId: string | null; // airline master id, optional
   highlight: string;
   description: string;
   bannerImage: string | null;

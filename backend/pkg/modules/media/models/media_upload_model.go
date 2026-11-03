@@ -11,6 +11,7 @@ const (
 	PurposeTourDOCX    = "tour-docx"
 	PurposeCountryHero = "country-hero"
 	PurposeCityHero    = "city-hero"
+	PurposeAirlineLogo = "airline-logo"
 )
 
 // MediaUploadRequest is built by the handler from multipart/form-data (fields "file", "purpose").

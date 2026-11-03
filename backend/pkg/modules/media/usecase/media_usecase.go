@@ -25,6 +25,8 @@ var purposeRules = map[string]purposeRule{
 	models.PurposeTourDOCX:    {mimes: []string{commons.MimeDOCX}, keyPrefix: "tours/documents/"},
 	models.PurposeCountryHero: {mimes: imageMimes, minWidth: 1600, minHeight: 900, keyPrefix: "countries/heroes/"},
 	models.PurposeCityHero:    {mimes: imageMimes, minWidth: 1600, minHeight: 900, keyPrefix: "cities/heroes/"},
+	// Logos are small and often wide (e.g. 400×100); airline usecase checks this prefix.
+	models.PurposeAirlineLogo: {mimes: imageMimes, minWidth: 120, minHeight: 40, keyPrefix: "airlines/logos/"},
 }
 
 func (r purposeRule) isImage() bool { return r.minWidth > 0 }

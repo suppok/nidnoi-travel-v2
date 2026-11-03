@@ -60,7 +60,11 @@ func NewTourProgramUseCase(
 func normalize(f *models.TourProgramFields) {
 	f.Name = strings.TrimSpace(f.Name)
 	f.WholesaleTourCode = strings.TrimSpace(f.WholesaleTourCode)
-	f.Airline = strings.TrimSpace(f.Airline)
+	if v := strings.TrimSpace(f.AirlineID.String); f.AirlineID.Valid && v != "" {
+		f.AirlineID = null.StringFrom(v)
+	} else {
+		f.AirlineID = null.String{}
+	}
 	f.Highlight = strings.TrimSpace(f.Highlight)
 	f.Description = strings.TrimSpace(f.Description)
 	f.InternalNote = strings.TrimSpace(f.InternalNote)
@@ -91,6 +95,14 @@ func knownStates() []any {
 		known[i] = s
 	}
 	return known
+}
+
+func optionalUUID(value any) error {
+	v, _ := value.(null.String)
+	if !v.Valid {
+		return nil
+	}
+	return validation.Validate(v.String, validation.UUID)
 }
 
 func uniqueIDs(value any) error {
@@ -148,7 +160,7 @@ func (u *tourProgramUseCase) fieldsValidate(f *models.TourProgramFields) error {
 		validation.Field(&f.State, validation.Required, validation.In(knownStates()...)),
 		validation.Field(&f.Days, validation.Required, validation.Min(1), validation.Max(maxDays)),
 		validation.Field(&f.Nights, validation.Min(0), validation.Max(f.Days).Error("must not be more than days")),
-		validation.Field(&f.Airline, validation.RuneLength(0, 100)),
+		validation.Field(&f.AirlineID, validation.By(optionalUUID)),
 		validation.Field(&f.Highlight, validation.RuneLength(0, 500)),
 		validation.Field(&f.Description, validation.RuneLength(0, 20000)),
 		validation.Field(&f.BannerImage, u.mediaURL(bannerPrefix, "")),
@@ -163,7 +175,7 @@ func (u *tourProgramUseCase) fieldsValidate(f *models.TourProgramFields) error {
 	)
 }
 
-// checkReferences verifies the wholesale, countries and cities inside the transaction. Newly
+// checkReferences verifies the wholesale, airline, countries and cities inside the transaction. Newly
 // selected references must be active; ones the tour already had may stay even if deleted since.
 // previous is nil on create.
 func (u *tourProgramUseCase) checkReferences(ctx context.Context, appDB query.AppIDB, f *models.TourProgramFields, previous *domain.TourProgram) error {
@@ -173,6 +185,17 @@ func (u *tourProgramUseCase) checkReferences(ctx context.Context, appDB query.Ap
 	}
 	if ws == nil || (!ws.Status && (previous == nil || previous.WholesaleID != f.WholesaleID)) {
 		return cerrors.FieldError("wholesaleId", "wholesale not found or deleted")
+	}
+
+	if f.AirlineID.Valid {
+		al, err := u.repositoryRegistry.AirlineRepository.WithTx(appDB).FindByID(ctx, f.AirlineID.String)
+		if err != nil {
+			return err
+		}
+		kept := previous != nil && previous.AirlineID.Valid && previous.AirlineID.String == f.AirlineID.String
+		if al == nil || (!al.Status && !kept) {
+			return cerrors.FieldError("airlineId", "airline not found or deleted")
+		}
 	}
 
 	hadCountry, hadCity := map[string]bool{}, map[string]bool{}
@@ -266,7 +289,7 @@ func applyFields(t *domain.TourProgram, f *models.TourProgramFields) {
 	t.State = f.State
 	t.Days = f.Days
 	t.Nights = f.Nights
-	t.Airline = f.Airline
+	t.AirlineID = f.AirlineID
 	t.Highlight = f.Highlight
 	t.Description = f.Description
 	t.BannerImage = f.BannerImage
@@ -277,7 +300,7 @@ func applyFields(t *domain.TourProgram, f *models.TourProgramFields) {
 }
 
 var editableColumns = []string{
-	"ref_id", "name", "wholesale_id", "wholesale_tour_code", "state", "days", "nights", "airline",
+	"ref_id", "name", "wholesale_id", "wholesale_tour_code", "state", "days", "nights", "airline_id",
 	"highlight", "description", "banner_image", "card_image", "pdf_file", "docx_file", "internal_note",
 	"update_date", "update_by",
 }
@@ -305,6 +328,7 @@ func (u *tourProgramUseCase) load(ctx context.Context, appDB query.AppIDB, id st
 // stripRelations clears relation fields before an Update so Bun writes only columns.
 func stripRelations(t *domain.TourProgram) {
 	t.Wholesale = nil
+	t.Airline = nil
 	t.CountryLinks = nil
 	t.CityLinks = nil
 	t.Images = nil

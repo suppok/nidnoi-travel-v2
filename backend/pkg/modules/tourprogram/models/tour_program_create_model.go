@@ -16,7 +16,7 @@ type TourProgramFields struct {
 	State             int         `json:"state"`             // default 10 (draft)
 	Days              int         `json:"days"`
 	Nights            int         `json:"nights"`
-	Airline           string      `json:"airline"`
+	AirlineID         null.String `json:"airlineId" swaggertype:"string"`   // optional airline master id
 	Highlight         string      `json:"highlight"`                        // short summary for tour cards
 	Description       string      `json:"description"`                      // plain text
 	BannerImage       null.String `json:"bannerImage" swaggertype:"string"` // URL from POST /media/upload (tour-banner), detail page hero

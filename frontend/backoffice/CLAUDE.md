@@ -206,7 +206,7 @@ All API calls go through `src/api/client.ts`. Never call `fetch` directly from a
 | `GET /api/v1/<resource>/:id` | get one |
 | `PUT /api/v1/<resource>/status` | soft delete / restore |
 
-Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `users`, `inquiries`. Plus `POST /media/upload` and `POST /site/rebuild`.
+Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `airlines`, `users`, `inquiries`. Plus `POST /media/upload` and `POST /site/rebuild`.
 
 ### Errors
 
@@ -284,7 +284,7 @@ Ant Design is **only** used in this app — never in code that could end up in `
 - `/tour-programs/create` — `TourProgramForm`; on success navigates to the edit page (`#periods`) because periods need the tour id.
 - `/tour-programs/:id/edit` — the same form plus `PeriodTable`. Read-only without `tour-program:update` or while soft-deleted; the periods table shows with `tour-program-period:list`.
 
-Form sections: ข้อมูลโปรแกรม (name, state, days/nights — nights default to days − 1, wholesale, wholesale tour code, airline, Ref ID), ปลายทาง, รายละเอียด (highlight, description — plain text until a rich editor is chosen, internal note), รูปภาพ (banner — hero of the tour detail page; card image — tour cards on the home/listing pages, 4:3; gallery), เอกสารโปรแกรม (PDF — public download; DOCX — staff only). Deleted wholesales/countries/cities stay selectable only when the tour already uses them.
+Form sections: ข้อมูลโปรแกรม (name, state, days/nights — nights default to days − 1, wholesale, wholesale tour code, airline — optional Select from the airline master, with logos, Ref ID), ปลายทาง, รายละเอียด (highlight, description — plain text until a rich editor is chosen, internal note), รูปภาพ (banner — hero of the tour detail page; card image — tour cards on the home/listing pages, 4:3; gallery), เอกสารโปรแกรม (PDF — public download; DOCX — staff only). Deleted wholesales/airlines/countries/cities stay selectable only when the tour already uses them.
 
 States (`src/constants/tourProgramStates.ts`, mirrors `tourprogramstate`): ร่าง 10, เปิดขาย 20, ปิดรับ/เต็ม 30, ยกเลิก 40. Only 20 and 30 appear on the customer site.
 
@@ -342,6 +342,11 @@ Create/edit fields: `slug` (create only), `nameTh`, `nameEn`, `description` (lon
 
 ---
 
+## Airlines
+
+- `/airlines` — list (search name/code, status filter) with a logo column; create/edit modal `features/airline/components/AirlineFormModal.tsx` (code — IATA 2 or ICAO 3 characters, uppercased; name; Ref ID; logo via `ImageUploadField` with `fit="contain"`). Sidebar group "ฝ่ายขาย". `sales` sees it read-only (`airline:list|get`).
+- The tour form picks an airline from this master (`useAirlineOptions`, `airlineId`).
+
 ## Customer Site Rebuild
 
 The customer site is fully static on Cloudflare Workers. **The backend** rebuilds it through a Cloudflare Deploy Hook after content changes, debounced (fires after 3 minutes without new changes, at most 15 minutes after the first). A build then takes a few minutes.
@@ -360,10 +365,10 @@ All media is uploaded through the **backend**, which validates it, re-encodes it
 
 antd `<Upload>` with a `customRequest` that goes through `src/api/client.ts` (`POST /media/upload`, `FormData`):
 
-- `name` = `"file"`, plus `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero`) — `src/api/media.ts`.
+- `name` = `"file"`, plus `purpose` (`tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero | airline-logo`) — `src/api/media.ts`.
 - `accept` = `"image/jpeg,image/png,image/webp"` for images (no SVG, no GIF), PDF / DOCX for the document purposes.
 - Components in `features/tour-program/components/`: `ImageUploadField` (one image), `GalleryField` (multi-upload, reorder, max 30), `DocumentUploadField` (one PDF/DOCX). Each is a Form control whose value is the URL.
-- `beforeUpload` = client-side guard (≤ 10 MB, accepted types). The backend re-checks size, type (by content) and minimum dimensions (banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900) and answers `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE`, `IMAGE_TOO_SMALL` or `STORAGE_UNAVAILABLE`.
+- `beforeUpload` = client-side guard (≤ 10 MB, accepted types). The backend re-checks size, type (by content) and minimum dimensions (banner ≥ 1200×630, card ≥ 800×600, gallery ≥ 800×600, hero ≥ 1600×900, airline logo ≥ 120×40) and answers `MEDIA_TYPE_NOT_ALLOWED`, `MEDIA_TOO_LARGE`, `IMAGE_TOO_SMALL` or `STORAGE_UNAVAILABLE`.
 - `fetch` has no upload progress events, so fields show an uploading state rather than a percentage.
 - The mock (`src/api/mock/media.ts`) returns `blob:` URLs that stop working after a reload.
 

@@ -13,6 +13,7 @@ export const ACCEPT: Record<MediaPurpose, string> = {
   'tour-gallery': 'image/jpeg,image/png,image/webp',
   'country-hero': 'image/jpeg,image/png,image/webp',
   'city-hero': 'image/jpeg,image/png,image/webp',
+  'airline-logo': 'image/jpeg,image/png,image/webp',
   'tour-pdf': 'application/pdf,.pdf',
   'tour-docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx',
 };
@@ -24,6 +25,7 @@ export const MIN_SIZE: Partial<Record<MediaPurpose, string>> = {
   'tour-gallery': '800×600',
   'country-hero': '1600×900',
   'city-hero': '1600×900',
+  'airline-logo': '120×40',
 };
 
 // Client-side guard only; the backend re-checks type (by content), size and dimensions.

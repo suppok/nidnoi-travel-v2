@@ -1,4 +1,4 @@
-import { CompassOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { CompassOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -23,6 +23,7 @@ const NAV: NavGroup[] = [
       { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
       { path: '/taxonomy/cities', label: 'เมือง', icon: <EnvironmentOutlined />, permission: Permissions.CityList },
       { path: '/wholesales', label: 'โฮลเซลล์', icon: <ShopOutlined />, permission: Permissions.WholesaleList },
+      { path: '/airlines', label: 'สายการบิน', icon: <SendOutlined />, permission: Permissions.AirlineList },
     ],
   },
   {
