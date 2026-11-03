@@ -26,6 +26,9 @@ func NewCityAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, cityUseC
 func (h *CityAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
 	r := h.router
 
+	// --- Public (customer site) — no auth. Registered BEFORE "/:id" routes. ---
+	r.Get("/cities/public", h.CityPublicList)
+
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Post("/cities", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.CityCreate), h.CityCreate)
 	r.Put("/cities", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.CityUpdate), h.CityUpdate)
@@ -125,5 +128,19 @@ func (h *CityAPIHandler) CityUpdateStatus(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.cityUseCase.UpdateStatus(ctx, request)
+	})
+}
+
+// CityPublicList godoc
+// @Summary     List public cities with tour stats (customer site build)
+// @Description Every active city in display order with its public tour count and lowest upcoming
+// @Description price. The site skips landing pages whose tourCount is 0. No auth.
+// @Tags        public
+// @Produce     json
+// @Success     200 {object} models.CityPublicListResponse
+// @Router      /cities/public [get]
+func (h *CityAPIHandler) CityPublicList(c *fiber.Ctx) error {
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
+		return h.cityUseCase.PublicList(ctx)
 	})
 }

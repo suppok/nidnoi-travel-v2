@@ -44,3 +44,4 @@ func In(values ...any) ozzo.InRule                  { return ozzo.In(values...) 
 func Each(rules ...Rule) ozzo.EachRule              { return ozzo.Each(rules...) }
 func By(f ozzo.RuleFunc) Rule                       { return ozzo.By(f) }
 func Match(re *regexp.Regexp) ozzo.MatchRule        { return ozzo.Match(re) }
+func Date(layout string) ozzo.DateRule              { return ozzo.Date(layout) }

@@ -26,6 +26,9 @@ func NewCountryAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, count
 func (h *CountryAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
 	r := h.router
 
+	// --- Public (customer site) — no auth. Registered BEFORE "/:id" routes. ---
+	r.Get("/countries/public", h.CountryPublicList)
+
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Post("/countries", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.CountryCreate), h.CountryCreate)
 	r.Put("/countries", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.CountryUpdate), h.CountryUpdate)
@@ -123,5 +126,19 @@ func (h *CountryAPIHandler) CountryUpdateStatus(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.countryUseCase.UpdateStatus(ctx, request)
+	})
+}
+
+// CountryPublicList godoc
+// @Summary     List public countries with tour stats (customer site build)
+// @Description Every active country in display order with its public tour count and lowest upcoming
+// @Description price. The site skips landing pages whose tourCount is 0. No auth.
+// @Tags        public
+// @Produce     json
+// @Success     200 {object} models.CountryPublicListResponse
+// @Router      /countries/public [get]
+func (h *CountryAPIHandler) CountryPublicList(c *fiber.Ctx) error {
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
+		return h.countryUseCase.PublicList(ctx)
 	})
 }

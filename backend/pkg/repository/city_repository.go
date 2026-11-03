@@ -21,6 +21,8 @@ type CityRepository interface {
 	List(ctx context.Context, criteria repomodels.CityListCriteria) ([]domain.City, int, error)
 	// FindByIDs returns the rows among ids that exist, in no particular order.
 	FindByIDs(ctx context.Context, ids []string) ([]domain.City, error)
+	// ListPublic returns every active city of an active country, with its Country, in display order.
+	ListPublic(ctx context.Context) ([]domain.City, error)
 }
 
 type cityRepository struct{ query query.DB[domain.City] }
@@ -81,5 +83,16 @@ func (r *cityRepository) FindByIDs(ctx context.Context, ids []string) ([]domain.
 		return items, nil
 	}
 	err := r.query.NewSelect().Where("ci.id IN (?)", bun.In(ids)).Scan(ctx, &items)
+	return items, err
+}
+
+func (r *cityRepository) ListPublic(ctx context.Context) ([]domain.City, error) {
+	var items []domain.City
+	err := r.query.NewSelect().
+		Relation("Country").
+		Where("ci.status = TRUE").
+		Where("country.status = TRUE").
+		OrderExpr("ci.sort_order ASC, ci.name_th ASC, ci.id ASC").
+		Scan(ctx, &items)
 	return items, err
 }

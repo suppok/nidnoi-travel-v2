@@ -6,5 +6,6 @@ import { USE_MOCK_DATA } from './mock-mode';
 /** Returns null in mock mode so the island keeps its build-time rows. */
 export async function fetchPublicPeriods(code: string, signal?: AbortSignal): Promise<TourPeriodPublic[] | null> {
   if (USE_MOCK_DATA) return null;
-  return apiGet<TourPeriodPublic[]>(`/tour-programs/public/${encodeURIComponent(code)}/periods`, signal);
+  const res = await apiGet<{ items: TourPeriodPublic[] }>(`/tour-programs/public/${encodeURIComponent(code)}/periods`, signal);
+  return res.items;
 }

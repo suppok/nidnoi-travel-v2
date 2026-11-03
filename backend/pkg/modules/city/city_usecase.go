@@ -12,4 +12,7 @@ type CityUseCase interface {
 	Create(ctx context.Context, request *models.CityCreateRequest) (*models.CityCreateResponse, error)
 	Update(ctx context.Context, request *models.CityUpdateRequest) (*models.CityUpdateResponse, error)
 	UpdateStatus(ctx context.Context, request *models.CityUpdateStatusRequest) (*models.CityUpdateStatusResponse, error)
+
+	// Public (customer site)
+	PublicList(ctx context.Context) (*models.CityPublicListResponse, error)
 }

@@ -430,13 +430,13 @@ Airline master (`pkg/modules/airline`, table `airline`). Seeded (`migrations/*_s
 - Newly selected wholesale / airline / countries / cities must be active; ones the tour already had may stay after they were soft-deleted (same rule on create and update).
 - Media fields accept only URLs under `R2_PUBLIC_URL` with the purpose's key prefix (`tours/banners/`, `tours/cards/`, `tours/gallery/`, `tours/documents/…{.pdf|.docx}`) — i.e. files uploaded through `/media/upload`.
 - Endpoints follow the route conventions (`/tour-programs`, `/list` with keyword/country/city/wholesale/state/status, max `pageSize` 100). Errors: `REF_ID_TAKEN` (409).
-- Public endpoints (`/tour-programs/public…`) are **not built yet**.
+- Public endpoints: see "Public endpoints (customer site)".
 
 ## Periods, prices and seats
 
 `tour_program_period` holds each departure's dates, price and seat availability. This is the data that changes most often (many times a day); tour content rarely changes after it is posted.
 
-- **Starting price** = the lowest price among a tour's active periods. It is baked into the customer site's static HTML (tour cards, JSON-LD), so a change requires a site rebuild.
+- **Starting price** = the lowest price among a tour's active **upcoming** periods (`status = true`, `start_date` after today in Thailand — `utils.TodayInThailand`). Sold-out periods still count. It is baked into the customer site's static HTML (tour cards, JSON-LD), so a change requires a site rebuild.
 - **Per-period price and seats** are served live to the customer site's period island via `GET /api/v1/tour-programs/public/:code/periods`: small payload (dates, price, seats left, sold-out flag), `Cache-Control: public, max-age=30`. Seat changes never trigger a rebuild.
 - Booking is inquiry-based (no online seat reservation), so up to 30 seconds of staleness is acceptable.
 - Staff edit periods through the `tour-program-periods` resource (`pkg/modules/tourprogramperiod`): `POST` create, `PUT` update, `POST /list` (`{tourProgramId, status?}`, every period of one tour by date, no paging), `PUT /status`. Codes `tour-program-period:create|update|list|status`. The update use case compares the old and new row (and the tour's starting price) to decide whether to enqueue a rebuild — see the rebuild table.
@@ -497,14 +497,22 @@ The backend is the only holder of R2 credentials. Upload flow: backoffice → `P
 
 All unauthenticated. All filter `status = true` in the repository. All return 404 for a missing **or** soft-deleted record — the same response, so deleted records never leak.
 
-| Endpoint | Caller |
-|---|---|
-| `GET /tour-programs/public?country=&city=&dateFrom=&dateTo=&page=&pageSize=` | site build |
-| `GET /tour-programs/public/:code` | site build |
-| `GET /tour-programs/public/:code/periods` | browser (period island), cached 30 s |
-| `GET /countries/public`, `GET /countries/public/:slug`, `GET /countries/public/:slug/cities` | site build |
-| `GET /cities/public`, `GET /cities/public/:slug` | site build |
-| `POST /inquiries/public` | browser (inquiry form), rate-limited |
+| Endpoint | Caller | Built |
+|---|---|---|
+| `GET /tour-programs/public?country=&city=&dateFrom=&dateTo=&page=&pageSize=` → `{items, total, page, pageSize}` (ordered by code, max `pageSize` 100) | site build | yes |
+| `GET /tour-programs/public/:code` → tour + `images` + `periods` | site build | yes |
+| `GET /tour-programs/public/:code/periods` → `{items}` | browser (period table), `Cache-Control: public, max-age=30` on 200, `no-store` otherwise | yes |
+| `GET /countries/public`, `GET /cities/public` → `{items}`: every active row with `tourCount` and `startingPrice` (cities only when their country is active) | site build | yes |
+| `GET /countries/public/:slug`, `GET /countries/public/:slug/cities`, `GET /cities/public/:slug` | site build | no — the site uses the lists |
+| `POST /inquiries/public` | browser (inquiry form), rate-limited | no |
+
+Visibility rules (repository: `wherePublic`, `ListPublic…`; DTOs: `pkg/modules/tourprogram/models/tour_program_public_item_model.go`):
+- A tour is public when `status = true` and `state` is in `tourprogramstate.Public` (selling, closed). Periods: `status = true` and departing after today (Thailand). Every period of a closed tour is `soldOut`.
+- Soft-deleted countries/cities linked to a tour are left out of its public `countries` / `cities`.
+- `:code` is matched exactly (case-sensitive); anything outside `^[A-Za-z0-9]{1,32}$` is 404 without a query.
+- Public DTOs never carry wholesale, `docxFile`, `internalNote`, `state`, `status` or audit fields.
+- `tourCount` / `startingPrice` per country/city come from one aggregate query each (`PublicCountryStats` / `PublicCityStats`).
+- Because "upcoming" moves with the calendar, starting prices can change without any mutation — the rebuild trigger needs a daily rebuild as well (see "Customer site rebuild").
 
 - Country/city detail returns 404 when the slug has zero active tours (empty landing pages hurt SEO).
 - Build-time callers should need few requests. If site builds slow down, add a bulk endpoint rather than N per-tour calls.
@@ -714,4 +722,4 @@ When a field is added, removed or renamed, propagate it through every layer:
 - **Legacy tour codes** — open until the legacy data is inspected:
   - *Casing:* new codes are `NIDN` + 6 digits (`NIDN000001`), but the docs show legacy codes lowercase (`/tour/nidn261690/`). URL paths are case-sensitive, so decide whether imported codes keep their legacy casing, are normalized, or the customer site lowercases codes in URLs (which would need 301s from the other casing).
   - *Number range:* `tour_code_seq` starts at 1. If staff create tours before the import, a new code could collide with a legacy one (the unique index would then fail the import). Decide whether to `setval` past the legacy range now.
-- **Not built yet:** the deploy-hook revalidator (use cases carry `TODO(revalidator)` where they must enqueue), the media orphan sweeper, and the public tour/period endpoints.
+- **Not built yet:** the deploy-hook revalidator (use cases carry `TODO(revalidator)` where they must enqueue), the media orphan sweeper, `POST /inquiries/public` and the public country/city detail endpoints.
