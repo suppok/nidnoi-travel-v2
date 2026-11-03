@@ -475,6 +475,8 @@ When to enqueue:
 | Country/city update or status change | only when it has public tours (`CountPublicByCountry` / `CountPublicByCity`); a city moved to another country rebuilds both landings |
 | Media upload not yet referenced by a record | no |
 
+**Build history:** every trigger the backend makes (and every skip) is a row in `site_build` (`trigger` manual/auto/daily, `outcome` triggered/failed/skipped, paths, attempts, error, `create_by` = the user for manual builds, the nil UUID otherwise), written through `revalidation.BuildLog` and never failing the trigger. Builds from git pushes are not in it, and `outcome` is whether Cloudflare accepted the hook, not the build result. Read with `POST /api/v1/site-builds/list` (`{trigger?, page, pageSize}`, newest first, `site-build:list` — admins only), shown on the backoffice page `/site-builds`.
+
 Manual trigger: `POST /api/v1/site/rebuild` (`pkg/modules/site`, `apicode.SiteRebuild`, code `site:rebuild` — admins via `*`) fires immediately, bypasses the debounce and clears the pending batch (re-queued if the trigger fails).
 
 ---
@@ -723,5 +725,5 @@ When a field is added, removed or renamed, propagate it through every layer:
 - **Legacy tour codes** — open until the legacy data is inspected:
   - *Casing:* new codes are `NIDN` + 6 digits (`NIDN000001`), but the docs show legacy codes lowercase (`/tour/nidn261690/`). URL paths are case-sensitive, so decide whether imported codes keep their legacy casing, are normalized, or the customer site lowercases codes in URLs (which would need 301s from the other casing).
   - *Number range:* `tour_code_seq` starts at 1. If staff create tours before the import, a new code could collide with a legacy one (the unique index would then fail the import). Decide whether to `setval` past the legacy range now.
-- **Not built yet:** the media orphan sweeper, `POST /inquiries/public`, the public country/city detail endpoints, and a backoffice "rebuild site" button for `POST /site/rebuild`.
+- **Not built yet:** the media orphan sweeper, `POST /inquiries/public` and the public country/city detail endpoints.
 - **`TAXONOMY_IN_USE`** is documented but not enforced yet: a country/city with public tours can still be soft-deleted (the rebuild trigger handles it, but the landing page and tour links disappear).

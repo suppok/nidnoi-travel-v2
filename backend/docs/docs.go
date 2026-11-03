@@ -1025,6 +1025,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/site-builds/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Manual (\"rebuild now\"), auto (debounced content edits) and daily builds, newest first.\nBuilds from git pushes are not included. Outcome is whether Cloudflare accepted the\ntrigger, not whether the build itself succeeded.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "site"
+                ],
+                "summary": "List customer site builds triggered by the backend",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_site_models.SiteBuildListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_site_models.SiteBuildListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/site/rebuild": {
             "post": {
                 "security": [
@@ -3154,6 +3200,101 @@ const docTemplate = `{
                 "width": {
                     "description": "0 for documents",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_site_models.SiteBuildItem": {
+            "type": "object",
+            "properties": {
+                "attempts": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "outcome": {
+                    "type": "string",
+                    "enum": [
+                        "triggered",
+                        "failed",
+                        "skipped"
+                    ]
+                },
+                "paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "trigger": {
+                    "type": "string",
+                    "enum": [
+                        "manual",
+                        "auto",
+                        "daily"
+                    ]
+                },
+                "triggeredBy": {
+                    "description": "TriggeredBy is the user who pressed \"rebuild\"; null for system builds (auto, daily).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_site_models.SiteBuildUser"
+                        }
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_site_models.SiteBuildListRequest": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 100",
+                    "type": "integer"
+                },
+                "trigger": {
+                    "description": "manual | auto | daily; \"\" = all",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_site_models.SiteBuildListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_site_models.SiteBuildItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_site_models.SiteBuildUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

@@ -25,6 +25,28 @@ func NewSiteAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, siteUseC
 
 func (h *SiteAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
 	h.router.Post("/site/rebuild", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.SiteRebuild), h.SiteRebuild)
+	h.router.Post("/site-builds/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.SiteBuildList), h.SiteBuildList)
+}
+
+// SiteBuildList godoc
+// @Summary     List customer site builds triggered by the backend
+// @Description Manual ("rebuild now"), auto (debounced content edits) and daily builds, newest first.
+// @Description Builds from git pushes are not included. Outcome is whether Cloudflare accepted the
+// @Description trigger, not whether the build itself succeeded.
+// @Tags        site
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.SiteBuildListRequest true "Filter"
+// @Success     200 {object} models.SiteBuildListResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Router      /site-builds/list [post]
+func (h *SiteAPIHandler) SiteBuildList(c *fiber.Ctx) error {
+	request := &models.SiteBuildListRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.siteUseCase.BuildList(ctx, request)
+	})
 }
 
 // SiteRebuild godoc

@@ -31,6 +31,7 @@ export const Permissions = {
   AirlineStatus: 'airline:status',
   MediaUpload: 'media:upload',
   SiteRebuild: 'site:rebuild',
+  SiteBuildList: 'site-build:list',
   UserCreate: 'user:create',
   UserUpdate: 'user:update',
   UserList: 'user:list',

@@ -14,7 +14,7 @@ import (
 
 // Rebuild triggers a customer-site build now, bypassing the debounce (backoffice "rebuild" button).
 func (u *siteUseCase) Rebuild(ctx context.Context, request *models.SiteRebuildRequest) (*models.SiteRebuildResponse, error) {
-	err := u.shareRegistry.ServiceRegistry.Revalidator.RebuildNow(ctx)
+	err := u.shareRegistry.ServiceRegistry.Revalidator.RebuildNow(ctx, request.UserRequestInfo.UserID)
 	if revalidation.IsNotConfigured(err) {
 		return nil, cerrors.New(http.StatusServiceUnavailable, errorcode.SiteRebuildUnavailable)
 	}

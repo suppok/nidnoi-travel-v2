@@ -684,6 +684,70 @@ definitions:
         description: 0 for documents
         type: integer
     type: object
+  backend_pkg_modules_site_models.SiteBuildItem:
+    properties:
+      attempts:
+        type: integer
+      createDate:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      outcome:
+        enum:
+        - triggered
+        - failed
+        - skipped
+        type: string
+      paths:
+        items:
+          type: string
+        type: array
+      trigger:
+        enum:
+        - manual
+        - auto
+        - daily
+        type: string
+      triggeredBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_site_models.SiteBuildUser'
+        description: TriggeredBy is the user who pressed "rebuild"; null for system
+          builds (auto, daily).
+    type: object
+  backend_pkg_modules_site_models.SiteBuildListRequest:
+    properties:
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      trigger:
+        description: manual | auto | daily; "" = all
+        type: string
+    type: object
+  backend_pkg_modules_site_models.SiteBuildListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_site_models.SiteBuildItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_site_models.SiteBuildUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   backend_pkg_modules_site_models.SiteRebuildResponse:
     properties:
       triggered:
@@ -2565,6 +2629,38 @@ paths:
       summary: Upload an image or document to R2
       tags:
       - media
+  /site-builds/list:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Manual ("rebuild now"), auto (debounced content edits) and daily builds, newest first.
+        Builds from git pushes are not included. Outcome is whether Cloudflare accepted the
+        trigger, not whether the build itself succeeded.
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_site_models.SiteBuildListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_site_models.SiteBuildListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List customer site builds triggered by the backend
+      tags:
+      - site
   /site/rebuild:
     post:
       description: |-

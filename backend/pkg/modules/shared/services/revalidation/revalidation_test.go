@@ -9,8 +9,26 @@ import (
 
 	"go.uber.org/zap"
 
+	"backend/pkg/constants/sitebuild"
 	"backend/pkg/core/config"
 )
+
+type fakeLog struct {
+	mu     sync.Mutex
+	builds []Build
+}
+
+func (l *fakeLog) Record(b Build) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.builds = append(l.builds, b)
+}
+
+func (l *fakeLog) all() []Build {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return append([]Build(nil), l.builds...)
+}
 
 type fakeHook struct {
 	mu         sync.Mutex
@@ -39,7 +57,7 @@ func (f *fakeHook) count() int {
 
 func start(t *testing.T, hook *fakeHook, quiet, maxWait time.Duration) (*deployHookRevalidator, context.CancelFunc, chan struct{}) {
 	t.Helper()
-	r := New(hook, zap.NewNop(), config.RevalidationConfig{Quiet: quiet, MaxWait: maxWait}).(*deployHookRevalidator)
+	r := New(hook, &fakeLog{}, zap.NewNop(), config.RevalidationConfig{Quiet: quiet, MaxWait: maxWait}).(*deployHookRevalidator)
 	r.retryDelays = []time.Duration{5 * time.Millisecond, 5 * time.Millisecond}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
@@ -62,6 +80,11 @@ func TestDebounceCoalescesBurst(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 	if got := hook.count(); got != 1 {
 		t.Fatalf("calls = %d, want 1", got)
+	}
+	builds := r.builds.(*fakeLog).all()
+	if len(builds) != 1 || builds[0].Trigger != sitebuild.TriggerAuto || builds[0].Outcome != sitebuild.OutcomeTriggered ||
+		len(builds[0].Paths) != 1 || builds[0].Paths[0] != "/a/" {
+		t.Fatalf("recorded %+v, want one auto/triggered build for /a/", builds)
 	}
 }
 
@@ -90,6 +113,22 @@ func TestRetriesThenSucceeds(t *testing.T) {
 	if got := hook.count(); got != 3 {
 		t.Fatalf("calls = %d, want 3 (2 failures + success)", got)
 	}
+	if b := r.builds.(*fakeLog).all(); len(b) != 1 || b[0].Attempts != 3 || b[0].Outcome != sitebuild.OutcomeTriggered {
+		t.Fatalf("recorded %+v, want one triggered build after 3 attempts", b)
+	}
+}
+
+func TestGivesUpAndRecordsFailure(t *testing.T) {
+	hook := &fakeHook{configured: true, failFirst: 99}
+	r, cancel, done := start(t, hook, 10*time.Millisecond, time.Second)
+	defer func() { cancel(); <-done }()
+
+	r.Enqueue(context.Background(), []string{"/a/"})
+	time.Sleep(120 * time.Millisecond)
+	b := r.builds.(*fakeLog).all()
+	if len(b) != 1 || b[0].Outcome != sitebuild.OutcomeFailed || b[0].Attempts != 3 || b[0].Error == "" {
+		t.Fatalf("recorded %+v, want one failed build after 3 attempts with an error", b)
+	}
 }
 
 func TestShutdownFlushesPending(t *testing.T) {
@@ -113,27 +152,47 @@ func TestNotConfiguredSkips(t *testing.T) {
 	if hook.count() != 0 {
 		t.Fatalf("triggered without a configured hook")
 	}
-	if err := r.RebuildNow(context.Background()); !IsNotConfigured(err) {
+	if err := r.RebuildNow(context.Background(), "user-1"); !IsNotConfigured(err) {
 		t.Fatalf("RebuildNow err = %v, want ErrNotConfigured", err)
+	}
+	b := r.builds.(*fakeLog).all()
+	if len(b) != 2 || b[0].Outcome != sitebuild.OutcomeSkipped ||
+		b[1].Trigger != sitebuild.TriggerManual || b[1].Outcome != sitebuild.OutcomeSkipped || b[1].ActorID != "user-1" {
+		t.Fatalf("recorded %+v, want an auto skip then a manual skip by user-1", b)
 	}
 }
 
 func TestRebuildNowClearsPendingAndRequeuesOnFailure(t *testing.T) {
 	hook := &fakeHook{configured: true, failFirst: 1}
-	r := New(hook, zap.NewNop(), config.RevalidationConfig{Quiet: time.Hour, MaxWait: time.Hour}).(*deployHookRevalidator)
+	builds := &fakeLog{}
+	r := New(hook, builds, zap.NewNop(), config.RevalidationConfig{Quiet: time.Hour, MaxWait: time.Hour}).(*deployHookRevalidator)
 
 	r.Enqueue(context.Background(), []string{"/a/"})
-	if err := r.RebuildNow(context.Background()); err == nil {
+	if err := r.RebuildNow(context.Background(), "user-1"); err == nil {
 		t.Fatal("want the first trigger to fail")
 	}
 	if _, pending := r.due(); !pending {
 		t.Fatal("failed manual rebuild must keep the batch pending")
 	}
-	if err := r.RebuildNow(context.Background()); err != nil {
+	if err := r.RebuildNow(context.Background(), "user-1"); err != nil {
 		t.Fatalf("second RebuildNow: %v", err)
 	}
 	if _, pending := r.due(); pending {
 		t.Fatal("successful manual rebuild must clear the batch")
+	}
+	b := builds.all()
+	if len(b) != 2 || b[0].Outcome != sitebuild.OutcomeFailed || b[1].Outcome != sitebuild.OutcomeTriggered ||
+		b[1].Trigger != sitebuild.TriggerManual || b[1].ActorID != "user-1" || len(b[1].Paths) != 1 {
+		t.Fatalf("recorded %+v, want manual failed then manual triggered (covering /a/) by user-1", b)
+	}
+}
+
+func TestTriggerOf(t *testing.T) {
+	if tr, p := triggerOf([]string{DailyPath}); tr != sitebuild.TriggerDaily || len(p) != 0 {
+		t.Errorf("daily only: %s %v", tr, p)
+	}
+	if tr, p := triggerOf([]string{"/", DailyPath, "/tour/X/"}); tr != sitebuild.TriggerAuto || len(p) != 2 {
+		t.Errorf("mixed: %s %v, want auto without the daily marker", tr, p)
 	}
 }
 
