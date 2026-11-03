@@ -1,0 +1,101 @@
+---
+// Live departures for /tour/<code>/: dates, per-period prices and seats.
+// Rendered at build time (bots and no-JS visitors see real data). A small inline script handles selection
+// and refreshes the rows once from the periods endpoint; on error the build-time rows stay.
+// No framework: the markup comes from lib/period-view.ts on both sides.
+import {
+  detailsHtml,
+  firstOpenId,
+  legendText,
+  lineHref,
+  priceHtml,
+  primaryPhone,
+  rowsHtml,
+} from '../../lib/period-view';
+import type { TourPeriodPublic } from '../../types/tour-program';
+import Icon from '../ui/Icon.astro';
+import './PeriodTable.css';
+
+type Props = { code: string; tourName: string; periods: TourPeriodPublic[] };
+const { code, tourName, periods } = Astro.props;
+
+const selectedId = firstOpenId(periods);
+const selected = periods.find((p) => p.id === selectedId) ?? null;
+const empty = periods.length === 0;
+const json = JSON.stringify(periods).replace(/</g, '\\u003c');
+---
+
+<div class="period-card" data-period-table data-code={code} data-name={tourName}>
+  <p class="period-empty" data-empty hidden={!empty}>ยังไม่มีรอบเดินทางที่เปิดจอง ทัก LINE เพื่อสอบถามรอบถัดไป</p>
+
+  <div data-body hidden={empty}>
+    <div class="period-price" data-price set:html={priceHtml(selected)} />
+    <fieldset class="period-list">
+      <legend data-legend>{legendText(periods.length)}</legend>
+      <ul data-rows set:html={rowsHtml(periods, selectedId)} />
+    </fieldset>
+    <div data-details set:html={detailsHtml(selected)} />
+  </div>
+
+  <div class="period-cta">
+    <a class="btn btn-line" data-line href={lineHref(code, tourName, selected)} target="_blank" rel="noopener">
+      <Icon name="line" size={16} /> สอบถาม / จองผ่าน LINE
+    </a>
+    <a class="btn btn-ghost" href={`tel:${primaryPhone.tel}`}>โทร {primaryPhone.display}</a>
+  </div>
+
+  <script type="application/json" data-periods set:html={json} />
+</div>
+
+<script>
+  import { fetchPublicPeriods } from '../../lib/api/periods';
+  import { detailsHtml, firstOpenId, legendText, lineHref, priceHtml, rowsHtml } from '../../lib/period-view';
+  import type { TourPeriodPublic } from '../../types/tour-program';
+
+  function mount(root: HTMLElement) {
+    const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const code = root.dataset.code!;
+    const name = root.dataset.name!;
+    let periods = JSON.parse($('[data-periods]').textContent || '[]') as TourPeriodPublic[];
+    let selectedId = firstOpenId(periods);
+
+    // Selection only touches the summary, so the clicked row keeps focus.
+    function showSelected() {
+      const p = periods.find((x) => x.id === selectedId) ?? null;
+      root.querySelectorAll<HTMLButtonElement>('.period-row').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.id === selectedId));
+      });
+      $('[data-price]').innerHTML = priceHtml(p);
+      $('[data-details]').innerHTML = detailsHtml(p);
+      $<HTMLAnchorElement>('[data-line]').href = lineHref(code, name, p);
+    }
+
+    function renderAll() {
+      $('[data-empty]').hidden = periods.length > 0;
+      $('[data-body]').hidden = periods.length === 0;
+      $('[data-legend]').textContent = legendText(periods.length);
+      $('[data-rows]').innerHTML = rowsHtml(periods, selectedId);
+      showSelected();
+    }
+
+    $('[data-rows]').addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest<HTMLButtonElement>('button.period-row');
+      if (!btn || btn.disabled) return;
+      selectedId = btn.dataset.id ?? null;
+      showSelected();
+    });
+
+    // One refresh per page view, no polling. Errors keep the build-time rows silently.
+    fetchPublicPeriods(code)
+      .then((fresh) => {
+        if (!fresh) return;
+        periods = fresh;
+        // Keep the visitor's choice when it still exists and is bookable.
+        if (!fresh.some((p) => p.id === selectedId && !p.soldOut)) selectedId = firstOpenId(fresh);
+        renderAll();
+      })
+      .catch(() => {});
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-period-table]').forEach(mount);
+</script>

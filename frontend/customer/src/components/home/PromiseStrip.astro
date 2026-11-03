@@ -1,0 +1,36 @@
+---
+import { promises } from '../../config/site';
+import Icon, { type IconName } from '../ui/Icon.astro';
+---
+
+<section class="section-tight bg-primary-tint" aria-label="ทำไมต้องเที่ยวกับเรา">
+  <div class="container-site">
+    <ul class="grid gap-6 md:grid-cols-3">
+      {
+        promises.map((p) => (
+          <li class="promise-card flex items-start gap-5 rounded-lg border border-line-soft bg-white px-7 py-8">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-primary-tint text-primary-deep">
+              <Icon name={p.icon as IconName} size={22} />
+            </span>
+            <div>
+              <h3 class="mb-2 font-display text-xl leading-tight font-semibold text-ink">{p.title}</h3>
+              <p class="m-0 text-[15px] leading-relaxed text-ink-soft">{p.text}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .promise-card {
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .promise-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+</style>

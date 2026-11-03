@@ -1,13 +1,125 @@
 ---
+import { contact, socialLinks, tourLicenseNo } from '../../config/site';
+import { listPublicCountries } from '../../lib/api/taxonomy';
 import { SITE_NAME } from '../../lib/seo';
+import Icon from '../ui/Icon.astro';
+import Logo from './Logo.astro';
 
-const year = new Date().getFullYear();
+const countries = (await listPublicCountries()).filter((c) => c.tourCount > 0);
+// Buddhist year, matching the rest of the site.
+const year = new Date().getFullYear() + 543;
 ---
 
-<footer class="mt-16 bg-primary-900 text-primary-100">
-  <div class="mx-auto max-w-6xl px-4 py-10 text-sm">
-    <p class="text-base font-semibold text-white">{SITE_NAME}</p>
-    <p class="mt-1">ทัวร์ต่างประเทศคุณภาพ ดูแลโดยทีมงานมืออาชีพ</p>
-    <p class="mt-6 text-primary-100/70">© {year} {SITE_NAME}</p>
+<footer id="contact" class="bg-ink pt-20 pb-8 text-white">
+  <div class="container-site">
+    <div class="footer-grid mb-16 grid gap-12">
+      <div>
+        <div class="inline-block rounded-md bg-white px-3 py-2"><Logo height={56} /></div>
+        <p class="mt-6 max-w-xs text-[15px] text-white/75">
+          บริษัทนำเที่ยวต่างประเทศ รวมโปรแกรมทัวร์คุณภาพ ราคาชัดเจน เช็กวันเดินทางและที่นั่งว่างได้ทันที
+        </p>
+        {tourLicenseNo && <p class="mt-3 text-sm text-white/60">ใบอนุญาตประกอบธุรกิจนำเที่ยวเลขที่ {tourLicenseNo}</p>}
+        {
+          socialLinks.length > 0 && (
+            <ul class="mt-7 flex gap-2.5">
+              {socialLinks.map((s) => (
+                <li>
+                  <a href={s.url} aria-label={s.label} rel="noopener" target="_blank" class="footer-social">
+                    <Icon name={s.name} size={15} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+
+      <div>
+        <h2 class="footer-title">ทัวร์ต่างประเทศ</h2>
+        <ul class="footer-links grid grid-cols-2 gap-x-6 sm:grid-cols-1">
+          {
+            countries.map((c) => (
+              <li>
+                <a href={`/tours/${c.slug}/`}>ทัวร์{c.nameTh}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="footer-title">ติดต่อเรา</h2>
+        <ul class="flex flex-col gap-3.5 text-[15px] text-white/85">
+          <li class="flex items-start gap-2.5">
+            <Icon name="phone" size={15} class="mt-1.5" />
+            <div class="flex flex-col">
+              {contact.phones.map((p) => <a href={`tel:${p.tel}`} class="hover:text-primary-light">{p.display}</a>)}
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <Icon name="line" size={15} class="mt-1.5" />
+            <a href={contact.lineUrl} rel="noopener" target="_blank" class="hover:text-primary-light">{contact.lineId}</a>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <Icon name="mail" size={15} class="mt-1.5" />
+            <a href={`mailto:${contact.email}`} class="break-all hover:text-primary-light">{contact.email}</a>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <Icon name="clock" size={15} class="mt-1.5" />
+            <div>{contact.hours.map((h) => <div>{h}</div>)}</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-white/10 pt-6 text-sm text-white/60">© {year} {SITE_NAME} · สงวนลิขสิทธิ์</div>
   </div>
 </footer>
+
+<style>
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (min-width: 1000px) {
+    .footer-grid {
+      grid-template-columns: 1.5fr 1fr 1.1fr;
+    }
+  }
+  .footer-title {
+    margin-bottom: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-primary-light);
+  }
+  .footer-links a {
+    display: inline-block;
+    padding-block: 6px;
+    font-size: 15px;
+    color: rgb(255 255 255 / 0.8);
+    transition: color 0.2s;
+  }
+  .footer-links a:hover {
+    color: var(--color-primary-light);
+  }
+  .footer-social {
+    display: flex;
+    height: 40px;
+    width: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    background: rgb(255 255 255 / 0.08);
+    transition: background-color 0.2s;
+  }
+  .footer-social:hover {
+    background: var(--color-primary-deep);
+  }
+</style>

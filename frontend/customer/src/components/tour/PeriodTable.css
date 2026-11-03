@@ -1,0 +1,186 @@
+/* Styles for PeriodTable.astro (also applied to the HTML its script re-renders, so not scoped). */
+.period-card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.period-price-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.period-price-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.period-price-value .amount {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-deep);
+}
+.period-price-value .unit {
+  font-size: 17px;
+  color: var(--color-ink-soft);
+}
+.period-price-before {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-ink-muted);
+  text-decoration: line-through;
+}
+
+.period-list {
+  margin: 22px 0 0;
+  padding: 22px 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-line);
+}
+.period-list legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-muted);
+}
+.period-list ul {
+  clear: both;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+}
+
+.period-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.period-row:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+.period-row[aria-pressed='true'] {
+  border-color: var(--color-primary-deep);
+  background: var(--color-primary-tint);
+}
+.period-row:disabled {
+  cursor: not-allowed;
+  background: var(--color-cream);
+  color: var(--color-ink-muted);
+}
+.period-row:disabled .period-amount {
+  text-decoration: line-through;
+  color: var(--color-ink-muted);
+}
+
+.period-row-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.period-date {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.period-seat {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.period-seat.ok {
+  color: var(--color-success);
+}
+.period-seat.danger {
+  color: var(--color-danger);
+}
+.period-seat.muted {
+  color: var(--color-ink-muted);
+}
+
+.period-row-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.period-amount {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.period-amount small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+.period-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-accent-deep);
+}
+
+.period-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 20px 0 0;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--color-cream);
+  font-size: 13.5px;
+}
+.period-details dt {
+  color: var(--color-ink-muted);
+}
+.period-details dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.period-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.period-cta .btn {
+  width: 100%;
+}
+
+.period-empty {
+  margin: 0 0 4px;
+  color: var(--color-ink-soft);
+}

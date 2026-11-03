@@ -1,11 +1,11 @@
 ---
 import { env } from '../config/env';
-import { absoluteUrl, defaultOgImage, pageTitle, type SeoProps } from '../lib/seo';
+import { absoluteUrl, defaultOgImage, pageTitle, SITE_NAME, type SeoProps } from '../lib/seo';
 import '../styles/global.css';
 
 type Props = SeoProps;
 
-const { title, description, path, ogImage = defaultOgImage(), ogType = 'website' } = Astro.props;
+const { title, description, path, ogImage = defaultOgImage(), ogType = 'website', jsonLd = [] } = Astro.props;
 const fullTitle = pageTitle(title);
 const canonical = absoluteUrl(path);
 ---
@@ -15,14 +15,17 @@ const canonical = absoluteUrl(path);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e6f3fb" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
 
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {env.SITE_ENV !== 'prd' && <meta name="robots" content="noindex, nofollow" />}
 
+    <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
@@ -35,9 +38,16 @@ const canonical = absoluteUrl(path);
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data).replace(/</g, '\\u003c')} />)}
+
     <slot name="head" />
   </head>
-  <body class="min-h-screen">
+  <body class="min-h-screen bg-white">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
+      >ข้ามไปยังเนื้อหา</a
+    >
     <slot />
   </body>
 </html>

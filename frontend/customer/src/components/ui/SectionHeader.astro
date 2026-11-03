@@ -1,0 +1,30 @@
+---
+import Icon from './Icon.astro';
+
+type Props = {
+  eyebrow: string;
+  /** Plain-text title. Use the "title" slot for markup such as <em>. */
+  title?: string;
+  sub?: string;
+  cta?: { label: string; href: string };
+  /** Heading level; landing pages keep a single h1 elsewhere. */
+  as?: 'h1' | 'h2';
+};
+
+const { eyebrow, title, sub, cta, as: Heading = 'h2' } = Astro.props;
+---
+
+<div class="mb-10 flex flex-wrap items-end justify-between gap-8 md:mb-14">
+  <div class="max-w-3xl">
+    <p class="eyebrow mb-4">{eyebrow}</p>
+    <Heading class="h-section m-0"><slot name="title">{title}</slot></Heading>
+    {sub && <p class="body-lg mt-4 mb-0 max-w-xl text-ink-soft">{sub}</p>}
+  </div>
+  {
+    cta && (
+      <a href={cta.href} class="btn btn-ghost btn-sm">
+        {cta.label} <Icon name="arrow-right" size={14} />
+      </a>
+    )
+  }
+</div>

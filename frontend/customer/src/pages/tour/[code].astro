@@ -1,0 +1,276 @@
+---
+// Tour detail — /tour/<code>/ matches the legacy URL exactly (no redirect).
+import PeriodTable from '../../components/tour/PeriodTable.astro';
+import TourCard from '../../components/tour/TourCard.astro';
+import Breadcrumb from '../../components/ui/Breadcrumb.astro';
+import CfImage from '../../components/ui/CfImage.astro';
+import Icon from '../../components/ui/Icon.astro';
+import LineCta from '../../components/ui/LineCta.astro';
+import SectionHeader from '../../components/ui/SectionHeader.astro';
+import { DEFAULT_HERO_IMAGE, lineMessageUrl } from '../../config/site';
+import PageLayout from '../../layouts/PageLayout.astro';
+import { byNextDeparture, getPublicTour, listPublicTours } from '../../lib/api/tour-programs';
+import { formatDate, formatDuration, formatPrice, paragraphs } from '../../lib/format';
+import { ogImageUrl } from '../../lib/image';
+import { breadcrumbJsonLd, metaDescription, touristTripJsonLd, type Crumb } from '../../lib/seo';
+import type { TourProgramPublicDetail } from '../../types/tour-program';
+
+const RELATED_LIMIT = 3;
+
+export async function getStaticPaths() {
+  const tours = await listPublicTours();
+  // One detail call per tour. If builds slow down, ask the backend for a bulk endpoint.
+  const details = await Promise.all(tours.map((t) => getPublicTour(t.code)));
+  return details.map((tour) => ({ params: { code: tour.code }, props: { tour } }));
+}
+
+type Props = { tour: TourProgramPublicDetail };
+const { tour } = Astro.props;
+
+const country = tour.countries[0];
+const city = tour.cities.find((c) => c.countrySlug === country?.slug);
+const path = `/tour/${tour.code}/`;
+const crumbs: Crumb[] = [
+  { name: 'หน้าแรก', path: '/' },
+  ...(country ? [{ name: `ทัวร์${country.nameTh}`, path: `/tours/${country.slug}/` }] : []),
+  ...(country && city ? [{ name: `ทัวร์${city.nameTh}`, path: `/tours/${country.slug}/${city.slug}/` }] : []),
+  { name: tour.code.toUpperCase(), path },
+];
+
+const hero = tour.bannerImage ?? tour.cardImage ?? DEFAULT_HERO_IMAGE;
+const thumbs = tour.images.slice(0, 4);
+const duration = formatDuration(tour.days, tour.nights);
+const share = ogImageUrl(hero);
+
+const allTours = await listPublicTours();
+const related = allTours
+  .filter((t) => t.code !== tour.code && t.countries.some((c) => c.slug === country?.slug))
+  .sort(byNextDeparture)
+  .slice(0, RELATED_LIMIT);
+
+const facts = [
+  { icon: 'calendar', label: 'ระยะเวลา', value: duration },
+  { icon: 'plane', label: 'สายการบิน', value: tour.airline ? `${tour.airline.name} (${tour.airline.code})` : 'สอบถามเพิ่มเติม' },
+  { icon: 'users', label: 'รอบเดินทาง', value: `${tour.periodCount} รอบ` },
+  {
+    icon: 'compass',
+    label: 'ออกเดินทางรอบถัดไป',
+    value: tour.nextDepartureDate ? formatDate(tour.nextDepartureDate) : 'สอบถามเพิ่มเติม',
+  },
+] as const;
+
+const priceText = tour.startingPrice !== null ? ` เริ่มต้น ${formatPrice(tour.startingPrice)} บาท` : '';
+const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}${priceText} เช็กวันเดินทางและที่นั่งว่างได้ทันที`);
+---
+
+<PageLayout
+  title={`${tour.name} ${duration}`}
+  description={description}
+  path={path}
+  ogImage={share}
+  ogType="article"
+  jsonLd={[touristTripJsonLd(tour, share), breadcrumbJsonLd(crumbs)]}
+>
+  <section class="bg-white pt-8">
+    <div class="container-site">
+      <Breadcrumb crumbs={crumbs} />
+
+      <div class="mt-8 mb-8 flex flex-wrap items-end justify-between gap-6">
+        <div class="max-w-4xl">
+          <div class="mb-4 flex flex-wrap gap-2">
+            {
+              tour.countries.map((c) => (
+                <a href={`/tours/${c.slug}/`} class="chip chip-tint">
+                  <Icon name="map-pin" size={11} /> {c.nameTh}
+                </a>
+              ))
+            }
+            <span class="chip"><Icon name="calendar" size={11} /> {duration}</span>
+          </div>
+          <h1 class="h-section mt-0 mb-4 text-[clamp(30px,5vw,54px)]">{tour.name}</h1>
+          {tour.highlight && <p class="body-lg m-0 max-w-2xl text-ink-soft">{tour.highlight}</p>}
+        </div>
+        <p class="text-sm font-medium text-ink-muted">รหัสทัวร์ <span class="font-semibold text-ink">{tour.code.toUpperCase()}</span></p>
+      </div>
+
+      <div class:list={['detail-gallery pb-12', thumbs.length === 4 ? 'has-thumbs' : 'no-thumbs']}>
+        <div class="gallery-main relative overflow-hidden rounded-lg bg-cream-deep">
+          <CfImage
+            src={hero}
+            alt={tour.name}
+            preset="hero"
+            width={1920}
+            height={1080}
+            sizes="(min-width: 900px) 50vw, 100vw"
+            priority
+            class="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+        {
+          thumbs.length === 4 &&
+            thumbs.map((src, i) => (
+              <div class="relative overflow-hidden rounded-md bg-cream-deep" style={`grid-area: g${i + 1}`}>
+                <CfImage
+                  src={src}
+                  alt={`${tour.name} ภาพที่ ${i + 2}`}
+                  preset="gallery"
+                  width={800}
+                  height={600}
+                  sizes="(min-width: 900px) 25vw, 50vw"
+                  class="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
+            ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-white pb-24">
+    <div class="container-site detail-grid">
+      <div class="min-w-0">
+        <dl class="facts mb-16 grid grid-cols-2 overflow-hidden rounded-md border border-line bg-cream md:grid-cols-4">
+          {
+            facts.map((f) => (
+              <div class="fact p-5">
+                <span class="mb-3 flex h-9 w-9 items-center justify-center rounded-[10px] border border-line bg-white text-primary-deep">
+                  <Icon name={f.icon} size={16} />
+                </span>
+                <dt class="mb-1 text-xs font-semibold tracking-[0.1em] text-ink-muted">{f.label}</dt>
+                <dd class="m-0 text-[15px] font-semibold text-ink">{f.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+
+        <p class="eyebrow mb-4">รายละเอียดโปรแกรม</p>
+        <h2 class="h-section mt-0 mb-6">ทริปนี้<em>มีอะไรบ้าง</em></h2>
+        <div class="body-lg max-w-3xl space-y-5 text-ink-soft">
+          {paragraphs(tour.description).map((p) => <p>{p}</p>)}
+        </div>
+
+        {
+          tour.pdfFile && (
+            <a href={tour.pdfFile} class="btn btn-ghost mt-8" target="_blank" rel="noopener">
+              <Icon name="file" size={16} /> ดาวน์โหลดโปรแกรมทัวร์ (PDF)
+            </a>
+          )
+        }
+      </div>
+
+      <aside id="periods" class="detail-aside scroll-mt-24" aria-label="รอบเดินทางและราคา">
+        <PeriodTable code={tour.code} tourName={tour.name} periods={tour.periods} />
+      </aside>
+    </div>
+  </section>
+
+  {
+    related.length > 0 && country && (
+      <section class="section-tight border-t border-line-soft bg-cream">
+        <div class="container-site">
+          <SectionHeader
+            eyebrow={`ทัวร์${country.nameTh}อื่น ๆ`}
+            title="โปรแกรมที่เกี่ยวข้อง"
+            cta={{ label: 'ดูทั้งหมด', href: `/tours/${country.slug}/` }}
+          />
+          <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+            {related.map((t) => (
+              <li class="flex">
+                <TourCard tour={t} columns={3} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <LineCta />
+
+  <!-- Mobile booking bar (static). The aside sits far below the fold on phones. -->
+  <div class="mobile-bar fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        {
+          tour.startingPrice !== null ? (
+            <>
+              <div class="text-xs text-ink-muted">ราคาเริ่มต้น / ท่าน</div>
+              <div class="font-display text-xl leading-tight font-semibold text-primary-deep">{formatPrice(tour.startingPrice)} บาท</div>
+            </>
+          ) : (
+            <div class="text-sm font-medium text-ink-muted">สอบถามราคา</div>
+          )
+        }
+      </div>
+      <div class="flex shrink-0 gap-2">
+        <a href="#periods" class="btn btn-ghost btn-sm">รอบเดินทาง</a>
+        <a href={lineMessageUrl(`สนใจทัวร์ ${tour.code.toUpperCase()} ${tour.name}`)} class="btn btn-line btn-sm" target="_blank" rel="noopener" aria-label="สอบถามผ่าน LINE">
+          <Icon name="line" size={15} /> LINE
+        </a>
+      </div>
+    </div>
+  </div>
+</PageLayout>
+
+<style>
+  .detail-gallery {
+    display: grid;
+    gap: 12px;
+  }
+  .detail-gallery.no-thumbs .gallery-main {
+    aspect-ratio: 16 / 9;
+  }
+  .detail-gallery.has-thumbs {
+    grid-template-areas: 'main main' 'g1 g2' 'g3 g4';
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 240px 140px 140px;
+  }
+  .gallery-main {
+    grid-area: main;
+  }
+  @media (min-width: 900px) {
+    .detail-gallery.has-thumbs {
+      grid-template-areas: 'main main g1 g2' 'main main g3 g4';
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 220px 220px;
+    }
+    .detail-gallery.no-thumbs .gallery-main {
+      aspect-ratio: 21 / 9;
+    }
+  }
+
+  .detail-grid {
+    display: grid;
+    gap: 48px;
+    align-items: start;
+  }
+  @media (min-width: 1024px) {
+    .detail-grid {
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 56px;
+    }
+    .detail-aside {
+      position: sticky;
+      top: 96px;
+    }
+  }
+
+  .fact + .fact {
+    border-left: 1px solid var(--color-line);
+  }
+  @media (max-width: 767px) {
+    .fact:nth-child(3) {
+      border-left: 0;
+    }
+    .fact:nth-child(n + 3) {
+      border-top: 1px solid var(--color-line);
+    }
+  }
+
+  /* Keep page content clear of the fixed mobile bar. */
+  @media (max-width: 1023px) {
+    :global(body) {
+      padding-bottom: 76px;
+    }
+  }
+</style>

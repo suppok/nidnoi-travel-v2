@@ -1,0 +1,84 @@
+---
+import { heroCampaign as hero } from '../../config/home';
+import { formatPrice } from '../../lib/format';
+import type { CountryPublic } from '../../types/taxonomy';
+import CfImage from '../ui/CfImage.astro';
+import Icon from '../ui/Icon.astro';
+
+type Props = { country: CountryPublic };
+const { country } = Astro.props;
+const href = `/tours/${country.slug}/`;
+---
+
+<section class="hero relative overflow-hidden pt-12 pb-40 md:pt-20 md:pb-48">
+  <div class="halo halo-primary -top-[12%] -left-[10%] h-[640px] w-[640px] opacity-75"></div>
+  <div class="halo halo-primary top-[30%] -right-[12%] h-[520px] w-[520px] opacity-50"></div>
+  <div class="halo halo-accent right-[8%] -bottom-[20%] h-80 w-80 opacity-35"></div>
+
+  <div class="container-site relative grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+    <div class="relative z-[2]">
+      <p class="eyebrow mb-5">{hero.eyebrow}</p>
+      <h1 class="h-display mt-0 mb-7">
+        {hero.titleLead}<br />{hero.titlePrefix}<em>{hero.titleEmphasis}</em>
+      </h1>
+      <p class="body-lg mb-10 max-w-xl text-ink-soft">{hero.sub}</p>
+      <div class="flex flex-wrap items-center gap-3.5">
+        <a href={href} class="btn btn-primary">
+          ดูทัวร์{country.nameTh}ทั้งหมด <Icon name="arrow-right" size={16} />
+        </a>
+        <a href="#destinations" class="btn btn-ghost">เลือกปลายทางอื่น</a>
+      </div>
+    </div>
+
+    <div class="relative ml-auto w-full max-w-[540px]">
+      <div class="hero-photo relative aspect-[4/5] overflow-hidden rounded-xl bg-white">
+        <CfImage
+          src={hero.image}
+          alt={hero.imageAlt}
+          preset="hero"
+          width={960}
+          height={1200}
+          sizes="(min-width: 1024px) 540px, 100vw"
+          priority
+          class="absolute inset-0 h-full w-full object-cover"
+        />
+
+        <span class="chip chip-light absolute top-6 left-6 px-3.5 py-1.5">
+          <Icon name="map-pin" size={13} class="text-primary-deep" />
+          {hero.location}
+        </span>
+
+        {
+          country.startingPrice !== null && (
+            <div class="price-chip absolute right-6 bottom-6 left-6 flex items-center justify-between gap-3.5 rounded-md px-4 py-3.5">
+              <div>
+                <div class="mb-0.5 text-xs font-semibold tracking-wider text-ink-muted">ราคาเริ่มต้น / ท่าน</div>
+                <div class="font-display text-2xl leading-none font-semibold text-ink">
+                  {formatPrice(country.startingPrice)} <span class="text-sm font-medium text-ink-muted">บาท</span>
+                </div>
+              </div>
+              <a href={href} class="btn btn-primary btn-sm">
+                ดูทัวร์ <Icon name="arrow-right" size={14} />
+              </a>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    background: linear-gradient(170deg, var(--color-primary-light) 0%, var(--color-cream-deep) 45%, var(--color-white) 100%);
+  }
+  .hero-photo {
+    box-shadow:
+      0 30px 80px rgb(21 35 58 / 0.18),
+      0 12px 32px rgb(21 35 58 / 0.1);
+  }
+  .price-chip {
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(12px);
+  }
+</style>

@@ -1,47 +1,65 @@
 ---
-import PageLayout from '../layouts/PageLayout.astro';
+import Destinations from '../components/home/Destinations.astro';
+import DestinationPicker from '../components/home/DestinationPicker.astro';
+import Hero from '../components/home/Hero.astro';
+import PromiseStrip from '../components/home/PromiseStrip.astro';
+import TourCard from '../components/tour/TourCard.astro';
+import Icon from '../components/ui/Icon.astro';
+import LineCta from '../components/ui/LineCta.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+import { heroCampaign } from '../config/home';
+import { byNextDeparture, listPublicTours } from '../lib/api/tour-programs';
+import { listPublicCountries } from '../lib/api/taxonomy';
+import { ogImageUrl } from '../lib/image';
 import { SITE_NAME } from '../lib/seo';
+import PageLayout from '../layouts/PageLayout.astro';
 
-const highlights = [
-  { title: 'โปรแกรมคัดสรร', text: 'เส้นทางทัวร์ที่ทีมงานเดินทางจริงและคัดมาอย่างดี ทั้งญี่ปุ่น เกาหลี และไต้หวัน' },
-  { title: 'ราคาชัดเจน', text: 'แสดงราคาและที่นั่งว่างของแต่ละวันเดินทาง ไม่มีค่าใช้จ่ายแอบแฝง' },
-  { title: 'ดูแลตลอดทริป', text: 'หัวหน้าทัวร์ประสบการณ์สูง พร้อมดูแลตั้งแต่ก่อนออกเดินทางจนกลับถึงบ้าน' },
-];
+const FEATURED_LIMIT = 8;
+
+const [countries, tours] = await Promise.all([listPublicCountries(), listPublicTours()]);
+const activeCountries = countries.filter((c) => c.tourCount > 0);
+const heroCountry = activeCountries.find((c) => c.slug === heroCampaign.countrySlug);
+if (!heroCountry) {
+  throw new Error(`Home hero links to "${heroCampaign.countrySlug}", which has no active tours — update src/config/home.ts`);
+}
+const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
 ---
 
 <PageLayout
   title={SITE_NAME}
-  description="นิดหน่อย ทราเวล รวมโปรแกรมทัวร์ต่างประเทศ ญี่ปุ่น เกาหลี ไต้หวัน ราคาชัดเจน เช็กวันเดินทางและที่นั่งว่างได้ทันที ดูแลโดยหัวหน้าทัวร์มืออาชีพตลอดทริป จองง่าย"
+  description={`${SITE_NAME} รวมโปรแกรมทัวร์ต่างประเทศ ${activeCountries
+    .slice(0, 5)
+    .map((c) => c.nameTh)
+    .join(' ')} ราคาชัดเจน เช็กวันเดินทางและที่นั่งว่างได้ทันที สอบถามและจองง่ายผ่าน LINE`}
   path="/"
+  ogImage={ogImageUrl(heroCampaign.image)}
 >
-  <section class="bg-gradient-to-br from-primary-800 to-primary-600 text-white">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:py-28">
-      <h1 class="text-4xl leading-tight font-bold sm:text-5xl">
-        เที่ยวต่างประเทศ<br />อย่างมั่นใจกับ{SITE_NAME}
-      </h1>
-      <p class="mt-5 max-w-xl text-lg text-primary-50/90">
-        รวมโปรแกรมทัวร์ญี่ปุ่น เกาหลี และไต้หวัน พร้อมวันเดินทางและราคาที่อัปเดตสม่ำเสมอ
-      </p>
-      <a
-        href="/tour-programs/"
-        class="mt-8 inline-block rounded-full bg-accent-400 px-7 py-3 font-semibold text-slate-900 transition hover:bg-accent-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      >
-        ดูโปรแกรมทัวร์ทั้งหมด
-      </a>
+  <Hero country={heroCountry} />
+  <DestinationPicker countries={activeCountries} />
+  <Destinations countries={activeCountries} />
+
+  <section class="section bg-white">
+    <div class="container-site">
+      <SectionHeader eyebrow="ออกเดินทางเร็ว ๆ นี้">
+        <Fragment slot="title">ทัวร์ที่<em>กำลังจะออกเดินทาง</em></Fragment>
+      </SectionHeader>
+      <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        {
+          featured.map((t) => (
+            <li class="flex">
+              <TourCard tour={t} columns={4} />
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-14 flex justify-center">
+        <a href="#destinations" class="btn btn-primary">
+          ดูทัวร์ตามประเทศ <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 py-16">
-    <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">ทำไมต้องเที่ยวกับเรา</h2>
-    <ul class="mt-8 grid gap-6 sm:grid-cols-3">
-      {
-        highlights.map((item) => (
-          <li class="rounded-2xl border border-slate-200 p-6">
-            <h3 class="text-lg font-semibold text-primary-800">{item.title}</h3>
-            <p class="mt-2 text-slate-600">{item.text}</p>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+  <PromiseStrip />
+  <LineCta />
 </PageLayout>

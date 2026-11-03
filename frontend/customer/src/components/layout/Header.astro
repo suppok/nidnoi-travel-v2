@@ -1,28 +1,108 @@
 ---
-import { SITE_NAME } from '../../lib/seo';
+import { contact } from '../../config/site';
+import { listPublicCountries } from '../../lib/api/taxonomy';
+import Icon from '../ui/Icon.astro';
+import Logo from './Logo.astro';
 
+const NAV_COUNTRY_LIMIT = 6;
+const countries = (await listPublicCountries()).filter((c) => c.tourCount > 0).slice(0, NAV_COUNTRY_LIMIT);
 const links = [
-  { href: '/tour-programs/', label: 'โปรแกรมทัวร์' },
-  { href: '/about/', label: 'เกี่ยวกับเรา' },
-  { href: '/contact/', label: 'ติดต่อเรา' },
+  ...countries.map((c) => ({ href: `/tours/${c.slug}/`, label: `ทัวร์${c.nameTh}` })),
+  { href: '#contact', label: 'ติดต่อเรา' },
 ];
+const current = Astro.url.pathname;
+const [phone] = contact.phones;
 ---
 
-<header class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-    <a href="/" class="text-xl font-bold text-primary-800">{SITE_NAME}</a>
-    <nav aria-label="เมนูหลัก">
-      <ul class="flex gap-4 text-sm sm:gap-6 sm:text-base">
+<header class="site-header sticky top-0 z-50 border-b text-ink">
+  <div class="container-site flex items-center justify-between gap-6 py-2.5">
+    <Logo height={56} />
+
+    <nav aria-label="เมนูหลัก" class="hidden xl:block">
+      <ul class="flex items-center gap-1">
         {
-          links.map((link) => (
+          links.map((l) => (
             <li>
-              <a href={link.href} class="text-slate-700 hover:text-primary-700">
-                {link.label}
+              <a
+                href={l.href}
+                class="nav-link rounded-full px-4 py-2 text-[15px] font-medium"
+                aria-current={current.startsWith(l.href) ? 'page' : undefined}
+              >
+                {l.label}
               </a>
             </li>
           ))
         }
       </ul>
     </nav>
+
+    <div class="flex items-center gap-4">
+      <a href={`tel:${phone.tel}`} class="hidden items-center gap-2 text-[15px] font-semibold text-primary-deep md:inline-flex">
+        <Icon name="phone" size={15} />
+        {phone.display}
+      </a>
+      <a href={contact.lineUrl} class="btn btn-primary btn-sm" rel="noopener" target="_blank">
+        <Icon name="line" size={15} /> แชท LINE
+      </a>
+
+      <!-- Mobile menu: a native disclosure, no JS. -->
+      <details class="mobile-menu relative xl:hidden">
+        <summary
+          class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-line bg-white"
+          aria-label="เปิดเมนู"
+        >
+          <Icon name="menu" size={20} class="icon-open" />
+          <Icon name="close" size={20} class="icon-close" />
+        </summary>
+        <nav aria-label="เมนูมือถือ" class="absolute top-12 right-0 w-64 rounded-md border border-line bg-white p-2 shadow-xl">
+          <ul>
+            {
+              links.map((l) => (
+                <li>
+                  <a href={l.href} class="block rounded-sm px-4 py-2.5 font-medium hover:bg-primary-tint">
+                    {l.label}
+                  </a>
+                </li>
+              ))
+            }
+            <li class="mt-1 border-t border-line-soft pt-1">
+              <a href={`tel:${phone.tel}`} class="flex items-center gap-2 rounded-sm px-4 py-2.5 font-semibold text-primary-deep">
+                <Icon name="phone" size={15} />
+                {phone.display}
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </details>
+    </div>
   </div>
 </header>
+
+<style>
+  .site-header {
+    background: rgb(230 243 251 / 0.88);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-color: rgb(46 158 224 / 0.15);
+  }
+  .nav-link {
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+  .nav-link:hover,
+  .nav-link[aria-current='page'] {
+    background: var(--color-white);
+    color: var(--color-primary-deep);
+  }
+  .mobile-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .mobile-menu .icon-close,
+  .mobile-menu[open] .icon-open {
+    display: none;
+  }
+  .mobile-menu[open] .icon-close {
+    display: block;
+  }
+</style>

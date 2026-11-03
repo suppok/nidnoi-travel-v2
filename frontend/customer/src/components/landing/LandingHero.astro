@@ -1,0 +1,80 @@
+---
+import { DEFAULT_HERO_IMAGE } from '../../config/site';
+import { formatPrice, paragraphs } from '../../lib/format';
+import type { Crumb } from '../../lib/seo';
+import Breadcrumb from '../ui/Breadcrumb.astro';
+import CfImage from '../ui/CfImage.astro';
+
+type Props = {
+  crumbs: Crumb[];
+  /** Thai destination name — the H1 reads "ทัวร์<nameTh>". */
+  nameTh: string;
+  nameEn: string;
+  description: string;
+  heroImage: string | null;
+  tourCount: number;
+  startingPrice: number | null;
+};
+
+const { crumbs, nameTh, nameEn, description, heroImage, tourCount, startingPrice } = Astro.props;
+---
+
+<section class="relative overflow-hidden bg-ink">
+  <CfImage
+    src={heroImage ?? DEFAULT_HERO_IMAGE}
+    alt=""
+    preset="hero"
+    width={1920}
+    height={900}
+    sizes="100vw"
+    priority
+    class="absolute inset-0 h-full w-full object-cover opacity-55"
+  />
+  <div class="landing-shade absolute inset-0"></div>
+
+  <div class="container-site relative pt-14 pb-14 text-white md:pt-24 md:pb-16">
+    <Breadcrumb crumbs={crumbs} tone="light" />
+
+    <div class="mt-9 grid items-end gap-10 lg:grid-cols-[1.4fr_1fr]">
+      <div>
+        <p class="eyebrow mb-4 text-primary-light">{nameEn} · {tourCount} โปรแกรมเดินทาง</p>
+        <h1 class="h-display landing-title mt-0 mb-6 text-white">ทัวร์<em>{nameTh}</em></h1>
+        <div class="body-lg max-w-[620px] space-y-4 text-white/95">
+          {paragraphs(description).map((p) => <p>{p}</p>)}
+        </div>
+      </div>
+
+      {
+        startingPrice !== null && (
+          <div class="glass rounded-lg p-6">
+            <div class="text-xs font-semibold tracking-[0.12em] text-white/80 uppercase">ราคาเริ่มต้น</div>
+            <div class="mt-1 font-display text-4xl leading-none font-semibold">
+              {formatPrice(startingPrice)} <span class="text-lg font-medium text-white/80">บาท / ท่าน</span>
+            </div>
+            <a href="#tours" class="btn btn-white btn-sm mt-5">
+              ดู {tourCount} โปรแกรม
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .landing-shade {
+    background: linear-gradient(180deg, rgb(21 35 58 / 0.55) 0%, rgb(21 35 58 / 0.25) 50%, rgb(21 35 58 / 0.88) 100%);
+  }
+  .landing-title {
+    font-size: clamp(44px, 7vw, 92px);
+    color: var(--color-white);
+  }
+  .landing-title em {
+    color: var(--color-primary-light);
+  }
+  .glass {
+    background: rgb(255 255 255 / 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgb(255 255 255 / 0.18);
+  }
+</style>

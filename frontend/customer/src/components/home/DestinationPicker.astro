@@ -1,0 +1,49 @@
+---
+// Stands in for the design's search panel until /tour-programs/ (with filters) exists:
+// quick links to every landing page, styled as the overlapping panel.
+import type { CountryPublic } from '../../types/taxonomy';
+import Icon from '../ui/Icon.astro';
+
+type Props = { countries: CountryPublic[] };
+const { countries } = Astro.props;
+---
+
+<div class="container-site relative z-[5] -mt-28 md:-mt-32">
+  <div class="picker rounded-lg border border-line-soft bg-white px-5 py-6 md:px-8 md:py-7">
+    <div class="mb-4 flex items-center gap-2.5">
+      <Icon name="plane" size={18} class="text-primary" />
+      <h2 class="font-display text-lg font-semibold text-ink">จะไปไหนดี</h2>
+    </div>
+    <ul class="flex flex-wrap gap-2.5">
+      {
+        countries.map((c) => (
+          <li>
+            <a href={`/tours/${c.slug}/`} class="picker-chip inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-[15px] font-medium">
+              ทัวร์{c.nameTh}
+              <span class="text-xs text-ink-muted">{c.tourCount}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</div>
+
+<style>
+  .picker {
+    box-shadow:
+      0 24px 64px rgb(21 35 58 / 0.12),
+      0 6px 16px rgb(21 35 58 / 0.06);
+  }
+  .picker-chip {
+    transition:
+      border-color 0.2s,
+      background-color 0.2s,
+      color 0.2s;
+  }
+  .picker-chip:hover {
+    border-color: var(--color-primary-deep);
+    background: var(--color-primary-tint);
+    color: var(--color-primary-deep);
+  }
+</style>
