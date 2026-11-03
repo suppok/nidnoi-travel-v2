@@ -5,9 +5,10 @@ import type { CountryPublic } from '../../types/taxonomy';
 import CfImage from '../ui/CfImage.astro';
 import Icon from '../ui/Icon.astro';
 
-type Props = { country: CountryPublic };
+// country is undefined when the campaign country has no public tours.
+type Props = { country?: CountryPublic };
 const { country } = Astro.props;
-const href = `/tours/${country.slug}/`;
+const href = country ? `/tours/${country.slug}/` : '#destinations';
 ---
 
 <section class="hero relative overflow-hidden pt-12 pb-40 md:pt-20 md:pb-48">
@@ -24,7 +25,7 @@ const href = `/tours/${country.slug}/`;
       <p class="body-lg mb-10 max-w-xl text-ink-soft">{hero.sub}</p>
       <div class="flex flex-wrap items-center gap-3.5">
         <a href={href} class="btn btn-primary">
-          ดูทัวร์{country.nameTh}ทั้งหมด <Icon name="arrow-right" size={16} />
+          {country ? `ดูทัวร์${country.nameTh}ทั้งหมด` : 'ดูปลายทางทั้งหมด'} <Icon name="arrow-right" size={16} />
         </a>
         <a href="#destinations" class="btn btn-ghost">เลือกปลายทางอื่น</a>
       </div>
@@ -49,7 +50,7 @@ const href = `/tours/${country.slug}/`;
         </span>
 
         {
-          country.startingPrice !== null && (
+          country && country.startingPrice !== null && (
             <div class="price-chip absolute right-6 bottom-6 left-6 flex items-center justify-between gap-3.5 rounded-md px-4 py-3.5">
               <div>
                 <div class="mb-0.5 text-xs font-semibold tracking-wider text-ink-muted">ราคาเริ่มต้น / ท่าน</div>

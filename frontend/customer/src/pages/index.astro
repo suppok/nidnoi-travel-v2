@@ -18,10 +18,8 @@ const FEATURED_LIMIT = 8;
 
 const [countries, tours] = await Promise.all([listPublicCountries(), listPublicTours()]);
 const activeCountries = countries.filter((c) => c.tourCount > 0);
+// Without tours in the campaign country the hero drops its price and links to the destination list.
 const heroCountry = activeCountries.find((c) => c.slug === heroCampaign.countrySlug);
-if (!heroCountry) {
-  throw new Error(`Home hero links to "${heroCampaign.countrySlug}", which has no active tours — update src/config/home.ts`);
-}
 const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
 ---
 
@@ -35,30 +33,34 @@ const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
   ogImage={ogImageUrl(heroCampaign.image)}
 >
   <Hero country={heroCountry} />
-  <DestinationPicker countries={activeCountries} />
-  <Destinations countries={activeCountries} />
+  {activeCountries.length > 0 && <DestinationPicker countries={activeCountries} />}
+  {activeCountries.length > 0 && <Destinations countries={activeCountries} />}
 
-  <section class="section bg-white">
-    <div class="container-site">
-      <SectionHeader eyebrow="ออกเดินทางเร็ว ๆ นี้">
-        <Fragment slot="title">ทัวร์ที่<em>กำลังจะออกเดินทาง</em></Fragment>
-      </SectionHeader>
-      <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-        {
-          featured.map((t) => (
-            <li class="flex">
-              <TourCard tour={t} columns={4} />
-            </li>
-          ))
-        }
-      </ul>
-      <div class="mt-14 flex justify-center">
-        <a href="#destinations" class="btn btn-primary">
-          ดูทัวร์ตามประเทศ <Icon name="arrow-right" size={14} />
-        </a>
-      </div>
-    </div>
-  </section>
+  {
+    featured.length > 0 && (
+      <section class="section bg-white">
+        <div class="container-site">
+          <SectionHeader eyebrow="ออกเดินทางเร็ว ๆ นี้">
+            <Fragment slot="title">ทัวร์ที่<em>กำลังจะออกเดินทาง</em></Fragment>
+          </SectionHeader>
+          <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {
+              featured.map((t) => (
+                <li class="flex">
+                  <TourCard tour={t} columns={4} />
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mt-14 flex justify-center">
+            <a href="#destinations" class="btn btn-primary">
+              ดูทัวร์ตามประเทศ <Icon name="arrow-right" size={14} />
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <PromiseStrip />
   <LineCta />

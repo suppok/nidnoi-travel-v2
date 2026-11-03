@@ -573,6 +573,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/cities/public": {
+            "get": {
+                "description": "Every active city in display order with its public tour count and lowest upcoming\nprice. The site skips landing pages whose tourCount is 0. No auth.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "List public cities with tour stats (customer site build)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_city_models.CityPublicListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cities/status": {
             "put": {
                 "security": [
@@ -810,6 +830,26 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_country_models.CountryListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/countries/public": {
+            "get": {
+                "description": "Every active country in display order with its public tour count and lowest upcoming\nprice. The site skips landing pages whose tourCount is 0. No auth.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "List public countries with tour stats (customer site build)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_country_models.CountryPublicListResponse"
                         }
                     }
                 }
@@ -1308,6 +1348,143 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/public": {
+            "get": {
+                "description": "Active tours in a public state (selling, closed), ordered by code. Prices and dates\ncover upcoming periods only (departing after today, Thailand time). No auth.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "List public tour programs (customer site build)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Country slug",
+                        "name": "country",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "City slug",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Has an upcoming departure on/after (YYYY-MM-DD)",
+                        "name": "dateFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Has an upcoming departure on/before (YYYY-MM-DD)",
+                        "name": "dateTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 20, max 100)",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/public/{code}": {
+            "get": {
+                "description": "Tour page data with gallery and upcoming periods. 404 when the code is unknown,\ndeleted or not public. No auth.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "Get a public tour program by code (customer site build)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tour code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/public/{code}/periods": {
+            "get": {
+                "description": "Upcoming departures with prices and seats. Cache-Control: public, max-age=30. No auth.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "Live periods of a public tour (browser)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tour code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicPeriodsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -2460,6 +2637,59 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_city_models.CityPublicItem": {
+            "type": "object",
+            "properties": {
+                "countrySlug": {
+                    "type": "string",
+                    "example": "japan"
+                },
+                "description": {
+                    "description": "landing-page intro",
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string",
+                    "example": "Tokyo"
+                },
+                "nameTh": {
+                    "type": "string",
+                    "example": "โตเกียว"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "tokyo"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "startingPrice": {
+                    "description": "StartingPrice is the lowest upcoming period price among those tours; null when there is none.",
+                    "type": "integer"
+                },
+                "tourCount": {
+                    "description": "TourCount counts public tours. The site generates no landing page when it is 0.",
+                    "type": "integer"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_city_models.CityPublicListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_city_models.CityPublicItem"
+                    }
+                }
+            }
+        },
         "backend_pkg_modules_city_models.CityUpdateRequest": {
             "type": "object",
             "properties": {
@@ -2733,6 +2963,55 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_country_models.CountryPublicItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "landing-page intro",
+                    "type": "string"
+                },
+                "heroImage": {
+                    "type": "string"
+                },
+                "nameEn": {
+                    "type": "string",
+                    "example": "Japan"
+                },
+                "nameTh": {
+                    "type": "string",
+                    "example": "ญี่ปุ่น"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "japan"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "startingPrice": {
+                    "description": "StartingPrice is the lowest upcoming period price among those tours; null when there is none.",
+                    "type": "integer"
+                },
+                "tourCount": {
+                    "description": "TourCount counts public tours. The site generates no landing page when it is 0.",
+                    "type": "integer"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_country_models.CountryPublicListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_country_models.CountryPublicItem"
+                    }
+                }
+            }
+        },
         "backend_pkg_modules_country_models.CountryUpdateRequest": {
             "type": "object",
             "properties": {
@@ -2836,6 +3115,101 @@ const docTemplate = `{
                 "width": {
                     "description": "0 for documents",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.AirlinePublic": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "TG"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Thai Airways"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.CityPublicRef": {
+            "type": "object",
+            "properties": {
+                "countrySlug": {
+                    "type": "string",
+                    "example": "japan"
+                },
+                "nameEn": {
+                    "type": "string",
+                    "example": "Japan"
+                },
+                "nameTh": {
+                    "type": "string",
+                    "example": "ญี่ปุ่น"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "japan"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TaxonomyPublicRef": {
+            "type": "object",
+            "properties": {
+                "nameEn": {
+                    "type": "string",
+                    "example": "Japan"
+                },
+                "nameTh": {
+                    "type": "string",
+                    "example": "ญี่ปุ่น"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "japan"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourPeriodPublicItem": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "soldOut": {
+                    "description": "SoldOut is true when no seat is left or the tour is closed.",
+                    "type": "boolean"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
                 }
             }
         },
@@ -3294,6 +3668,172 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramPublicGetResponse": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.AirlinePublic"
+                },
+                "bannerImage": {
+                    "type": "string"
+                },
+                "cardImage": {
+                    "type": "string"
+                },
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.CityPublicRef"
+                    }
+                },
+                "code": {
+                    "type": "string",
+                    "example": "NIDN000001"
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TaxonomyPublicRef"
+                    }
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nextDepartureDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "type": "string"
+                },
+                "periodCount": {
+                    "type": "integer"
+                },
+                "periods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourPeriodPublicItem"
+                    }
+                },
+                "startingPrice": {
+                    "description": "StartingPrice is the lowest upcoming period price (\"ราคาเริ่มต้น\"); null without upcoming periods.",
+                    "type": "integer"
+                },
+                "startingPriceBeforeDiscount": {
+                    "description": "StartingPriceBeforeDiscount is the struck-through price of the period that sets StartingPrice.",
+                    "type": "integer"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramPublicItem": {
+            "type": "object",
+            "properties": {
+                "airline": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.AirlinePublic"
+                },
+                "cardImage": {
+                    "type": "string"
+                },
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.CityPublicRef"
+                    }
+                },
+                "code": {
+                    "type": "string",
+                    "example": "NIDN000001"
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TaxonomyPublicRef"
+                    }
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nextDepartureDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "periodCount": {
+                    "type": "integer"
+                },
+                "startingPrice": {
+                    "description": "StartingPrice is the lowest upcoming period price (\"ราคาเริ่มต้น\"); null without upcoming periods.",
+                    "type": "integer"
+                },
+                "startingPriceBeforeDiscount": {
+                    "description": "StartingPriceBeforeDiscount is the struck-through price of the period that sets StartingPrice.",
+                    "type": "integer"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramPublicListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramPublicPeriodsResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourPeriodPublicItem"
+                    }
                 }
             }
         },

@@ -3,6 +3,8 @@ import type { CityPublic, CountryPublic } from '../../types/taxonomy';
 import { apiGet } from './client';
 import { USE_MOCK_DATA } from './mock-mode';
 
+type Items<T> = { items: T[] };
+
 const bySortOrder = <T extends { sortOrder: number }>(a: T, b: T) => a.sortOrder - b.sortOrder;
 
 // The header and footer read taxonomy on every page; fetch once per build.
@@ -20,7 +22,7 @@ async function fetchCountries(): Promise<CountryPublic[]> {
     const { mockCountries } = await import('./mock-data');
     return [...mockCountries].sort(bySortOrder);
   }
-  return (await apiGet<CountryPublic[]>('/countries/public')).sort(bySortOrder);
+  return (await apiGet<Items<CountryPublic>>('/countries/public')).items.sort(bySortOrder);
 }
 
 /** All active cities across countries. */
@@ -34,5 +36,5 @@ async function fetchCities(): Promise<CityPublic[]> {
     const { mockCities } = await import('./mock-data');
     return [...mockCities].sort(bySortOrder);
   }
-  return (await apiGet<CityPublic[]>('/cities/public')).sort(bySortOrder);
+  return (await apiGet<Items<CityPublic>>('/cities/public')).items.sort(bySortOrder);
 }

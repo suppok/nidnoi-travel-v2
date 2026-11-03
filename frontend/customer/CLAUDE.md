@@ -27,6 +27,7 @@ Revisit only if tour **content** must appear on the site within seconds of being
 frontend/customer/
 ├── public/                       # Served as-is
 │   ├── _redirects                # Legacy 301 map (versioned artifact)
+│   ├── _headers                  # Cache-Control: immutable for hashed /_astro/* only (HTML revalidates)
 │   ├── robots.txt
 │   ├── favicon.svg, og-default.jpg
 │   └── fonts/

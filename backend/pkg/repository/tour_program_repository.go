@@ -4,8 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"time"
+
 	"github.com/uptrace/bun"
 
+	"backend/pkg/constants/tourprogramstate"
 	"backend/pkg/core/database/query"
 	"backend/pkg/domain"
 	"backend/pkg/domain/repomodels"
@@ -22,6 +25,21 @@ type TourProgramRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.TourProgram, error)
 	// List returns tours with their Wholesale and countries, most recently updated first.
 	List(ctx context.Context, criteria repomodels.TourProgramListCriteria) ([]domain.TourProgram, int, error)
+
+	// --- Public (customer site): active tours in a public state only. ---
+
+	// ListPublic returns tours with their Airline, countries and cities (cities with their Country),
+	// ordered by code.
+	ListPublic(ctx context.Context, criteria repomodels.TourProgramPublicListCriteria) ([]domain.TourProgram, int, error)
+	// FindPublicByCode loads the tour like ListPublic plus its gallery images; nil when the code is
+	// unknown, deleted or not public.
+	FindPublicByCode(ctx context.Context, code string) (*domain.TourProgram, error)
+	// FindPublicStateByCode reads only id, code and state (for the cached periods endpoint).
+	FindPublicStateByCode(ctx context.Context, code string) (*domain.TourProgram, error)
+	// PublicCountryStats / PublicCityStats count public tours per country/city and their lowest
+	// upcoming period price (start_date > departAfter). Rows without public tours are absent.
+	PublicCountryStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error)
+	PublicCityStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error)
 }
 
 type tourProgramRepository struct {
@@ -120,4 +138,103 @@ func (r *tourProgramRepository) List(ctx context.Context, criteria repomodels.To
 		return nil, 0, err
 	}
 	return items, int(total), nil
+}
+
+// wherePublic hard-codes the customer-site visibility rule: active and in a public state.
+func wherePublic(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.Where("tp.status = TRUE").Where("tp.state IN (?)", bun.In(tourprogramstate.Public))
+}
+
+// publicRelations loads what public DTOs render. Soft-deleted countries/cities are dropped by the use case.
+func publicRelations(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
+		Relation("Airline").
+		Relation("CountryLinks", orderedCountryLinks).
+		Relation("CountryLinks.Country").
+		Relation("CityLinks", orderedCityLinks).
+		Relation("CityLinks.City").
+		Relation("CityLinks.City.Country")
+}
+
+func (r *tourProgramRepository) ListPublic(ctx context.Context, criteria repomodels.TourProgramPublicListCriteria) ([]domain.TourProgram, int, error) {
+	var items []domain.TourProgram
+	q := wherePublic(publicRelations(r.query.NewSelect().Model(&items)))
+
+	if criteria.CountrySlug != "" {
+		q = q.Where(`EXISTS (SELECT 1 FROM tour_program_country x JOIN country c ON c.id = x.country_id
+			WHERE x.tour_program_id = tp.id AND c.slug = ? AND c.status = TRUE)`, criteria.CountrySlug)
+	}
+	if criteria.CitySlug != "" {
+		q = q.Where(`EXISTS (SELECT 1 FROM tour_program_city x JOIN city c ON c.id = x.city_id
+			WHERE x.tour_program_id = tp.id AND c.slug = ? AND c.status = TRUE)`, criteria.CitySlug)
+	}
+	if criteria.DateFrom.Valid || criteria.DateTo.Valid {
+		sub := r.db.NewSelect().TableExpr("tour_program_period AS p").ColumnExpr("1").
+			Where("p.tour_program_id = tp.id").
+			Where("p.status = TRUE").
+			Where("p.start_date > ?", criteria.DepartAfter.Format(time.DateOnly))
+		if criteria.DateFrom.Valid {
+			sub = sub.Where("p.start_date >= ?", criteria.DateFrom.Time.Format(time.DateOnly))
+		}
+		if criteria.DateTo.Valid {
+			sub = sub.Where("p.start_date <= ?", criteria.DateTo.Time.Format(time.DateOnly))
+		}
+		q = q.Where("EXISTS (?)", sub)
+	}
+
+	total, err := q.
+		OrderExpr("tp.code ASC").
+		Limit(int64(criteria.PageSize)).
+		Offset(int64((criteria.Page - 1) * criteria.PageSize)).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	return items, int(total), nil
+}
+
+func (r *tourProgramRepository) FindPublicByCode(ctx context.Context, code string) (*domain.TourProgram, error) {
+	obj := new(domain.TourProgram)
+	err := wherePublic(publicRelations(r.query.NewSelect().Model(obj))).
+		Relation("Images", orderedImages).
+		Where("tp.code = ?", code).
+		Limit(1).
+		Scan(ctx)
+	return query.NotFoundAsNil(obj, err)
+}
+
+func (r *tourProgramRepository) FindPublicStateByCode(ctx context.Context, code string) (*domain.TourProgram, error) {
+	obj := new(domain.TourProgram)
+	err := wherePublic(r.query.NewSelect().Model(obj).Column("id", "code", "state")).
+		Where("tp.code = ?", code).
+		Limit(1).
+		Scan(ctx)
+	return query.NotFoundAsNil(obj, err)
+}
+
+// publicStats aggregates public tours per taxonomy id through a link table
+// (tour_program_country.country_id or tour_program_city.city_id).
+func (r *tourProgramRepository) publicStats(ctx context.Context, linkTable, idColumn string, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error) {
+	var rows []repomodels.TaxonomyPublicStats
+	err := r.db.NewSelect().
+		TableExpr("tour_program AS tp").
+		Join("JOIN ? AS x ON x.tour_program_id = tp.id", bun.Ident(linkTable)).
+		Join("LEFT JOIN tour_program_period AS p ON p.tour_program_id = tp.id AND p.status = TRUE AND p.start_date > ?",
+			departAfter.Format(time.DateOnly)).
+		ColumnExpr("x.? AS id", bun.Ident(idColumn)).
+		ColumnExpr("count(DISTINCT tp.id) AS tour_count").
+		ColumnExpr("min(p.price) AS starting_price").
+		Where("tp.status = TRUE").
+		Where("tp.state IN (?)", bun.In(tourprogramstate.Public)).
+		GroupExpr("x.?", bun.Ident(idColumn)).
+		Scan(ctx, &rows)
+	return rows, err
+}
+
+func (r *tourProgramRepository) PublicCountryStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error) {
+	return r.publicStats(ctx, "tour_program_country", "country_id", departAfter)
+}
+
+func (r *tourProgramRepository) PublicCityStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error) {
+	return r.publicStats(ctx, "tour_program_city", "city_id", departAfter)
 }

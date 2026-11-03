@@ -355,6 +355,45 @@ definitions:
       total:
         type: integer
     type: object
+  backend_pkg_modules_city_models.CityPublicItem:
+    properties:
+      countrySlug:
+        example: japan
+        type: string
+      description:
+        description: landing-page intro
+        type: string
+      heroImage:
+        type: string
+      nameEn:
+        example: Tokyo
+        type: string
+      nameTh:
+        example: โตเกียว
+        type: string
+      slug:
+        example: tokyo
+        type: string
+      sortOrder:
+        type: integer
+      startingPrice:
+        description: StartingPrice is the lowest upcoming period price among those
+          tours; null when there is none.
+        type: integer
+      tourCount:
+        description: TourCount counts public tours. The site generates no landing
+          page when it is 0.
+        type: integer
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_city_models.CityPublicListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_city_models.CityPublicItem'
+        type: array
+    type: object
   backend_pkg_modules_city_models.CityUpdateRequest:
     properties:
       countryId:
@@ -538,6 +577,42 @@ definitions:
       total:
         type: integer
     type: object
+  backend_pkg_modules_country_models.CountryPublicItem:
+    properties:
+      description:
+        description: landing-page intro
+        type: string
+      heroImage:
+        type: string
+      nameEn:
+        example: Japan
+        type: string
+      nameTh:
+        example: ญี่ปุ่น
+        type: string
+      slug:
+        example: japan
+        type: string
+      sortOrder:
+        type: integer
+      startingPrice:
+        description: StartingPrice is the lowest upcoming period price among those
+          tours; null when there is none.
+        type: integer
+      tourCount:
+        description: TourCount counts public tours. The site generates no landing
+          page when it is 0.
+        type: integer
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_country_models.CountryPublicListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_country_models.CountryPublicItem'
+        type: array
+    type: object
   backend_pkg_modules_country_models.CountryUpdateRequest:
     properties:
       description:
@@ -608,6 +683,72 @@ definitions:
       width:
         description: 0 for documents
         type: integer
+    type: object
+  backend_pkg_modules_tourprogram_models.AirlinePublic:
+    properties:
+      code:
+        example: TG
+        type: string
+      logo:
+        type: string
+      name:
+        example: Thai Airways
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.CityPublicRef:
+    properties:
+      countrySlug:
+        example: japan
+        type: string
+      nameEn:
+        example: Japan
+        type: string
+      nameTh:
+        example: ญี่ปุ่น
+        type: string
+      slug:
+        example: japan
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TaxonomyPublicRef:
+    properties:
+      nameEn:
+        example: Japan
+        type: string
+      nameTh:
+        example: ญี่ปุ่น
+        type: string
+      slug:
+        example: japan
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourPeriodPublicItem:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      deposit:
+        type: integer
+      endDate:
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      price:
+        type: integer
+      priceBeforeDiscount:
+        type: integer
+      seatsAvailable:
+        type: integer
+      singleSupplement:
+        type: integer
+      soldOut:
+        description: SoldOut is true when no seat is left or the tour is closed.
+        type: boolean
+      startDate:
+        example: "2026-12-01"
+        type: string
     type: object
   backend_pkg_modules_tourprogram_models.TourProgramAirline:
     properties:
@@ -920,6 +1061,122 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramPublicGetResponse:
+    properties:
+      airline:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.AirlinePublic'
+      bannerImage:
+        type: string
+      cardImage:
+        type: string
+      cities:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.CityPublicRef'
+        type: array
+      code:
+        example: NIDN000001
+        type: string
+      countries:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TaxonomyPublicRef'
+        type: array
+      days:
+        type: integer
+      description:
+        type: string
+      highlight:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      nextDepartureDate:
+        example: "2026-12-01"
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        type: string
+      periodCount:
+        type: integer
+      periods:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourPeriodPublicItem'
+        type: array
+      startingPrice:
+        description: StartingPrice is the lowest upcoming period price ("ราคาเริ่มต้น");
+          null without upcoming periods.
+        type: integer
+      startingPriceBeforeDiscount:
+        description: StartingPriceBeforeDiscount is the struck-through price of the
+          period that sets StartingPrice.
+        type: integer
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramPublicItem:
+    properties:
+      airline:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.AirlinePublic'
+      cardImage:
+        type: string
+      cities:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.CityPublicRef'
+        type: array
+      code:
+        example: NIDN000001
+        type: string
+      countries:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TaxonomyPublicRef'
+        type: array
+      days:
+        type: integer
+      highlight:
+        type: string
+      name:
+        type: string
+      nextDepartureDate:
+        example: "2026-12-01"
+        type: string
+      nights:
+        type: integer
+      periodCount:
+        type: integer
+      startingPrice:
+        description: StartingPrice is the lowest upcoming period price ("ราคาเริ่มต้น");
+          null without upcoming periods.
+        type: integer
+      startingPriceBeforeDiscount:
+        description: StartingPriceBeforeDiscount is the struck-through price of the
+          period that sets StartingPrice.
+        type: integer
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramPublicListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramPublicPeriodsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourPeriodPublicItem'
+        type: array
     type: object
   backend_pkg_modules_tourprogram_models.TourProgramUpdateRequest:
     properties:
@@ -2033,6 +2290,21 @@ paths:
       summary: List cities
       tags:
       - cities
+  /cities/public:
+    get:
+      description: |-
+        Every active city in display order with its public tour count and lowest upcoming
+        price. The site skips landing pages whose tourCount is 0. No auth.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_city_models.CityPublicListResponse'
+      summary: List public cities with tour stats (customer site build)
+      tags:
+      - public
   /cities/status:
     put:
       consumes:
@@ -2187,6 +2459,21 @@ paths:
       summary: List countries
       tags:
       - countries
+  /countries/public:
+    get:
+      description: |-
+        Every active country in display order with its public tour count and lowest upcoming
+        price. The site skips landing pages whose tourCount is 0. No auth.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_country_models.CountryPublicListResponse'
+      summary: List public countries with tour stats (customer site build)
+      tags:
+      - public
   /countries/status:
     put:
       consumes:
@@ -2508,6 +2795,102 @@ paths:
       summary: List tour programs
       tags:
       - tour-programs
+  /tour-programs/public:
+    get:
+      description: |-
+        Active tours in a public state (selling, closed), ordered by code. Prices and dates
+        cover upcoming periods only (departing after today, Thailand time). No auth.
+      parameters:
+      - description: Country slug
+        in: query
+        name: country
+        type: string
+      - description: City slug
+        in: query
+        name: city
+        type: string
+      - description: Has an upcoming departure on/after (YYYY-MM-DD)
+        in: query
+        name: dateFrom
+        type: string
+      - description: Has an upcoming departure on/before (YYYY-MM-DD)
+        in: query
+        name: dateTo
+        type: string
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 20, max 100)
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List public tour programs (customer site build)
+      tags:
+      - public
+  /tour-programs/public/{code}:
+    get:
+      description: |-
+        Tour page data with gallery and upcoming periods. 404 when the code is unknown,
+        deleted or not public. No auth.
+      parameters:
+      - description: Tour code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a public tour program by code (customer site build)
+      tags:
+      - public
+  /tour-programs/public/{code}/periods:
+    get:
+      description: 'Upcoming departures with prices and seats. Cache-Control: public,
+        max-age=30. No auth.'
+      parameters:
+      - description: Tour code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramPublicPeriodsResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Live periods of a public tour (browser)
+      tags:
+      - public
   /tour-programs/status:
     put:
       consumes:

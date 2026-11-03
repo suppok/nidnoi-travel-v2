@@ -12,4 +12,7 @@ type CountryUseCase interface {
 	Create(ctx context.Context, request *models.CountryCreateRequest) (*models.CountryCreateResponse, error)
 	Update(ctx context.Context, request *models.CountryUpdateRequest) (*models.CountryUpdateResponse, error)
 	UpdateStatus(ctx context.Context, request *models.CountryUpdateStatusRequest) (*models.CountryUpdateStatusResponse, error)
+
+	// Public (customer site)
+	PublicList(ctx context.Context) (*models.CountryPublicListResponse, error)
 }
