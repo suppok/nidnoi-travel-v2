@@ -8,6 +8,7 @@ import (
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
 	"backend/pkg/domain"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/modules/tourprogram/models"
 )
 
@@ -26,6 +27,8 @@ func (u *tourProgramUseCase) Update(ctx context.Context, request *models.TourPro
 	}
 
 	var updated *domain.TourProgram
+	var wasVisible bool
+	var pathsBefore []string // the tour may leave countries/cities: rebuild those landings too
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		target, err := u.load(ctx, appDB, request.ID)
 		if err != nil {
@@ -35,6 +38,7 @@ func (u *tourProgramUseCase) Update(ctx context.Context, request *models.TourPro
 			return err
 		}
 
+		wasVisible, pathsBefore = revalidation.TourVisible(target), revalidation.PathsForTour(target)
 		actorID := request.UserRequestInfo.UserID
 		stripRelations(target)
 		applyFields(target, &request.TourProgramFields)
@@ -53,6 +57,8 @@ func (u *tourProgramUseCase) Update(ctx context.Context, request *models.TourPro
 		return nil, cerrors.Wrap(err, "update tour program")
 	}
 
-	// TODO(revalidator): enqueue a customer-site rebuild once the deploy-hook revalidator exists.
+	if wasVisible || revalidation.TourVisible(updated) {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, append(pathsBefore, revalidation.PathsForTour(updated)...))
+	}
 	return &models.TourProgramUpdateResponse{TourProgramItem: models.NewTourProgramItem(updated)}, nil
 }

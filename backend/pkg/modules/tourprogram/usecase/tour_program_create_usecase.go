@@ -9,6 +9,7 @@ import (
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/utils"
 	"backend/pkg/domain"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/modules/tourprogram/models"
 )
 
@@ -66,6 +67,8 @@ func (u *tourProgramUseCase) Create(ctx context.Context, request *models.TourPro
 		return nil, cerrors.Wrap(err, "create tour program")
 	}
 
-	// TODO(revalidator): enqueue a customer-site rebuild once the deploy-hook revalidator exists.
+	if revalidation.TourVisible(created) {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, revalidation.PathsForTour(created))
+	}
 	return &models.TourProgramCreateResponse{TourProgramItem: models.NewTourProgramItem(created)}, nil
 }

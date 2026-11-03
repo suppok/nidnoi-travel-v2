@@ -27,8 +27,9 @@ tourCode:
   prefix: NIDN # code = prefix + 6-digit zero-padded number, e.g. NIDN000001
 
 revalidation:
-  quiet: 3m
-  maxWait: 15m
+  quiet: 3m # fire once no change has arrived for this long
+  maxWait: 15m # ...but at most this long after the first pending change
+  dailyAt: "00:05" # Thailand time; "upcoming" periods move with the calendar. "" disables
 
 media:
   maxUploadMB: 10

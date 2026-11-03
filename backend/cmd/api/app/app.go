@@ -25,8 +25,10 @@ import (
 	"backend/pkg/core/database"
 	"backend/pkg/core/database/query"
 	corelogger "backend/pkg/core/logger"
+	"backend/pkg/modules/shared/client/deployhook"
 	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/password"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/registry"
 
 	airlineusecase "backend/pkg/modules/airline/usecase"
@@ -34,6 +36,7 @@ import (
 	cityusecase "backend/pkg/modules/city/usecase"
 	countryusecase "backend/pkg/modules/country/usecase"
 	mediausecase "backend/pkg/modules/media/usecase"
+	siteusecase "backend/pkg/modules/site/usecase"
 	tourprogramusecase "backend/pkg/modules/tourprogram/usecase"
 	periodusecase "backend/pkg/modules/tourprogramperiod/usecase"
 	userusecase "backend/pkg/modules/user/usecase"
@@ -46,10 +49,11 @@ const (
 )
 
 type App struct {
-	fiber  *fiber.App
-	config *config.Config
-	logger *zap.Logger
-	db     *bun.DB
+	fiber       *fiber.App
+	config      *config.Config
+	logger      *zap.Logger
+	db          *bun.DB
+	revalidator revalidation.Worker
 }
 
 // New wires config → infrastructure → registries → use cases → handlers.
@@ -88,12 +92,17 @@ func New(ctx context.Context) (*App, error) {
 		Permissions: permissions,
 	}
 	repositoryRegistry := initializer.NewRepositoryRegistry(db)
+	deployHook := deployhook.New(cfg.DeployHookURL)
+	revalidator := revalidation.New(deployHook, log, cfg.Revalidation)
 	shareRegistry := &registry.ShareRegistry{
-		ServiceRegistry: registry.ServiceRegistry{Password: passwords},
-		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2)},
+		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
+		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook},
 	}
 	if !cfg.R2.Configured() {
 		log.Warn("R2 is not configured: media uploads return STORAGE_UNAVAILABLE until every R2_* variable is set")
+	}
+	if !deployHook.Configured() {
+		log.Warn("CLOUDFLARE_DEPLOY_HOOK_URL is not set: customer-site rebuilds are logged and skipped")
 	}
 
 	// Use cases
@@ -106,6 +115,7 @@ func New(ctx context.Context) (*App, error) {
 	mediaUseCase := mediausecase.NewMediaUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	tourProgramUseCase := tourprogramusecase.NewTourProgramUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	siteUseCase := siteusecase.NewSiteUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 
 	// HTTP
 	response := api.NewApiResponseHandler(log)
@@ -146,8 +156,9 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewMediaAPIHandler(v1, apiHandler, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramAPIHandler(v1, apiHandler, tourProgramUseCase).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
+	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 
-	return &App{fiber: f, config: cfg, logger: log, db: db}, nil
+	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
 }
 
 // Run serves until ctx is cancelled, then shuts down gracefully.
@@ -155,6 +166,15 @@ func (a *App) Run(ctx context.Context) error {
 	defer func() {
 		_ = a.db.Close()
 		_ = a.logger.Sync()
+	}()
+
+	// The rebuild worker stops after the HTTP server, so edits made during shutdown are still flushed.
+	workerCtx, stopWorker := context.WithCancel(context.Background())
+	workerDone := make(chan struct{})
+	go func() { a.revalidator.Run(workerCtx); close(workerDone) }()
+	defer func() {
+		stopWorker()
+		<-workerDone
 	}()
 
 	errCh := make(chan error, 1)

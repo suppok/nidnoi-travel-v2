@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/guregu/null/v5"
+	"go.uber.org/zap"
 
 	"backend/pkg/constants/errorcode"
 	"backend/pkg/core/database/query"
@@ -13,6 +14,7 @@ import (
 	"backend/pkg/core/validation"
 	"backend/pkg/domain"
 	"backend/pkg/modules/country"
+	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/registry"
 )
 
@@ -104,4 +106,17 @@ func (u *countryUseCase) findForUpdate(ctx context.Context, appDB query.AppIDB, 
 		return nil, cerrors.NotFound()
 	}
 	return found, nil
+}
+
+// enqueueIfShown rebuilds the customer site when the country has public tours (otherwise it appears
+// on no page). Called after the transaction commits; a failed count is logged, never returned.
+func (u *countryUseCase) enqueueIfShown(ctx context.Context, c *domain.Country) {
+	n, err := u.repositoryRegistry.TourProgramRepository.CountPublicByCountry(ctx, c.ID)
+	if err != nil {
+		u.coreRegistry.Logger.Error("count public tours for rebuild", zap.Error(err), zap.String("countryId", c.ID))
+		return
+	}
+	if n > 0 {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, revalidation.PathsForCountry(c))
+	}
 }

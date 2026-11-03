@@ -8,6 +8,7 @@ import (
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
 	"backend/pkg/modules/city/models"
+	"backend/pkg/modules/shared/services/revalidation"
 )
 
 func (u *cityUseCase) UpdateStatusValidate(request *models.CityUpdateStatusRequest) error {
@@ -24,6 +25,7 @@ func (u *cityUseCase) UpdateStatus(ctx context.Context, request *models.CityUpda
 		return nil, cerrors.Validation(err)
 	}
 
+	var rebuild []string // set when the status actually changes
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		target, err := u.findForUpdate(ctx, appDB, request.ID)
 		if err != nil {
@@ -38,6 +40,9 @@ func (u *cityUseCase) UpdateStatus(ctx context.Context, request *models.CityUpda
 			}
 		}
 
+		if target.Country != nil {
+			rebuild = revalidation.PathsForCity(target.Country.Slug, target.Slug)
+		}
 		target.Status = *request.Status
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
@@ -47,6 +52,9 @@ func (u *cityUseCase) UpdateStatus(ctx context.Context, request *models.CityUpda
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "update city status")
+	}
+	if rebuild != nil {
+		u.enqueueIfShown(ctx, request.ID, rebuild)
 	}
 	return nil, nil
 }

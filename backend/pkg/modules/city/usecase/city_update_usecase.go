@@ -9,6 +9,7 @@ import (
 	"backend/pkg/core/validation"
 	"backend/pkg/domain"
 	"backend/pkg/modules/city/models"
+	"backend/pkg/modules/shared/services/revalidation"
 )
 
 func (u *cityUseCase) UpdateValidate(request *models.CityUpdateRequest) error {
@@ -32,12 +33,16 @@ func (u *cityUseCase) Update(ctx context.Context, request *models.CityUpdateRequ
 	}
 
 	var updated *domain.City
+	var pathsBefore []string // a country move changes the landing URL: rebuild both
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		target, err := u.findForUpdate(ctx, appDB, request.ID)
 		if err != nil {
 			return err
 		}
 		country := target.Country
+		if country != nil {
+			pathsBefore = revalidation.PathsForCity(country.Slug, target.Slug)
+		}
 		if request.CountryID != target.CountryID {
 			if country, err = u.activeCountry(ctx, appDB, request.CountryID); err != nil {
 				return err
@@ -65,5 +70,6 @@ func (u *cityUseCase) Update(ctx context.Context, request *models.CityUpdateRequ
 	if err != nil {
 		return nil, cerrors.Wrap(err, "update city")
 	}
+	u.enqueueIfShown(ctx, updated.ID, append(pathsBefore, revalidation.PathsForCity(updated.Country.Slug, updated.Slug)...))
 	return &models.CityUpdateResponse{CityItem: models.NewCityItem(updated)}, nil
 }

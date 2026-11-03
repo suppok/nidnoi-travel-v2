@@ -54,3 +54,9 @@ var (
 	ImageTooSmall       = ErrCode("IMAGE_TOO_SMALL", "The image is smaller than the minimum size")
 	StorageUnavailable  = ErrCode("STORAGE_UNAVAILABLE", "File storage is not configured")
 )
+
+// Customer site rebuild
+var (
+	SiteRebuildUnavailable = ErrCode("SITE_REBUILD_UNAVAILABLE", "The site rebuild hook is not configured")
+	SiteRebuildFailed      = ErrCode("SITE_REBUILD_FAILED", "Could not start the site rebuild")
+)

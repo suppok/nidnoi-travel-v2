@@ -684,6 +684,11 @@ definitions:
         description: 0 for documents
         type: integer
     type: object
+  backend_pkg_modules_site_models.SiteRebuildResponse:
+    properties:
+      triggered:
+        type: boolean
+    type: object
   backend_pkg_modules_tourprogram_models.AirlinePublic:
     properties:
       code:
@@ -2560,6 +2565,33 @@ paths:
       summary: Upload an image or document to R2
       tags:
       - media
+  /site/rebuild:
+    post:
+      description: |-
+        Fires the Cloudflare deploy hook immediately, bypassing the debounce. The build takes
+        a few minutes; a failed build leaves the previous deployment live.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_site_models.SiteRebuildResponse'
+        "502":
+          description: SITE_REBUILD_FAILED
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: SITE_REBUILD_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Rebuild the customer site now
+      tags:
+      - site
   /tour-program-periods:
     post:
       consumes:

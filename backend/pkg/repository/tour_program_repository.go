@@ -20,7 +20,7 @@ type TourProgramRepository interface {
 	NextCodeNumber(ctx context.Context) (int64, error)
 	Create(ctx context.Context, obj *domain.TourProgram) (*domain.TourProgram, error)
 	Update(ctx context.Context, obj *domain.TourProgram, columns ...string) (*domain.TourProgram, error)
-	// FindByID loads the tour with its Wholesale, Airline, countries, cities (with their Country) and images,
+	// FindByID loads the tour with its Wholesale, Airline, countries, cities (each with its Country) and images,
 	// each in display order.
 	FindByID(ctx context.Context, id string) (*domain.TourProgram, error)
 	// List returns tours with their Wholesale and countries, most recently updated first.
@@ -40,6 +40,9 @@ type TourProgramRepository interface {
 	// upcoming period price (start_date > departAfter). Rows without public tours are absent.
 	PublicCountryStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error)
 	PublicCityStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error)
+	// CountPublicByCountry / CountPublicByCity count public tours linked to the country/city.
+	CountPublicByCountry(ctx context.Context, countryID string) (int, error)
+	CountPublicByCity(ctx context.Context, cityID string) (int, error)
 }
 
 type tourProgramRepository struct {
@@ -91,6 +94,7 @@ func (r *tourProgramRepository) FindByID(ctx context.Context, id string) (*domai
 		Relation("CountryLinks.Country").
 		Relation("CityLinks", orderedCityLinks).
 		Relation("CityLinks.City").
+		Relation("CityLinks.City.Country").
 		Relation("Images", orderedImages).
 		Where("tp.id = ?", id).
 		Limit(1).
@@ -237,4 +241,18 @@ func (r *tourProgramRepository) PublicCountryStats(ctx context.Context, departAf
 
 func (r *tourProgramRepository) PublicCityStats(ctx context.Context, departAfter time.Time) ([]repomodels.TaxonomyPublicStats, error) {
 	return r.publicStats(ctx, "tour_program_city", "city_id", departAfter)
+}
+
+func (r *tourProgramRepository) CountPublicByCountry(ctx context.Context, countryID string) (int, error) {
+	n, err := wherePublic(r.query.NewSelect()).
+		Where("EXISTS (SELECT 1 FROM tour_program_country x WHERE x.tour_program_id = tp.id AND x.country_id = ?)", countryID).
+		Count(ctx)
+	return int(n), err
+}
+
+func (r *tourProgramRepository) CountPublicByCity(ctx context.Context, cityID string) (int, error) {
+	n, err := wherePublic(r.query.NewSelect()).
+		Where("EXISTS (SELECT 1 FROM tour_program_city x WHERE x.tour_program_id = tp.id AND x.city_id = ?)", cityID).
+		Count(ctx)
+	return int(n), err
 }

@@ -455,26 +455,27 @@ type Revalidator interface {
 }
 ```
 
-`DeployHookRevalidator` (in-process):
+`revalidation.New` (in-process worker, started and stopped by `app.go` after the HTTP server):
 - **Debounce:** fires once no new enqueue has arrived for `quiet` (default 3 min), and at most `maxWait` (default 15 min) after the first pending enqueue. Both values live in `config_api.yml`.
-- Fires `POST <CLOUDFLARE_DEPLOY_HOOK_URL>` through `shared/client/deployhook`. Retries 3× with backoff (1 s, 5 s, 30 s); a final failure is logged at ERROR with the pending paths.
+- **Daily rebuild** at `revalidation.dailyAt` (Thailand time, default `00:05`; `""` disables): "upcoming" periods move with the calendar, so starting prices can change without any edit.
+- **Shutdown flush:** a batch still pending when the API stops (e.g. a redeploy) is fired once before exit.
+- Fires `POST <CLOUDFLARE_DEPLOY_HOOK_URL>` through `shared/client/deployhook`. Retries 3× with backoff (1 s, 5 s, 30 s); a final failure is logged at ERROR with the pending paths. The URL never appears in logs or errors.
+- Without `CLOUDFLARE_DEPLOY_HOOK_URL` (local) every rebuild is logged and skipped; `POST /site/rebuild` returns `SITE_REBUILD_UNAVAILABLE` (503). A rejected trigger returns `SITE_REBUILD_FAILED` (502).
 - Cloudflare skips duplicate triggers while a build is still queued, and rate-limits hooks to 10 builds/minute per Worker.
 - `paths` are only logged today. They are kept so a per-path invalidation strategy can return later without touching use cases.
-- Use cases enqueue **after** the transaction commits, using `revalidation.PathsForTourMutation` / `PathsForTaxonomyMutation` — never hand-rolled path lists.
+- Use cases enqueue **after** the transaction commits, using `revalidation.PathsForTour` / `PathsForCountry` / `PathsForCity` — never hand-rolled path lists.
 
 When to enqueue:
 
 | Mutation | Enqueue? |
 |---|---|
-| Tour create / content update / status change | yes |
-| Tour country/city assignment change | yes |
-| Period create / delete / date change | yes |
-| Period price change | only if the tour's starting price changes |
-| Period seat change | **never** |
-| Country/city display-field update | yes |
+| Tour create / update / status change | only when the tour is public before or after (`revalidation.TourVisible`); an update also rebuilds the landings it left |
+| Period create / update / delete / restore | only when the tour is public **and** its baked summary changes (`domainmodels.PublicPeriodSummary`: starting price, its struck-through price, next departure, period count), compared before/after inside the transaction |
+| Period seat change, price change above the starting price | **never** (the result is served live by the period table) |
+| Country/city update or status change | only when it has public tours (`CountPublicByCountry` / `CountPublicByCity`); a city moved to another country rebuilds both landings |
 | Media upload not yet referenced by a record | no |
 
-Manual trigger: `POST /api/v1/site/rebuild` (`apicode.SiteRebuild`, code `site:rebuild`) fires immediately and bypasses the debounce.
+Manual trigger: `POST /api/v1/site/rebuild` (`pkg/modules/site`, `apicode.SiteRebuild`, code `site:rebuild` — admins via `*`) fires immediately, bypasses the debounce and clears the pending batch (re-queued if the trigger fails).
 
 ---
 
@@ -599,7 +600,7 @@ Deployed environments read variables from Railway (set per environment; prd secr
 | `DATABASE_URL` | Supabase **session pooler** URL |
 | `JWT_SECRET` | Different per environment |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated, see below |
-| `CLOUDFLARE_DEPLOY_HOOK_URL` | The URL itself is the credential — treat as a secret |
+| `CLOUDFLARE_DEPLOY_HOOK_URL` | The URL itself is the credential — treat as a secret. Optional: without it rebuilds are skipped. `https://` required outside local. One hook per Worker: `customer-dev` (dev), `customer-prd` (prd) |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Token scoped to this environment's bucket |
 | `R2_BUCKET` | `nidnoi-travel-media-dev` / `nidnoi-travel-media-prod` |
 | `R2_PUBLIC_URL` | `https://dev-media.nidnoitravelv2.com` / `https://media.nidnoitravelv2.com` |
@@ -722,4 +723,5 @@ When a field is added, removed or renamed, propagate it through every layer:
 - **Legacy tour codes** — open until the legacy data is inspected:
   - *Casing:* new codes are `NIDN` + 6 digits (`NIDN000001`), but the docs show legacy codes lowercase (`/tour/nidn261690/`). URL paths are case-sensitive, so decide whether imported codes keep their legacy casing, are normalized, or the customer site lowercases codes in URLs (which would need 301s from the other casing).
   - *Number range:* `tour_code_seq` starts at 1. If staff create tours before the import, a new code could collide with a legacy one (the unique index would then fail the import). Decide whether to `setval` past the legacy range now.
-- **Not built yet:** the deploy-hook revalidator (use cases carry `TODO(revalidator)` where they must enqueue), the media orphan sweeper, `POST /inquiries/public` and the public country/city detail endpoints.
+- **Not built yet:** the media orphan sweeper, `POST /inquiries/public`, the public country/city detail endpoints, and a backoffice "rebuild site" button for `POST /site/rebuild`.
+- **`TAXONOMY_IN_USE`** is documented but not enforced yet: a country/city with public tours can still be soft-deleted (the rebuild trigger handles it, but the landing page and tour links disappear).

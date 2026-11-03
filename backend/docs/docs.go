@@ -1025,6 +1025,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/site/rebuild": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fires the Cloudflare deploy hook immediately, bypassing the debounce. The build takes\na few minutes; a failed build leaves the previous deployment live.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "site"
+                ],
+                "summary": "Rebuild the customer site now",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_site_models.SiteRebuildResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "SITE_REBUILD_FAILED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "SITE_REBUILD_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/tour-program-periods": {
             "put": {
                 "security": [
@@ -3115,6 +3154,14 @@ const docTemplate = `{
                 "width": {
                     "description": "0 for documents",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_site_models.SiteRebuildResponse": {
+            "type": "object",
+            "properties": {
+                "triggered": {
+                    "type": "boolean"
                 }
             }
         },

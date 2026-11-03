@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/guregu/null/v5"
+	"go.uber.org/zap"
 
 	"backend/pkg/constants/errorcode"
 	"backend/pkg/core/database/query"
@@ -116,4 +117,17 @@ func (u *cityUseCase) findForUpdate(ctx context.Context, appDB query.AppIDB, id 
 		return nil, cerrors.NotFound()
 	}
 	return found, nil
+}
+
+// enqueueIfShown rebuilds the customer site when the city has public tours. paths are the city's
+// landing paths (before and after a country move). Called after commit; a failed count is logged.
+func (u *cityUseCase) enqueueIfShown(ctx context.Context, cityID string, paths []string) {
+	n, err := u.repositoryRegistry.TourProgramRepository.CountPublicByCity(ctx, cityID)
+	if err != nil {
+		u.coreRegistry.Logger.Error("count public tours for rebuild", zap.Error(err), zap.String("cityId", cityID))
+		return
+	}
+	if n > 0 {
+		u.shareRegistry.ServiceRegistry.Revalidator.Enqueue(ctx, paths)
+	}
 }
