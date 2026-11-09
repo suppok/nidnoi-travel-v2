@@ -28,7 +28,19 @@ async function fetchAllTours(): Promise<TourProgramPublicItem[]> {
   }
 }
 
-export async function getPublicTour(code: string): Promise<TourProgramPublicDetail> {
+const tourOnce = new Map<string, Promise<TourProgramPublicDetail>>();
+
+/** One tour with its gallery and periods. Cached per build: the detail and booking pages share it. */
+export function getPublicTour(code: string): Promise<TourProgramPublicDetail> {
+  let tour = tourOnce.get(code);
+  if (!tour) {
+    tour = fetchTour(code);
+    tourOnce.set(code, tour);
+  }
+  return tour;
+}
+
+async function fetchTour(code: string): Promise<TourProgramPublicDetail> {
   if (USE_MOCK_DATA) {
     const { mockTours } = await import('./mock-data');
     const tour = mockTours.find((t) => t.code === code);

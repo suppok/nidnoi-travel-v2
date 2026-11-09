@@ -137,44 +137,46 @@ export default function SiteBuildListPage() {
       />
 
       <Card>
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Segmented<TriggerFilter>
-            value={filters.trigger}
-            options={[
-              { value: 'all', label: 'ทั้งหมด' },
-              { value: 'manual', label: triggerInfo.manual.label },
-              { value: 'auto', label: triggerInfo.auto.label },
-              { value: 'daily', label: triggerInfo.daily.label },
-            ]}
-            onChange={(trigger) => update({ trigger: trigger === 'all' ? undefined : trigger })}
+        {/* Spacing via gap: antd resets margins on its components, so Tailwind margins have no effect. */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented<TriggerFilter>
+              value={filters.trigger}
+              options={[
+                { value: 'all', label: 'ทั้งหมด' },
+                { value: 'manual', label: triggerInfo.manual.label },
+                { value: 'auto', label: triggerInfo.auto.label },
+                { value: 'daily', label: triggerInfo.daily.label },
+              ]}
+              onChange={(trigger) => update({ trigger: trigger === 'all' ? undefined : trigger })}
+            />
+          </div>
+
+          <Alert
+            type="info"
+            showIcon
+            title="“สั่งสร้างแล้ว” หมายถึง Cloudflare รับคำสั่งแล้ว การสร้างใช้เวลา 2–5 นาที ถ้าหน้าเว็บไม่เปลี่ยน ให้ดูผลการ build ใน Cloudflare"
+          />
+
+          {error !== null && <Alert type="error" showIcon title={errorMessage(error)} />}
+
+          <Table<SiteBuild>
+            rowKey="id"
+            columns={columns}
+            dataSource={data?.items ?? []}
+            loading={loading}
+            pagination={{
+              current: filters.page,
+              pageSize: filters.pageSize,
+              total: data?.total ?? 0,
+              showSizeChanger: true,
+              showTotal: (total) => `ทั้งหมด ${total} ครั้ง`,
+              onChange: (page, pageSize) =>
+                update({ page: page > 1 ? String(page) : undefined, pageSize: pageSize !== DEFAULT_PAGE_SIZE ? String(pageSize) : undefined }),
+            }}
+            scroll={{ x: 860 }}
           />
         </div>
-
-        <Alert
-          type="info"
-          showIcon
-          className="mb-4"
-          title="“สั่งสร้างแล้ว” หมายถึง Cloudflare รับคำสั่งแล้ว การสร้างใช้เวลา 2–5 นาที ถ้าหน้าเว็บไม่เปลี่ยน ให้ดูผลการ build ใน Cloudflare"
-        />
-
-        {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
-
-        <Table<SiteBuild>
-          rowKey="id"
-          columns={columns}
-          dataSource={data?.items ?? []}
-          loading={loading}
-          pagination={{
-            current: filters.page,
-            pageSize: filters.pageSize,
-            total: data?.total ?? 0,
-            showSizeChanger: true,
-            showTotal: (total) => `ทั้งหมด ${total} ครั้ง`,
-            onChange: (page, pageSize) =>
-              update({ page: page > 1 ? String(page) : undefined, pageSize: pageSize !== DEFAULT_PAGE_SIZE ? String(pageSize) : undefined }),
-          }}
-          scroll={{ x: 860 }}
-        />
       </Card>
     </>
   );

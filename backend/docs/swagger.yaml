@@ -199,6 +199,325 @@ definitions:
         description: seconds
         type: integer
     type: object
+  backend_pkg_modules_booking_models.BookingGetResponse:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      assignee:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUser'
+        description: Assignee is the staff user who first took the booking out of
+          "new"; null until then.
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerNote:
+        type: string
+      email:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        description: 10 new, 20 contacted, 30 confirmed, 40 cancelled
+        enum:
+        - 10
+        - 20
+        - 30
+        - 40
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        description: at booking time
+        type: string
+      tourName:
+        description: at booking time
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_booking_models.BookingItem:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      assignee:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUser'
+        description: Assignee is the staff user who first took the booking out of
+          "new"; null until then.
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerNote:
+        type: string
+      email:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        description: 10 new, 20 contacted, 30 confirmed, 40 cancelled
+        enum:
+        - 10
+        - 20
+        - 30
+        - 40
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        description: at booking time
+        type: string
+      tourName:
+        description: at booking time
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_booking_models.BookingListRequest:
+    properties:
+      keyword:
+        description: booking no, customer name, email, phone or tour code
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      state:
+        description: 0 = all
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_booking_models.BookingListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_booking_models.BookingItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_booking_models.BookingPublicCreateRequest:
+    properties:
+      adultSingle:
+        description: adults in a single room; only when the period has a single supplement
+        type: integer
+      adultTwin:
+        description: adults sharing a room
+        type: integer
+      childNoBed:
+        description: only when the period has a child-no-bed price
+        type: integer
+      childWithBed:
+        description: only when the period has a child-with-bed price
+        type: integer
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      note:
+        description: special requests
+        type: string
+      periodId:
+        type: string
+      phone:
+        type: string
+      tourCode:
+        example: NIDN000001
+        type: string
+      website:
+        description: 'Website is a honeypot: the form hides it, so only bots fill
+          it in.'
+        type: string
+    type: object
+  backend_pkg_modules_booking_models.BookingPublicCreateResponse:
+    properties:
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      totalPrice:
+        description: whole baht, as quoted
+        type: integer
+    type: object
+  backend_pkg_modules_booking_models.BookingUpdateRequest:
+    properties:
+      id:
+        type: string
+      staffNote:
+        type: string
+      state:
+        description: 10 new, 20 contacted, 30 confirmed, 40 cancelled
+        type: integer
+    type: object
+  backend_pkg_modules_booking_models.BookingUpdateResponse:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      assignee:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUser'
+        description: Assignee is the staff user who first took the booking out of
+          "new"; null until then.
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerNote:
+        type: string
+      email:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        description: 10 new, 20 contacted, 30 confirmed, 40 cancelled
+        enum:
+        - 10
+        - 20
+        - 30
+        - 40
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        description: at booking time
+        type: string
+      tourName:
+        description: at booking time
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_booking_models.BookingUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete (spam, duplicates)
+        type: boolean
+    type: object
+  backend_pkg_modules_booking_models.BookingUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   backend_pkg_modules_city_models.CityCountry:
     properties:
       id:
@@ -2240,6 +2559,167 @@ paths:
       summary: Refresh the access token
       tags:
       - auth
+  /bookings:
+    put:
+      consumes:
+      - application/json
+      description: The first user to move the booking out of "new" becomes its assignee.
+      parameters:
+      - description: State and note
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a booking request's sales state and staff note
+      tags:
+      - bookings
+  /bookings/{id}:
+    get:
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_booking_models.BookingGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a booking request
+      tags:
+      - bookings
+  /bookings/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_booking_models.BookingListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_booking_models.BookingListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List booking requests, newest first
+      tags:
+      - bookings
+  /bookings/public:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Records a sales lead for a departure. Reserves no seats and takes no payment: sales
+        contacts the customer to confirm. Prices are quoted from the period, never from the
+        request. Rate-limited per client IP.
+      parameters:
+      - description: Booking request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_booking_models.BookingPublicCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_booking_models.BookingPublicCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND (tour)
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: PERIOD_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: RATE_LIMITED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Send a booking request (customer site)
+      tags:
+      - bookings
+  /bookings/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_booking_models.BookingUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete (spam, duplicates) or restore a booking request
+      tags:
+      - bookings
   /cities:
     post:
       consumes:

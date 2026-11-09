@@ -438,9 +438,23 @@ Airline master (`pkg/modules/airline`, table `airline`). Seeded (`migrations/*_s
 
 - **Starting price** = the lowest price among a tour's active **upcoming** periods (`status = true`, `start_date` after today in Thailand — `utils.TodayInThailand`). Sold-out periods still count. It is baked into the customer site's static HTML (tour cards, JSON-LD), so a change requires a site rebuild.
 - **Per-period price and seats** are served live to the customer site's period island via `GET /api/v1/tour-programs/public/:code/periods`: small payload (dates, price, seats left, sold-out flag), `Cache-Control: public, max-age=30`. Seat changes never trigger a rebuild.
-- Booking is inquiry-based (no online seat reservation), so up to 30 seconds of staleness is acceptable.
+- Booking is lead-based (no online seat reservation, see "Bookings"), so up to 30 seconds of staleness is acceptable.
 - Staff edit periods through the `tour-program-periods` resource (`pkg/modules/tourprogramperiod`): `POST` create, `PUT` update, `POST /list` (`{tourProgramId, status?}`, every period of one tour by date, no paging), `PUT /status`. Codes `tour-program-period:create|update|list|status`. The update use case compares the old and new row (and the tour's starting price) to decide whether to enqueue a rebuild — see the rebuild table.
 - Columns: `start_date`/`end_date` (`DATE`, wire format `YYYY-MM-DD`, at most 90 days apart), `price` (adult, required), optional `price_before_discount` (must be above `price`), `child_with_bed_price`, `child_no_bed_price`, `single_supplement`, `deposit`, `seats_total` (0–999), `seats_available` (`0..seats_total`, 0 = sold out), `note` (staff only). **Prices are whole baht (`INTEGER`)** — no floats.
+
+---
+
+## Bookings
+
+Booking requests from the customer site (`pkg/modules/booking`, table `booking`). A booking is a **sales lead**: no seats are reserved, no payment is taken and `seats_available` is never touched. Sales contacts the customer and adjusts seats by hand.
+
+- `POST /bookings/public` (no auth, `rateLimit.booking` per IP): `{tourCode, periodId, adultTwin, adultSingle, childWithBed, childNoBed, firstName, lastName, email, phone, note, website}`. `website` is a honeypot — when filled, the API answers success with a random `bookingNo` and stores nothing.
+- Bookable = tour `status` true and state **selling**, period active, departing after today (Thailand) and `seats_available > 0`; otherwise `PERIOD_UNAVAILABLE` (409). An unknown or hidden tour code is `NOT_FOUND`.
+- Prices are **quoted by the backend** from the period: adult twin = `price`, adult single = `price + single_supplement`, children = `child_with_bed_price` / `child_no_bed_price`. A count for a row the period doesn't price is a `VALIDATION` error on that field. At least one adult, at most 50 travellers.
+- The row stores a snapshot (tour code/name, dates, unit prices, counts, total) so it still reads correctly after the tour or period is edited. `booking_no` = 2-digit year in Thailand + 6 random characters from `bookingstate.NoAlphabet` (no 0/O/1/I/L, e.g. `26X8K9AQ`); a collision hits the unique index `booking_booking_no_key` and the create transaction is retried (up to 3 times). `create_by` is the nil UUID. Logs carry the booking number and tour code only — never personal data.
+- `state` (`pkg/constants/bookingstate`): 10 new, 20 contacted, 30 confirmed, 40 cancelled. The first user to move a booking out of "new" becomes its `assignee_id`.
+- Staff endpoints: `POST /bookings/list` (`{keyword, state, status, page, pageSize}`, newest first), `GET /bookings/:id`, `PUT /bookings` (`{id, state, staffNote}`), `PUT /bookings/status` (spam/duplicates). Permissions `booking:list|get|update|status`; `sales` has list/get/update, `finance` list/get.
+- The backoffice polls `POST /bookings/list` with `{state: 10, status: true, pageSize: 1}` every 60 s for its new-booking badge.
 
 ---
 
@@ -507,7 +521,7 @@ All unauthenticated. All filter `status = true` in the repository. All return 40
 | `GET /tour-programs/public/:code/periods` → `{items}` | browser (period table), `Cache-Control: public, max-age=30` on 200, `no-store` otherwise | yes |
 | `GET /countries/public`, `GET /cities/public` → `{items}`: every active row with `tourCount` and `startingPrice` (cities only when their country is active) | site build | yes |
 | `GET /countries/public/:slug`, `GET /countries/public/:slug/cities`, `GET /cities/public/:slug` | site build | no — the site uses the lists |
-| `POST /inquiries/public` | browser (inquiry form), rate-limited | no |
+| `POST /bookings/public` → `{bookingNo, totalPrice}` | browser (booking form), rate-limited | yes |
 
 Visibility rules (repository: `wherePublic`, `ListPublic…`; DTOs: `pkg/modules/tourprogram/models/tour_program_public_item_model.go`):
 - A tour is public when `status = true` and `state` is in `tourprogramstate.Public` (selling, closed). Periods: `status = true` and departing after today (Thailand). Every period of a closed tour is `soldOut`.
@@ -519,7 +533,7 @@ Visibility rules (repository: `wherePublic`, `ListPublic…`; DTOs: `pkg/modules
 
 - Country/city detail returns 404 when the slug has zero active tours (empty landing pages hurt SEO).
 - Build-time callers should need few requests. If site builds slow down, add a bulk endpoint rather than N per-tour calls.
-- Browser-called endpoints need the customer origin in CORS. Rate-limit `POST /inquiries/public` with Fiber's built-in `limiter` middleware.
+- Browser-called endpoints need the customer origin in CORS. `POST /bookings/public` is rate-limited per client IP with Fiber's built-in `limiter` (`rateLimit.booking`).
 
 ---
 
@@ -584,7 +598,7 @@ No global variables, no `init()` wiring. Background workers (revalidator, media 
 
 ## Configuration and environments
 
-Environments: `local`, `dev`, `prd` (`APP_ENV`). Each deployed environment has its own Supabase project, R2 bucket, deploy hook and secrets. Never share a value across environments. Never copy prd data into dev — inquiries contain customer personal data (PDPA).
+Environments: `local`, `dev`, `prd` (`APP_ENV`). Each deployed environment has its own Supabase project, R2 bucket, deploy hook and secrets. Never share a value across environments. Never copy prd data into dev — bookings contain customer personal data (PDPA).
 
 | File | Purpose |
 |---|---|
@@ -720,10 +734,11 @@ When a field is added, removed or renamed, propagate it through every layer:
 - **WebP encoder** — `disintegration/imaging` decodes but cannot encode WebP. Choose an encoder (cgo-based `chai2010/webp` vs a pure-Go/wasm option) and confirm it builds on Railway and on Windows (cgo needs gcc there).
 - **Sales/finance permissions** — rows in `policy.csv` are placeholders; confirm with the business before prd.
 - **golangci-lint** — the locally installed binary was built with Go 1.25 and refuses this Go 1.26 module; reinstall it with Go 1.26 before relying on `task lint`.
-- **Inquiry spam protection** — rate limiting only for now; consider Cloudflare Turnstile before launch.
+- **Booking spam protection** — rate limiting + honeypot only for now; consider Cloudflare Turnstile before launch.
 - **Legacy data import** — preserve legacy `code` values and `setval` the tour code sequence past the highest one.
 - **Legacy tour codes** — open until the legacy data is inspected:
   - *Casing:* new codes are `NIDN` + 6 digits (`NIDN000001`), but the docs show legacy codes lowercase (`/tour/nidn261690/`). URL paths are case-sensitive, so decide whether imported codes keep their legacy casing, are normalized, or the customer site lowercases codes in URLs (which would need 301s from the other casing).
   - *Number range:* `tour_code_seq` starts at 1. If staff create tours before the import, a new code could collide with a legacy one (the unique index would then fail the import). Decide whether to `setval` past the legacy range now.
-- **Not built yet:** the media orphan sweeper, `POST /inquiries/public` and the public country/city detail endpoints.
+- **Not built yet:** the media orphan sweeper and the public country/city detail endpoints.
+- **Booking notifications** — the backoffice polls `POST /bookings/list`; an email or LINE push to sales would need a new provider and secret (ask first).
 - **`TAXONOMY_IN_USE`** is documented but not enforced yet: a country/city with public tours can still be soft-deleted (the rebuild trigger handles it, but the landing page and tour links disappear).

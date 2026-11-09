@@ -22,6 +22,7 @@ export const ErrorCodes = {
   StorageUnavailable: 'STORAGE_UNAVAILABLE',
   SiteRebuildUnavailable: 'SITE_REBUILD_UNAVAILABLE',
   SiteRebuildFailed: 'SITE_REBUILD_FAILED',
+  PeriodUnavailable: 'PERIOD_UNAVAILABLE', // customer site only (POST /bookings/public)
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',
   Unknown: 'UNKNOWN',

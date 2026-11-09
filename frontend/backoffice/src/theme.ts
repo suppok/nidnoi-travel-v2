@@ -42,5 +42,7 @@ export const theme: ThemeConfig = {
       itemSelectedColor: '#B02A61',
     },
     Table: { headerBg: '#F6FAFE' },
+    // antd derives a murky grey-blue info background from colorInfo; use the light sky tokens instead.
+    Alert: { colorInfoBg: '#EAF5FD', colorInfoBorder: '#CFE9FA' },
   },
 };

@@ -1,0 +1,446 @@
+---
+// Booking request form for /tour/<code>/booking/?period=<id>. Like PeriodTable, it is rendered at
+// build time and driven by a small inline script (no React): the script reads ?period=, refreshes
+// seats and prices once, keeps the totals in sync and POSTs to /bookings/public.
+// A booking is a sales lead: it reserves no seats and takes no payment.
+import { contact, lineMessageUrl } from '../../config/site';
+import {
+  DEFAULT_COUNTS,
+  fitCounts,
+  periodDatesHtml,
+  periodOptionLabel,
+  pickPeriod,
+  priceRows,
+  stepperRowsHtml,
+  summaryHtml,
+  totalPrice,
+  travellersText,
+} from '../../lib/booking-view';
+import { formatDuration, formatPrice } from '../../lib/format';
+import type { TourProgramPublicDetail } from '../../types/tour-program';
+import CfImage from '../ui/CfImage.astro';
+import Icon from '../ui/Icon.astro';
+import './BookingForm.css';
+
+type Props = { tour: TourProgramPublicDetail; fallbackImage: string };
+const { tour, fallbackImage } = Astro.props;
+
+const code = tour.code.toUpperCase();
+const duration = formatDuration(tour.days, tour.nights);
+const period = pickPeriod(tour.periods, null);
+const rows = period ? priceRows(period) : [];
+const counts = fitCounts(rows, DEFAULT_COUNTS);
+const json = JSON.stringify(tour.periods).replace(/</g, '\\u003c');
+const phone = contact.phones[0];
+---
+
+<div class="bk" data-booking data-code={tour.code} data-duration={duration}>
+  <div class="bk-notice" role="note">
+    <Icon name="shield" size={20} class="bk-notice-icon" />
+    <div>
+      <p class="bk-notice-title">การจองผ่านเว็บไซต์ยังไม่การันตีที่นั่ง</p>
+      <p class="bk-notice-text">
+        ใบจองจะได้รับการยืนยันหลังจากเจ้าหน้าที่ติดต่อกลับเพื่อตรวจสอบที่นั่งและราคากับคุณก่อนเท่านั้น
+        ยังไม่มีการชำระเงินในขั้นตอนนี้
+      </p>
+    </div>
+  </div>
+
+  <div class="bk-grid">
+    <!-- Tour + price summary -->
+    <aside class="bk-aside" aria-label="รายละเอียดทัวร์และราคา">
+      <section class="bk-card">
+        <h2 class="bk-card-title">รายละเอียดทัวร์</h2>
+        <div class="bk-cover">
+          <CfImage
+            src={tour.cardImage ?? tour.bannerImage ?? fallbackImage}
+            alt={tour.name}
+            preset="card"
+            width={800}
+            height={600}
+            sizes="(min-width: 1024px) 360px, 100vw"
+            priority
+            class="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+        <p class="bk-tour-name">{tour.name}</p>
+        {
+          tour.airline && (
+            <p class="bk-airline">
+              <Icon name="plane" size={14} /> {tour.airline.name}
+            </p>
+          )
+        }
+        <dl class="bk-facts">
+          <div>
+            <dt>วันเดินทาง</dt>
+            <dd data-dates set:html={periodDatesHtml(period, duration)} />
+          </div>
+          <div>
+            <dt>รหัสทัวร์</dt>
+            <dd><a href={`/tour/${tour.code}/`} class="bk-code">{code}</a></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="bk-card" data-has-period hidden={!period}>
+        <h2 class="bk-card-title">รายละเอียดราคา</h2>
+        <div data-summary set:html={summaryHtml(rows, counts)} />
+      </section>
+    </aside>
+
+    <div class="bk-main">
+      <!-- No open period: nothing to book, point to LINE / phone instead. -->
+      <section class="bk-card" data-no-period hidden={!!period}>
+        <h2 class="bk-card-title">ยังไม่มีรอบที่เปิดรับจอง</h2>
+        <p class="m-0 text-ink-soft">รอบเดินทางของทัวร์นี้เต็มหรือปิดรับจองแล้ว ทัก LINE หรือโทรหาเราเพื่อสอบถามรอบถัดไป</p>
+      </section>
+
+      <form class="bk-form" data-form novalidate hidden={!period}>
+        <section class="bk-card">
+          <h2 class="bk-card-title">จำนวนผู้เดินทาง</h2>
+
+          <label class="bk-label" for="bk-period">รอบเดินทาง</label>
+          <select id="bk-period" class="bk-input bk-select" data-period-select>
+            {
+              tour.periods.map((p) => (
+                <option value={p.id} selected={p.id === period?.id} disabled={p.soldOut || p.seatsAvailable === 0}>
+                  {periodOptionLabel(p)}
+                </option>
+              ))
+            }
+          </select>
+          <p class="bk-error" data-error-for="periodId" hidden></p>
+
+          <div class="bk-table-wrap">
+            <table class="bk-table">
+              <thead>
+                <tr>
+                  <th scope="col">ห้องพัก</th>
+                  <th scope="col" class="bk-col-price">ราคา/ท่าน</th>
+                  <th scope="col">จำนวน</th>
+                  <th scope="col" class="bk-col-sum">รวม</th>
+                </tr>
+              </thead>
+              <tbody data-rows set:html={stepperRowsHtml(rows, counts)} />
+              <tfoot>
+                <tr>
+                  <th scope="row">รวม</th>
+                  <td class="bk-col-price"></td>
+                  <td data-travellers>{travellersText(counts)}</td>
+                  <td class="bk-col-sum bk-grand" data-total>{formatPrice(totalPrice(rows, counts))} บาท</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="bk-error" data-error-for="adultTwin" hidden></p>
+          <p class="bk-hint" data-seats-hint hidden></p>
+        </section>
+
+        <section class="bk-card">
+          <h2 class="bk-card-title">ข้อมูลผู้ติดต่อ</h2>
+          <div class="bk-fields">
+            <div>
+              <label class="bk-label" for="bk-firstName">ชื่อ <span class="bk-req" aria-hidden="true">*</span></label>
+              <input id="bk-firstName" name="firstName" class="bk-input" autocomplete="given-name" maxlength="100" required />
+              <p class="bk-error" data-error-for="firstName" hidden></p>
+            </div>
+            <div>
+              <label class="bk-label" for="bk-lastName">นามสกุล</label>
+              <input id="bk-lastName" name="lastName" class="bk-input" autocomplete="family-name" maxlength="100" />
+              <p class="bk-error" data-error-for="lastName" hidden></p>
+            </div>
+            <div>
+              <label class="bk-label" for="bk-email">อีเมล <span class="bk-req" aria-hidden="true">*</span></label>
+              <input id="bk-email" name="email" type="email" class="bk-input" autocomplete="email" maxlength="254" required />
+              <p class="bk-error" data-error-for="email" hidden></p>
+            </div>
+            <div>
+              <label class="bk-label" for="bk-phone">มือถือ <span class="bk-req" aria-hidden="true">*</span></label>
+              <input id="bk-phone" name="phone" type="tel" class="bk-input" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="08x-xxx-xxxx" required />
+              <p class="bk-error" data-error-for="phone" hidden></p>
+            </div>
+            <div class="bk-span">
+              <label class="bk-label" for="bk-note">ความต้องการพิเศษ</label>
+              <textarea id="bk-note" name="note" class="bk-input bk-textarea" rows="3" maxlength="1000" placeholder="เช่น อาหารที่แพ้ ต้องการเตียงเสริม หรือเวลาที่สะดวกให้ติดต่อกลับ"></textarea>
+              <p class="bk-error" data-error-for="note" hidden></p>
+            </div>
+            <!-- Honeypot: hidden from people and screen readers; bots that fill it are dropped. -->
+            <div class="bk-hp" aria-hidden="true">
+              <label for="bk-website">Website</label>
+              <input id="bk-website" name="website" tabindex="-1" autocomplete="off" />
+            </div>
+          </div>
+
+          <p class="bk-consent">
+            ข้อมูลของคุณใช้เพื่อติดต่อกลับเกี่ยวกับใบจองนี้เท่านั้น การกด “ส่งใบจอง” ยังไม่ใช่การยืนยันที่นั่ง
+            เจ้าหน้าที่จะติดต่อกลับในเวลาทำการ ({contact.hours.join(' ')})
+          </p>
+          <p class="bk-error bk-form-error" data-form-error role="alert" hidden></p>
+          <button type="submit" class="btn btn-primary bk-submit" data-submit>
+            <span class="bk-spinner" aria-hidden="true"></span>
+            <span data-submit-label>ส่งใบจอง</span>
+          </button>
+          <noscript><p class="bk-error">ต้องเปิด JavaScript เพื่อส่งใบจอง หรือติดต่อเราทาง LINE / โทรศัพท์</p></noscript>
+        </section>
+      </form>
+
+      <!-- Confirmation (filled in by the script after a successful submit). -->
+      <section class="bk-card bk-done" data-done hidden tabindex="-1" aria-live="polite">
+        <span class="bk-done-icon"><Icon name="medal" size={26} /></span>
+        <h2 class="bk-card-title">ส่งใบจองเรียบร้อยแล้ว</h2>
+        <p class="bk-done-no">เลขที่ใบจอง <strong data-done-no></strong></p>
+        <p class="m-0 text-ink-soft">
+          ขอบคุณที่สนใจทัวร์กับเรา เจ้าหน้าที่จะติดต่อกลับเพื่อยืนยันที่นั่งและราคาโดยเร็วที่สุด ในเวลาทำการ ({contact.hours.join(' ')})
+          ระหว่างนี้ยังไม่ต้องชำระเงินใด ๆ
+        </p>
+        <div class="bk-done-actions">
+          <a class="btn btn-line" data-done-line href={lineMessageUrl(`ใบจองทัวร์ ${code}`)} target="_blank" rel="noopener">
+            <Icon name="line" size={16} /> แจ้งเลขที่ใบจองทาง LINE
+          </a>
+          <a class="btn btn-ghost" href={`/tour/${tour.code}/`}>กลับไปหน้าทัวร์</a>
+        </div>
+      </section>
+
+      <div class="bk-contacts">
+        <a class="bk-contact" href={`tel:${phone.tel}`}>
+          <span class="bk-contact-icon"><Icon name="headset" size={22} /></span>
+          <span>
+            <span class="bk-contact-label">ติดต่อสอบถามข้อมูล · {contact.hours.join(' ')}</span>
+            <span class="bk-contact-value">{phone.display}</span>
+          </span>
+        </a>
+        <a class="bk-contact" href={lineMessageUrl(`สนใจทัวร์ ${code} ${tour.name}`)} target="_blank" rel="noopener">
+          <span class="bk-contact-icon bk-contact-line"><Icon name="line" size={22} /></span>
+          <span>
+            <span class="bk-contact-label">จองทัวร์ผ่าน LINE เพียงพิมพ์รหัสทัวร์</span>
+            <span class="bk-contact-value">{contact.lineId}</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" data-periods set:html={json} />
+</div>
+
+<script>
+  import { ApiError } from '../../lib/api/client';
+  import { submitBooking } from '../../lib/api/bookings';
+  import { fetchPublicPeriods } from '../../lib/api/periods';
+  import {
+    DEFAULT_COUNTS,
+    fitCounts,
+    MAX_TRAVELLERS,
+    periodDatesHtml,
+    periodOptionLabel,
+    pickPeriod,
+    priceRows,
+    type RowKey,
+    seatsHint,
+    stepperRowsHtml,
+    summaryHtml,
+    totalPrice,
+    travellers,
+    travellersText,
+  } from '../../lib/booking-view';
+  import { formatPrice } from '../../lib/format';
+  import { lineMessageUrl } from '../../config/site';
+  import type { BookingCounts } from '../../types/booking';
+  import type { TourPeriodPublic } from '../../types/tour-program';
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_RE = /^\+?[0-9][0-9 -]*[0-9]$/;
+
+  // Thai messages per field; the backend's (English) field messages are never shown as-is.
+  const FIELD_MESSAGES: Record<string, string> = {
+    firstName: 'กรุณากรอกชื่อ',
+    lastName: 'นามสกุลยาวเกินไป',
+    email: 'กรุณากรอกอีเมลให้ถูกต้อง',
+    phone: 'กรุณากรอกเบอร์มือถือให้ถูกต้อง (9–15 หลัก)',
+    note: 'ข้อความยาวเกินไป (ไม่เกิน 1,000 ตัวอักษร)',
+    periodId: 'กรุณาเลือกรอบเดินทาง',
+    adultTwin: `ต้องมีผู้ใหญ่อย่างน้อย 1 ท่าน และรวมไม่เกิน ${MAX_TRAVELLERS} ท่าน`,
+    adultSingle: 'รอบนี้ไม่มีราคาพักเดี่ยว',
+    childWithBed: 'รอบนี้ไม่มีราคาเด็ก (มีเตียง)',
+    childNoBed: 'รอบนี้ไม่มีราคาเด็ก (ไม่มีเตียง)',
+  };
+
+  function digits(s: string): number {
+    return (s.match(/[0-9]/g) ?? []).length;
+  }
+
+  function mount(root: HTMLElement) {
+    const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const code = root.dataset.code!;
+    const duration = root.dataset.duration!;
+    const form = $<HTMLFormElement>('[data-form]');
+    const select = $<HTMLSelectElement>('[data-period-select]');
+    const submitBtn = $<HTMLButtonElement>('[data-submit]');
+
+    let periods = JSON.parse($('[data-periods]').textContent || '[]') as TourPeriodPublic[];
+    let period = pickPeriod(periods, new URLSearchParams(location.search).get('period'));
+    let counts: BookingCounts = { ...DEFAULT_COUNTS };
+
+    function rows() {
+      return period ? priceRows(period) : [];
+    }
+
+    function setError(field: string, message: string | null) {
+      const el = root.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+      const input = root.querySelector<HTMLElement>(`[name="${field}"]`);
+      if (el) {
+        el.textContent = message ?? '';
+        el.hidden = !message;
+      }
+      input?.setAttribute('aria-invalid', String(!!message));
+    }
+
+    function setFormError(message: string | null) {
+      const el = $('[data-form-error]');
+      el.textContent = message ?? '';
+      el.hidden = !message;
+    }
+
+    function renderOptions() {
+      select.innerHTML = '';
+      for (const p of periods) {
+        const opt = new Option(periodOptionLabel(p), p.id, false, p.id === period?.id);
+        opt.disabled = p.soldOut || p.seatsAvailable === 0;
+        select.add(opt);
+      }
+    }
+
+    function render() {
+      const has = period !== null;
+      $('[data-no-period]').hidden = has;
+      form.hidden = !has;
+      $('[data-has-period]').hidden = !has;
+      $('[data-dates]').innerHTML = periodDatesHtml(period, duration);
+      const r = rows();
+      counts = fitCounts(r, counts);
+      $('[data-rows]').innerHTML = stepperRowsHtml(r, counts);
+      $('[data-travellers]').textContent = travellersText(counts);
+      $('[data-total]').textContent = `${formatPrice(totalPrice(r, counts))} บาท`;
+      $('[data-summary]').innerHTML = summaryHtml(r, counts);
+      const hint = seatsHint(period, counts);
+      $('[data-seats-hint]').textContent = hint;
+      $('[data-seats-hint]').hidden = !hint;
+      setError('adultTwin', null);
+    }
+
+    function setCount(key: RowKey, value: number) {
+      const others = travellers(counts).total - counts[key];
+      const next = Math.max(0, Math.min(Math.floor(value) || 0, MAX_TRAVELLERS - others));
+      counts = { ...counts, [key]: next };
+      // At least one adult: never let the last adult go.
+      if (counts.adultTwin + counts.adultSingle === 0) counts.adultTwin = 1;
+      render();
+    }
+
+    $('[data-rows]').addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest<HTMLButtonElement>('button[data-step]');
+      if (!btn || btn.disabled) return;
+      const key = btn.dataset.key as RowKey;
+      setCount(key, counts[key] + Number(btn.dataset.step));
+      root.querySelector<HTMLButtonElement>(`button[data-key="${key}"][data-step="${btn.dataset.step}"]`)?.focus();
+    });
+    $('[data-rows]').addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      if (input.dataset.key) setCount(input.dataset.key as RowKey, Number(input.value));
+    });
+
+    select.addEventListener('change', () => {
+      period = periods.find((p) => p.id === select.value) ?? null;
+      setError('periodId', null);
+      const url = new URL(location.href);
+      if (period) url.searchParams.set('period', period.id);
+      history.replaceState(null, '', url);
+      render();
+    });
+
+    function validate(data: Record<string, string>): boolean {
+      const errors: Record<string, string | null> = {
+        firstName: data.firstName ? null : FIELD_MESSAGES.firstName,
+        email: EMAIL_RE.test(data.email) ? null : FIELD_MESSAGES.email,
+        phone: PHONE_RE.test(data.phone) && digits(data.phone) >= 9 && digits(data.phone) <= 15 ? null : FIELD_MESSAGES.phone,
+      };
+      for (const [field, message] of Object.entries(errors)) setError(field, message);
+      const first = Object.keys(errors).find((f) => errors[f]);
+      if (first) root.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      return !first;
+    }
+
+    function setPending(pending: boolean) {
+      submitBtn.disabled = pending;
+      submitBtn.classList.toggle('is-pending', pending);
+      $('[data-submit-label]').textContent = pending ? 'กำลังส่งใบจอง…' : 'ส่งใบจอง';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setFormError(null);
+      if (!period) return;
+      const fd = new FormData(form);
+      const data = Object.fromEntries(['firstName', 'lastName', 'email', 'phone', 'note', 'website'].map((k) => [k, String(fd.get(k) ?? '').trim()]));
+      if (!validate(data)) return;
+
+      setPending(true);
+      try {
+        const res = await submitBooking({
+          tourCode: code,
+          periodId: period.id,
+          ...counts,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          note: data.note,
+          website: data.website,
+        });
+        form.hidden = true;
+        $('[data-done-no]').textContent = res.bookingNo;
+        $<HTMLAnchorElement>('[data-done-line]').href = lineMessageUrl(`ใบจองเลขที่ ${res.bookingNo} ทัวร์ ${code.toUpperCase()}`);
+        const done = $('[data-done]');
+        done.hidden = false;
+        done.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        done.focus({ preventScroll: true });
+      } catch (err) {
+        if (err instanceof ApiError && err.code === 'VALIDATION' && err.fields) {
+          for (const field of Object.keys(err.fields)) setError(field, FIELD_MESSAGES[field] ?? 'ข้อมูลไม่ถูกต้อง');
+          setFormError('กรุณาตรวจสอบข้อมูลที่ไฮไลต์ไว้');
+        } else if (err instanceof ApiError && err.code === 'PERIOD_UNAVAILABLE') {
+          setError('periodId', 'รอบนี้เต็มหรือปิดรับจองแล้ว กรุณาเลือกรอบอื่น');
+          select.focus();
+          void refresh();
+        } else if (err instanceof ApiError && err.code === 'RATE_LIMITED') {
+          setFormError('ส่งใบจองบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่ หรือติดต่อเราทาง LINE');
+        } else {
+          setFormError('ส่งใบจองไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อเราทาง LINE / โทรศัพท์');
+        }
+      } finally {
+        setPending(false);
+      }
+    });
+
+    // One refresh per page view for live seats and prices. Errors keep the build-time data silently.
+    async function refresh() {
+      try {
+        const fresh = await fetchPublicPeriods(code);
+        if (!fresh) return;
+        periods = fresh;
+        period = pickPeriod(fresh, period?.id ?? null);
+        renderOptions();
+        render();
+      } catch {
+        // keep build-time data
+      }
+    }
+
+    renderOptions();
+    render();
+    void refresh();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-booking]').forEach(mount);
+</script>

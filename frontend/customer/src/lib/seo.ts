@@ -13,6 +13,8 @@ export type SeoProps = {
   ogType?: 'website' | 'article';
   /** JSON-LD objects rendered into <head>. */
   jsonLd?: Record<string, unknown>[];
+  /** Keeps the page out of search results on every environment (forms such as /tour/<code>/booking/). */
+  noindex?: boolean;
 };
 
 export function absoluteUrl(path: string): string {

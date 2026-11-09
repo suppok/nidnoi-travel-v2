@@ -63,6 +63,12 @@ export function detailsHtml(p: TourPeriodPublic | null): string {
     .join('')}</dl>`;
 }
 
+/** Booking form for the chosen departure; the tour's booking page when none is bookable. */
+export function bookingHref(code: string, p: TourPeriodPublic | null): string {
+  const base = `/tour/${encodeURIComponent(code)}/booking/`;
+  return p && !p.soldOut ? `${base}?period=${encodeURIComponent(p.id)}` : base;
+}
+
 /** LINE chat prefilled with the tour code and the chosen departure. */
 export function lineHref(code: string, tourName: string, p: TourPeriodPublic | null): string {
   const when = p ? ` รอบ ${formatDateRange(p.startDate, p.endDate)}` : '';

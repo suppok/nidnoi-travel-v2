@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS booking;
+DROP SEQUENCE IF EXISTS booking_no_seq;

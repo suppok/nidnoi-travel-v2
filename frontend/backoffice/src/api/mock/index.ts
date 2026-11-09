@@ -4,6 +4,7 @@ import { env } from '../../config/env.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
 import { airlineRoutes } from './airlines.ts';
 import { authRoutes } from './auth.ts';
+import { bookingRoutes } from './bookings.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
 import { mediaRoutes } from './media.ts';
 import { siteRoutes } from './site.ts';
@@ -21,6 +22,7 @@ const routes: Record<string, MockHandler> = {
   ...mediaRoutes,
   ...tourProgramRoutes,
   ...siteRoutes,
+  ...bookingRoutes,
 };
 
 const LATENCY_MS = 300;

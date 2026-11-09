@@ -34,7 +34,7 @@ type TourProgramRepository interface {
 	// FindPublicByCode loads the tour like ListPublic plus its gallery images; nil when the code is
 	// unknown, deleted or not public.
 	FindPublicByCode(ctx context.Context, code string) (*domain.TourProgram, error)
-	// FindPublicStateByCode reads only id, code and state (for the cached periods endpoint).
+	// FindPublicStateByCode reads only id, code, name and state (periods endpoint, booking requests).
 	FindPublicStateByCode(ctx context.Context, code string) (*domain.TourProgram, error)
 	// PublicCountryStats / PublicCityStats count public tours per country/city and their lowest
 	// upcoming period price (start_date > departAfter). Rows without public tours are absent.
@@ -209,7 +209,7 @@ func (r *tourProgramRepository) FindPublicByCode(ctx context.Context, code strin
 
 func (r *tourProgramRepository) FindPublicStateByCode(ctx context.Context, code string) (*domain.TourProgram, error) {
 	obj := new(domain.TourProgram)
-	err := wherePublic(r.query.NewSelect().Model(obj).Column("id", "code", "state")).
+	err := wherePublic(r.query.NewSelect().Model(obj).Column("id", "code", "name", "state")).
 		Where("tp.code = ?", code).
 		Limit(1).
 		Scan(ctx)

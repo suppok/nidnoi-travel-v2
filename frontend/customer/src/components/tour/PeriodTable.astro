@@ -4,6 +4,7 @@
 // and refreshes the rows once from the periods endpoint; on error the build-time rows stay.
 // No framework: the markup comes from lib/period-view.ts on both sides.
 import {
+  bookingHref,
   detailsHtml,
   firstOpenId,
   legendText,
@@ -38,6 +39,9 @@ const json = JSON.stringify(periods).replace(/</g, '\\u003c');
   </div>
 
   <div class="period-cta">
+    <a class="btn btn-primary" data-book href={bookingHref(code, selected)} hidden={!selected || selected.soldOut}>
+      <Icon name="calendar" size={16} /> จองทัวร์นี้
+    </a>
     <a class="btn btn-line" data-line href={lineHref(code, tourName, selected)} target="_blank" rel="noopener">
       <Icon name="line" size={16} /> สอบถาม / จองผ่าน LINE
     </a>
@@ -49,7 +53,7 @@ const json = JSON.stringify(periods).replace(/</g, '\\u003c');
 
 <script>
   import { fetchPublicPeriods } from '../../lib/api/periods';
-  import { detailsHtml, firstOpenId, legendText, lineHref, priceHtml, rowsHtml } from '../../lib/period-view';
+  import { bookingHref, detailsHtml, firstOpenId, legendText, lineHref, priceHtml, rowsHtml } from '../../lib/period-view';
   import type { TourPeriodPublic } from '../../types/tour-program';
 
   function mount(root: HTMLElement) {
@@ -68,6 +72,9 @@ const json = JSON.stringify(periods).replace(/</g, '\\u003c');
       $('[data-price]').innerHTML = priceHtml(p);
       $('[data-details]').innerHTML = detailsHtml(p);
       $<HTMLAnchorElement>('[data-line]').href = lineHref(code, name, p);
+      const book = $<HTMLAnchorElement>('[data-book]');
+      book.href = bookingHref(code, p);
+      book.hidden = !p || p.soldOut;
     }
 
     function renderAll() {

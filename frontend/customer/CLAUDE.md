@@ -54,7 +54,6 @@ frontend/customer/
 │   │   └── layout/               # Header, Footer, Nav
 │   ├── islands/                  # React components that hydrate (interactive only)
 │   │   ├── TourFilters.tsx       # Filters on /tour-programs/
-│   │   ├── InquiryForm.tsx       # Lead capture
 │   │   └── ImageGallery.tsx      # Lightbox / carousel
 │   ├── lib/
 │   │   ├── api/                  # Backend client (build time + islands)
@@ -81,7 +80,7 @@ frontend/customer/
 - `pages/` is the router. One file = one URL. No server endpoints (`pages/api/` does not exist).
 - `components/` is `.astro` — static by default, no client JS.
 - `islands/` is `.tsx` — ships JS to every visitor. Treat it as a budget.
-- `lib/api/` runs **at build time** (pages, `getStaticPaths`) and **in the browser** (islands only: periods, inquiry). Browser calls are limited to those two endpoints.
+- `lib/api/` runs **at build time** (pages, `getStaticPaths`) and **in the browser** (inline scripts only: periods, booking). Browser calls are limited to those two endpoints.
 
 ---
 
@@ -106,7 +105,7 @@ Always `cd frontend/customer` first. Never run npm at the repo root.
 1. List active tour programs with filters (country, city, date range, price).
 2. Show a tour detail page as static HTML with full meta tags, plus live period availability.
 3. Serve country and city landing pages (primary SEO surface).
-4. Capture inquiries that POST to the public backend endpoint.
+4. Capture booking requests (leads) that POST to the public backend endpoint.
 5. Serve static content (about, contact, terms).
 
 It does **not**:
@@ -265,7 +264,7 @@ All API calls go through `src/lib/api/client.ts`. Never call `fetch` directly fr
 
 - **Base URL:** `PUBLIC_API_BASE_URL` via `src/config/env.ts`.
 - **Public endpoints only** — registered without auth in the backend, handler names containing `Public`. Never attach an `Authorization` header.
-- **Browser calls** are limited to `GET /tour-programs/public/:code/periods` (period island) and `POST /inquiries/public` (inquiry form). These need this site's origin in the backend CORS allowlist; everything else runs at build time.
+- **Browser calls** are limited to `GET /tour-programs/public/:code/periods` (period island) and `POST /bookings/public` (booking form). These need this site's origin in the backend CORS allowlist; everything else runs at build time.
 - **Error shape:** `{ success: false, error: { code, message, fields? } }`. The wrapper throws a typed `ApiError`.
 - **JSON casing:** camelCase in both directions.
 
@@ -450,9 +449,17 @@ Design tokens (colors, spacing, font sizes, radii) live in the Tailwind theme. N
 
 ## Forms & Lead Capture
 
-`src/islands/InquiryForm.tsx` POSTs to `POST /api/v1/inquiries/public` (rate-limited by the backend).
+**Booking page** — `/tour/<code>/booking/?period=<id>` (`src/pages/tour/[code]/booking.astro` + `src/components/booking/BookingForm.astro`). One static page per public tour, `noindex` and left out of the sitemap. Linked from the period table's "จองทัวร์นี้" button with the selected period.
 
-- react-hook-form + zod for validation (aligned with the backoffice).
+- Like the period table, it is **not** a React island: build-time HTML plus a small inline script (~3.5 KB gzipped). Markup and display pricing live in `src/lib/booking-view.ts`, shared by the build and the script.
+- The script reads `?period=`, refreshes periods once (`fetchPublicPeriods`), keeps the traveller steppers and totals in sync and POSTs to `POST /api/v1/bookings/public` (`src/lib/api/bookings.ts`). The backend re-quotes every price; the page's totals are for display.
+- Rows: ผู้ใหญ่ (พักห้องคู่) always; พักห้องเดี่ยว, เด็ก (มีเตียง), เด็ก (ไม่มีเตียง) only when the period prices them. At least one adult, at most 50 travellers.
+- The page states up front that a web booking **does not guarantee seats** — staff confirm by phone/LINE first, and no payment is taken.
+- A hidden `website` honeypot field is sent with every request; bots that fill it get a fake success (a booking number that is never stored).
+- Error codes handled: `VALIDATION` (fields mapped to Thai messages), `PERIOD_UNAVAILABLE` (pick another period), `RATE_LIMITED`.
+
+Rules for any lead form:
+- Plain inline-script forms (no form library) while the site has no React islands.
 - The server validates again — never trust client validation alone. Map `error.fields` back onto inputs.
 - Clear success and error states; show the backend's `error.message`.
 - Disable submit while pending; show a spinner.
@@ -541,7 +548,7 @@ When adding a variable: update `.env.example`, the schema in `src/config/env.ts`
 - Don't call a Cloudflare Deploy Hook from this app.
 - Don't add a UI component library.
 - Don't add SPA-style client routing.
-- Don't call authenticated backend endpoints, or add browser calls beyond the period and inquiry endpoints without discussion.
+- Don't call authenticated backend endpoints, or add browser calls beyond the period and booking endpoints without discussion.
 - Don't add image presets or transformation parameters outside `src/lib/image.ts`.
 - Don't import from `frontend/backoffice`.
 - Don't add `client:load` without a justification comment.
@@ -571,5 +578,5 @@ Flag the user before assuming:
 - **Consent / cookie banner** — required only if analytics uses cookies.
 - **Preview of unpublished tours** — the static site can't show unsaved/unpublished content; decide whether staff preview on `dev` or in a backoffice preview screen.
 - **A/B testing** — out of scope.
-- **Inquiry spam protection** — Cloudflare Turnstile on `InquiryForm` before launch?
+- **Booking spam protection** — Cloudflare Turnstile on the booking form before launch? (rate limit + honeypot today)
 - **Full legacy URL audit** — the current `_redirects` map comes from search results; crawl the legacy sitemap end-to-end before launch.

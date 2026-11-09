@@ -102,7 +102,7 @@ The back-office is the only place where data is mutated. It:
 5. Uploads media through the backend.
 6. Lets staff force a customer-site rebuild.
 7. Manages users and roles (where the caller's permissions allow).
-8. Shows operational dashboards (inquiries, …).
+8. Shows booking requests from the customer site and alerts staff to new ones.
 
 It does **not**:
 - Serve any UI without login other than `/login` and `/not-found`.
@@ -206,7 +206,7 @@ All API calls go through `src/api/client.ts`. Never call `fetch` directly from a
 | `GET /api/v1/<resource>/:id` | get one |
 | `PUT /api/v1/<resource>/status` | soft delete / restore |
 
-Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `airlines`, `users`, `inquiries`. Plus `POST /media/upload`, `POST /site/rebuild` and `POST /site-builds/list`.
+Resources: `tour-programs`, `tour-program-periods`, `countries`, `cities`, `wholesales`, `airlines`, `users`, `bookings`. Plus `POST /media/upload`, `POST /site/rebuild` and `POST /site-builds/list`.
 
 ### Errors
 
@@ -268,6 +268,7 @@ Use **antd** for complex UI: `Table`, `Form`, `DatePicker`, `Select`, `Modal`, `
 - One `<ConfigProvider>` in `App.tsx`; theme tokens live there.
 - Prefer antd components over building your own.
 - **Tailwind for layout and spacing**, **antd for components**. Don't fight antd styling with `!important` — use theme tokens or documented `className` props.
+- **CSS layers:** `App.tsx` wraps everything in `<StyleProvider layer>` (`@ant-design/cssinjs`), so antd's CSS-in-JS lands in `@layer antd`, ordered before Tailwind's `utilities` in `styles/global.css` (`@layer theme, base, antd, components, utilities`). Tailwind classes on antd components (e.g. `className="mb-4"` on an `Alert`) therefore win over antd's resets. Keep both pieces; without them antd's unlayered styles silently override every Tailwind utility.
 - Import directly (`import { Button } from 'antd'`); antd v5 tree-shakes with Vite.
 - Use antd `Form` for any form with more than three fields.
 - Dates and money: `DatePicker` and `InputNumber` with explicit `format` / `precision`.
@@ -346,6 +347,16 @@ Create/edit fields: `slug` (create only), `nameTh`, `nameEn`, `description` (lon
 
 - `/airlines` — list (search name/code, status filter) with a logo column; create/edit modal `features/airline/components/AirlineFormModal.tsx` (code — IATA 2 or ICAO 3 characters, uppercased; name; Ref ID; logo via `ImageUploadField` with `fit="contain"`). Sidebar group "ฝ่ายขาย". `sales` sees it read-only (`airline:list|get`).
 - The tour form picks an airline from this master (`useAirlineOptions`, `airlineId`).
+
+## Bookings
+
+Booking requests sent from the customer site (leads — no seats reserved, no payment). Contract in `backend/CLAUDE.md` "Bookings".
+
+- `/bookings` ("ใบจอง", first item of "ฝ่ายขาย", `Permissions.BookingList`): search (booking no, name, email, phone, tour code), state filter, "แสดงใบจองที่ลบแล้ว". `?open=<id>` opens `BookingDrawer` (customer contact with tel/mailto, tour + traveller lines as quoted, state radio + staff note). Saving needs `booking:update`; delete/restore (spam) needs `booking:status`.
+- States (`src/constants/bookingStates.ts`, mirrors `bookingstate`): ใหม่ 10, ติดต่อแล้ว 20, ยืนยันแล้ว 30, ยกเลิก 40. The first user to leave "ใหม่" becomes the assignee.
+- **New-booking alerts:** `BookingAlertsProvider` (inside `AppLayout`) polls `POST /bookings/list {state: 10, status: true, pageSize: 1}` every 60 s while the tab is visible (and on refocus). It drives the menu badge, the header bell, the dashboard card and a `(n)` tab-title prefix, and pops a notification ("ดูใบจอง") when a newer booking arrives. The first poll only sets a baseline. Pages call `useBookingAlerts().refresh()` after changing a booking.
+- Seats are never changed by a booking — staff edit them on the tour's period table.
+- Mock: four seeded bookings; run `__mockNewBooking()` in the console to try the alert.
 
 ## Customer Site Rebuild
 

@@ -1,12 +1,15 @@
-import { CloudSyncOutlined, CompassOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
-import { Avatar, Dropdown, Layout, Menu, type MenuProps, Tag } from 'antd';
+import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/useAuth.ts';
 import BrandMark from '../components/BrandMark.tsx';
 import { env } from '../config/env.ts';
 import { type Permission, Permissions } from '../constants/permissions.ts';
+import { BookingStates } from '../constants/bookingStates.ts';
 import { roleInfo } from '../constants/roles.ts';
+import BookingAlertsProvider from '../features/booking/components/BookingAlertsProvider.tsx';
+import { useBookingAlerts } from '../features/booking/hooks/useBookingAlerts.ts';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
 import { initials } from '../lib/format.ts';
 
@@ -20,6 +23,7 @@ const NAV: NavGroup[] = [
     key: 'sales',
     label: 'ฝ่ายขาย',
     items: [
+      { path: '/bookings', label: 'ใบจอง', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
       { path: '/tour-programs', label: 'โปรแกรมทัวร์', icon: <CompassOutlined />, permission: Permissions.TourProgramList },
       { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
       { path: '/taxonomy/cities', label: 'เมือง', icon: <EnvironmentOutlined />, permission: Permissions.CityList },
@@ -38,7 +42,30 @@ const NAV: NavGroup[] = [
 ];
 
 export default function AppLayout() {
+  return (
+    <BookingAlertsProvider>
+      <Shell />
+    </BookingAlertsProvider>
+  );
+}
+
+/** Header bell: count of bookings nobody has contacted yet. */
+function NewBookingsBell() {
+  const { newCount } = useBookingAlerts();
+  const navigate = useNavigate();
+  if (newCount === null) return null;
+  return (
+    <Tooltip title={newCount > 0 ? `ใบจองใหม่รอติดต่อ ${newCount} รายการ` : 'ไม่มีใบจองใหม่'}>
+      <Badge count={newCount} size="small" offset={[-4, 4]}>
+        <Button type="text" shape="circle" icon={<BellOutlined />} aria-label="ใบจองใหม่" onClick={() => navigate(`/bookings?state=${BookingStates.New}`)} />
+      </Badge>
+    </Tooltip>
+  );
+}
+
+function Shell() {
   const { user, can, logout } = useAuth();
+  const { newCount } = useBookingAlerts();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -48,7 +75,16 @@ export default function AppLayout() {
     label: group.label,
     children: group.items
       .filter((item) => !item.permission || can(item.permission))
-      .map((item) => ({ key: item.path, icon: item.icon, label: <Link to={item.path}>{item.label}</Link> })),
+      .map((item) => ({
+        key: item.path,
+        icon: item.icon,
+        label: (
+          <Link to={item.path} className="flex items-center justify-between gap-2">
+            {item.label}
+            {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
+          </Link>
+        ),
+      })),
   })).filter((group) => group.children.length > 0);
 
   const selected = NAV.flatMap((g) => g.items)
@@ -80,6 +116,7 @@ export default function AppLayout() {
           {env.API_MOCK && <Tag color="purple">MOCK API</Tag>}
           <div className="ml-auto flex items-center gap-3">
             <SiteRebuildButton className="max-md:hidden" />
+            <NewBookingsBell />
             {user && (
               <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
                 <button

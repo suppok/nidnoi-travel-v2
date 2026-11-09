@@ -38,6 +38,10 @@ export const Permissions = {
   UserGet: 'user:get',
   UserStatus: 'user:status',
   UserPasswordReset: 'user:password-reset',
+  BookingList: 'booking:list',
+  BookingGet: 'booking:get',
+  BookingUpdate: 'booking:update',
+  BookingStatus: 'booking:status',
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

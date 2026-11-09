@@ -55,6 +55,11 @@ var (
 	StorageUnavailable  = ErrCode("STORAGE_UNAVAILABLE", "File storage is not configured")
 )
 
+// Booking
+var (
+	PeriodUnavailable = ErrCode("PERIOD_UNAVAILABLE", "This departure is no longer open for booking")
+)
+
 // Customer site rebuild
 var (
 	SiteRebuildUnavailable = ErrCode("SITE_REBUILD_UNAVAILABLE", "The site rebuild hook is not configured")

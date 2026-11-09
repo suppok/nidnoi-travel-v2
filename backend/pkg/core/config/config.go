@@ -102,7 +102,7 @@ type TourCodeConfig struct {
 
 type RateLimitConfig struct {
 	Login   RateLimitRule `mapstructure:"login"`
-	Inquiry RateLimitRule `mapstructure:"inquiry"`
+	Booking RateLimitRule `mapstructure:"booking"`
 }
 
 type RateLimitRule struct {
