@@ -46,7 +46,7 @@ Each subproject has its own `CLAUDE.md` with details specific to that codebase. 
 staff   ─▶ admin.*  (backoffice SPA, Cloudflare Access) ─▶ api.* (backend) ─▶ Supabase
                                                               ├─▶ R2 ─▶ media.*
                                                               └─ debounced deploy hook ─▶ Workers Builds ─▶ www.* rebuilt
-visitor ─▶ www.*    (static HTML) ── period island / inquiry form ─▶ api.* public endpoints
+visitor ─▶ www.*    (static HTML) ── period island / booking form ─▶ api.* public endpoints
 ```
 
 ## Environments
@@ -72,7 +72,7 @@ Rules:
 - **Prd customer site is public on the interim domain:** `www.nidnoitravelv2.com` launches publicly and is indexed (no Access, no `noindex`). Its rankings and inbound links must be carried to `nidnoitravel.com` at cutover, so checklist step 5 (301 every v2 URL) is **mandatory**, not optional. `media.*` / `dev-media.*` are always public — Image Transformations and link previews fetch them. `api.*` and `dev-api.*` are **not** behind Access (islands and builds call them; staff endpoints are protected by JWT).
 - `api.*` is proxied through Cloudflare (SSL mode Full (strict)). A Cache Rule makes `/api/v1/tour-programs/public/*/periods` eligible for edge caching, respecting the origin's `Cache-Control` (30 s). Everything else on `api.*` bypasses cache.
 - Secrets are per environment — never reuse a value across dev and prd. Prd secrets are sealed in Railway.
-- **Never copy prd data into dev.** Inquiries contain customer personal data (PDPA).
+- **Never copy prd data into dev.** Bookings contain customer personal data (PDPA).
 
 ### Domains
 
@@ -208,6 +208,11 @@ The agreed approach:
 
 Cross-cutting principle: **no public-facing URL pattern is introduced without first deciding which legacy URLs it absorbs (if any).** Details in `frontend/customer/CLAUDE.md`.
 
+### Booking requests
+- Customers send a **booking request** from `/tour/<code>/booking/?period=<id>` (`POST /api/v1/bookings/public`). It is a **sales lead only**: it reserves no seats, takes no payment and never changes `seats_available`. The page says so up front ("การจองผ่านเว็บไซต์ยังไม่การันตีที่นั่ง").
+- The backend quotes prices from the period (never from the request) and stores a snapshot (tour, dates, unit prices, counts, total) with a booking number of the 2-digit year + 6 random characters (e.g. `26X8K9AQ`).
+- Staff see bookings in the backoffice (`/bookings`), move them through ใหม่ → ติดต่อแล้ว → ยืนยันแล้ว / ยกเลิก and adjust seats by hand on the tour's period table. The backoffice polls for new bookings (badge, tab title, popup) — there is no email/LINE push yet.
+
 ### Customer site rebuild contract
 - Only the backend triggers rebuilds, by POSTing to the customer Worker's **Cloudflare Deploy Hook** after a committed mutation that changes published content.
 - The backend debounces: it fires after 3 minutes without new changes, and at most 15 minutes after the first pending change. A build then takes a few minutes. Staff should expect content changes to appear within minutes, seat changes within ~30 seconds.
@@ -262,7 +267,7 @@ Flag the user before assuming an answer. Subproject-specific questions live in e
 - **Analytics / PDPA consent** — Cloudflare Web Analytics (cookieless) vs GA4 vs Plausible, and whether a consent banner is required.
 - **Railway team access** — stay on Hobby (one operator) or move to Pro for workspace members.
 - **WebP encoder** for backend image processing — see `backend/CLAUDE.md`.
-- **Inquiry spam protection** — rate limiting only for now; consider Cloudflare Turnstile before launch.
+- **Booking spam protection** — rate limiting + a honeypot field only for now; consider Cloudflare Turnstile before launch.
 
 ### Resolved (recorded for context)
 - **Customer site:** Astro, fully static, on Cloudflare Workers static assets; rebuilt through a debounced deploy hook. Seats and per-period prices served live through an island. (Vercel ISR was dropped: content rarely changes, Vercel Hobby forbids commercial use, and Pro adds $20/month for freshness this site doesn't need.)

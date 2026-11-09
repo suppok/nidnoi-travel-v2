@@ -31,7 +31,8 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      filter: (page) => !page.includes('/404'),
+      // Booking forms are noindex: keep them out of the sitemap too.
+      filter: (page) => !page.includes('/404') && !page.endsWith('/booking/'),
       serialize: (item) => ({ ...item, ...sitemapRank(item.url) }),
     }),
   ],

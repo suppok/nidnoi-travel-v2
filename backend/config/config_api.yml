@@ -43,6 +43,6 @@ rateLimit:
   login:
     max: 10
     window: 1m
-  inquiry:
+  booking: # POST /bookings/public, per client IP
     max: 5
-    window: 1m
+    window: 10m

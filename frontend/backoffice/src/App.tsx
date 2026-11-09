@@ -1,3 +1,4 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { App as AntApp, ConfigProvider } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
@@ -8,6 +9,7 @@ import { Permissions } from './constants/permissions.ts';
 import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
 import AirlineListPage from './routes/airlines/AirlineListPage.tsx';
+import BookingListPage from './routes/bookings/BookingListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
@@ -40,6 +42,10 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
+          {
+            element: <RequirePermission code={Permissions.BookingList} />,
+            children: [{ path: '/bookings', element: <BookingListPage /> }],
+          },
           {
             element: <RequirePermission code={Permissions.TourProgramList} />,
             children: [{ path: '/tour-programs', element: <TourProgramListPage /> }],
@@ -89,12 +95,15 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <ConfigProvider locale={thTH} theme={theme}>
-      <AntApp className="h-full">
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </AntApp>
-    </ConfigProvider>
+    // `layer`: antd styles go in @layer antd, below Tailwind utilities (order in styles/global.css).
+    <StyleProvider layer>
+      <ConfigProvider locale={thTH} theme={theme}>
+        <AntApp className="h-full">
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </AntApp>
+      </ConfigProvider>
+    </StyleProvider>
   );
 }

@@ -5,7 +5,7 @@ import '../styles/global.css';
 
 type Props = SeoProps;
 
-const { title, description, path, ogImage = defaultOgImage(), ogType = 'website', jsonLd = [] } = Astro.props;
+const { title, description, path, ogImage = defaultOgImage(), ogType = 'website', jsonLd = [], noindex = false } = Astro.props;
 const fullTitle = pageTitle(title);
 const canonical = absoluteUrl(path);
 ---
@@ -23,7 +23,7 @@ const canonical = absoluteUrl(path);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {env.SITE_ENV !== 'prd' && <meta name="robots" content="noindex, nofollow" />}
+    {env.SITE_ENV !== 'prd' ? <meta name="robots" content="noindex, nofollow" /> : noindex && <meta name="robots" content="noindex, follow" />}
 
     <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={fullTitle} />

@@ -179,6 +179,9 @@
 .period-cta .btn {
   width: 100%;
 }
+.period-cta .btn[hidden] {
+  display: none;
+}
 
 .period-empty {
   margin: 0 0 4px;

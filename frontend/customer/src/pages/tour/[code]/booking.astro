@@ -1,0 +1,44 @@
+---
+// Booking request — /tour/<code>/booking/?period=<id>. One static page per public tour; the period
+// comes from the query string. Not indexed (noindex, left out of the sitemap): it is a form, and
+// /tour/<code>/ is the page that ranks.
+import BookingForm from '../../../components/booking/BookingForm.astro';
+import Breadcrumb from '../../../components/ui/Breadcrumb.astro';
+import { DEFAULT_HERO_IMAGE } from '../../../config/site';
+import PageLayout from '../../../layouts/PageLayout.astro';
+import { getPublicTour, listPublicTours } from '../../../lib/api/tour-programs';
+import type { Crumb } from '../../../lib/seo';
+import type { TourProgramPublicDetail } from '../../../types/tour-program';
+
+export async function getStaticPaths() {
+  const tours = await listPublicTours();
+  const details = await Promise.all(tours.map((t) => getPublicTour(t.code)));
+  return details.map((tour) => ({ params: { code: tour.code }, props: { tour } }));
+}
+
+type Props = { tour: TourProgramPublicDetail };
+const { tour } = Astro.props;
+
+const code = tour.code.toUpperCase();
+const path = `/tour/${tour.code}/booking/`;
+const crumbs: Crumb[] = [
+  { name: 'หน้าแรก', path: '/' },
+  { name: code, path: `/tour/${tour.code}/` },
+  { name: 'จองทัวร์', path },
+];
+---
+
+<PageLayout
+  title={`จองทัวร์ ${code} ${tour.name}`}
+  description={`ส่งใบจองทัวร์ ${tour.name} (${code}) เลือกรอบเดินทางและจำนวนผู้เดินทาง เจ้าหน้าที่จะติดต่อกลับเพื่อยืนยันที่นั่ง`}
+  path={path}
+  noindex
+>
+  <section class="bg-cream pt-8 pb-24">
+    <div class="container-site">
+      <Breadcrumb crumbs={crumbs} />
+      <h1 class="h-section mt-6 mb-6 text-[clamp(28px,4vw,40px)]">จองทัวร์</h1>
+      <BookingForm tour={tour} fallbackImage={DEFAULT_HERO_IMAGE} />
+    </div>
+  </section>
+</PageLayout>

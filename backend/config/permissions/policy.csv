@@ -17,6 +17,11 @@ p, sales, wholesale, list
 p, sales, wholesale, get
 p, sales, airline, list
 p, sales, airline, get
+p, sales, booking, list
+p, sales, booking, get
+p, sales, booking, update
 p, finance, tour-program, list
 p, finance, tour-program, get
 p, finance, tour-program-period, list
+p, finance, booking, list
+p, finance, booking, get

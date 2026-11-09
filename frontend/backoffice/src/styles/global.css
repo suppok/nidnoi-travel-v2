@@ -1,5 +1,7 @@
-/* Tailwind for layout only: skip Preflight so it doesn't fight antd's component styles. */
-@layer theme, base, components, utilities;
+/* Tailwind for layout only: skip Preflight so it doesn't fight antd's component styles.
+   antd's CSS-in-JS goes in the `antd` layer (StyleProvider layer in App.tsx), declared before
+   `utilities` so Tailwind classes (margins, widths, colors) win over antd's own resets. */
+@layer theme, base, antd, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 

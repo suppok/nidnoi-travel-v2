@@ -24,5 +24,7 @@ func NewRepositoryRegistry(db query.AppIDB) *registry.RepositoryRegistry {
 		TourProgramPeriodRepository:  repository.NewTourProgramPeriodRepository(db),
 
 		SiteBuildRepository: repository.NewSiteBuildRepository(db),
+
+		BookingRepository: repository.NewBookingRepository(db),
 	}
 }

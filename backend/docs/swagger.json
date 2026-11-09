@@ -417,6 +417,252 @@
                 }
             }
         },
+        "/bookings": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The first user to move the booking out of \"new\" becomes its assignee.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Update a booking request's sales state and staff note",
+                "parameters": [
+                    {
+                        "description": "State and note",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "List booking requests, newest first",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/public": {
+            "post": {
+                "description": "Records a sales lead for a departure. Reserves no seats and takes no payment: sales\ncontacts the customer to confirm. Prices are quoted from the period, never from the\nrequest. Rate-limited per client IP.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Send a booking request (customer site)",
+                "parameters": [
+                    {
+                        "description": "Booking request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingPublicCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingPublicCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND (tour)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "PERIOD_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "429": {
+                        "description": "RATE_LIMITED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Delete (spam, duplicates) or restore a booking request",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Get a booking request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/cities": {
             "put": {
                 "security": [
@@ -2479,6 +2725,468 @@
                 "expiresIn": {
                     "description": "seconds",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingGetResponse": {
+            "type": "object",
+            "properties": {
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "assignee": {
+                    "description": "Assignee is the staff user who first took the booking out of \"new\"; null until then.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUser"
+                        }
+                    ]
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "customerNote": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "description": "10 new, 20 contacted, 30 confirmed, 40 cancelled",
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        30,
+                        40
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourName": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingItem": {
+            "type": "object",
+            "properties": {
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "assignee": {
+                    "description": "Assignee is the staff user who first took the booking out of \"new\"; null until then.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUser"
+                        }
+                    ]
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "customerNote": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "description": "10 new, 20 contacted, 30 confirmed, 40 cancelled",
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        30,
+                        40
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourName": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingListRequest": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "description": "booking no, customer name, email, phone or tour code",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 100",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "0 = all",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingPublicCreateRequest": {
+            "type": "object",
+            "properties": {
+                "adultSingle": {
+                    "description": "adults in a single room; only when the period has a single supplement",
+                    "type": "integer"
+                },
+                "adultTwin": {
+                    "description": "adults sharing a room",
+                    "type": "integer"
+                },
+                "childNoBed": {
+                    "description": "only when the period has a child-no-bed price",
+                    "type": "integer"
+                },
+                "childWithBed": {
+                    "description": "only when the period has a child-with-bed price",
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "special requests",
+                    "type": "string"
+                },
+                "periodId": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tourCode": {
+                    "type": "string",
+                    "example": "NIDN000001"
+                },
+                "website": {
+                    "description": "Website is a honeypot: the form hides it, so only bots fill it in.",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingPublicCreateResponse": {
+            "type": "object",
+            "properties": {
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "totalPrice": {
+                    "description": "whole baht, as quoted",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "state": {
+                    "description": "10 new, 20 contacted, 30 confirmed, 40 cancelled",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "assignee": {
+                    "description": "Assignee is the staff user who first took the booking out of \"new\"; null until then.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_booking_models.BookingUser"
+                        }
+                    ]
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "customerNote": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "description": "10 new, 20 contacted, 30 confirmed, 40 cancelled",
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        30,
+                        40
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourName": {
+                    "description": "at booking time",
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete (spam, duplicates)",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_booking_models.BookingUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
