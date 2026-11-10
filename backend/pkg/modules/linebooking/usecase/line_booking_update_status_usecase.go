@@ -28,7 +28,7 @@ func (u *lineBookingUseCase) UpdateStatus(ctx context.Context, request *models.L
 		if err != nil {
 			return err
 		}
-		if target == nil {
+		if target == nil || !visibleTo(target, request.UserRequestInfo) {
 			return cerrors.NotFound()
 		}
 		if target.Status == *request.Status {

@@ -38,11 +38,13 @@ func (u *lineBookingUseCase) List(ctx context.Context, request *models.LineBooki
 		request.PageSize = defaultPageSize
 	}
 	items, total, err := u.repositoryRegistry.LineBookingRepository.List(ctx, repomodels.LineBookingListCriteria{
-		Keyword:  request.Keyword,
-		State:    request.State,
-		Status:   request.Status,
-		Page:     request.Page,
-		PageSize: request.PageSize,
+		Keyword: request.Keyword,
+		State:   request.State,
+		Status:  request.Status,
+		// Sales see only the bookings they own.
+		SalesUserID: ownerScope(request.UserRequestInfo),
+		Page:        request.Page,
+		PageSize:    request.PageSize,
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "list line bookings")

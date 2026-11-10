@@ -18,6 +18,7 @@ var (
 	NotFound         = ErrCode("NOT_FOUND", "Not found")
 	Conflict         = ErrCode("CONFLICT", "Conflict")
 	RateLimited      = ErrCode("RATE_LIMITED", "Too many requests")
+	RequestTimeout   = ErrCode("REQUEST_TIMEOUT", "Request timeout")
 	Internal         = ErrCode("INTERNAL", "Internal server error")
 )
 

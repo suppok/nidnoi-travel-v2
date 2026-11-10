@@ -19,6 +19,7 @@ func Open(ctx context.Context, cfg *config.Config) (*bun.DB, error) {
 	sqldb.SetMaxOpenConns(cfg.Database.MaxOpenConns)
 	sqldb.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	sqldb.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
+	sqldb.SetConnMaxIdleTime(cfg.Database.ConnMaxIdleTime)
 
 	db := bun.NewDB(sqldb, pgdialect.New())
 

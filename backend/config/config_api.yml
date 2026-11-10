@@ -7,9 +7,13 @@ server:
   clientIPHeader: CF-Connecting-IP # real client IP behind Cloudflare; falls back to the socket address
 
 database:
-  maxOpenConns: 10
-  maxIdleConns: 5
+  # The Supabase session pooler gives each client connection its own server slot (pool_size 15 on
+  # the Free org) and local + dev share one database, so keep every instance small and let idle
+  # connections go.
+  maxOpenConns: 5
+  maxIdleConns: 2
   connMaxLifetime: 30m
+  connMaxIdleTime: 5m
 
 auth:
   accessTokenTTL: 15m

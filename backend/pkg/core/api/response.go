@@ -84,6 +84,10 @@ func fromFiberError(e *fiber.Error) *cerrors.AppError {
 		return cerrors.PermissionDenied()
 	case http.StatusTooManyRequests:
 		return cerrors.RateLimited()
+	case http.StatusRequestTimeout:
+		// fasthttp's read timeout, mostly idle preconnected browser sockets that never sent a
+		// request: not a server fault, so it is neither INTERNAL nor logged.
+		return cerrors.New(http.StatusRequestTimeout, errorcode.RequestTimeout)
 	case http.StatusBadRequest, http.StatusRequestEntityTooLarge, http.StatusUnprocessableEntity, http.StatusMethodNotAllowed:
 		return &cerrors.AppError{Status: e.Code, Code: errorcode.Validation.Code, Message: e.Message}
 	default:
