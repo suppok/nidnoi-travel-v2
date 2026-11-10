@@ -158,10 +158,11 @@ func New(ctx context.Context) (*App, error) {
 	apiHandler := api.NewApiHandler(response, cfg.Server.ClientIPHeader)
 	jwtAuth := middleware.NewAuth(coreRegistry.JWT, authUseCase)
 	authPermissions := middleware.NewAuthPermissions(permissions)
+	liffAuth := middleware.NewLIFFAuth(authUseCase)
 
 	v1 := f.Group("/api/v1")
 	handler.NewHealthAPIHandler(v1, apiHandler).Init()
-	handler.NewAuthAPIHandler(v1, apiHandler, cfg, authUseCase).Init(jwtAuth)
+	handler.NewAuthAPIHandler(v1, apiHandler, cfg, authUseCase).Init(jwtAuth, liffAuth, authPermissions)
 	handler.NewUserAPIHandler(v1, apiHandler, userUseCase).Init(jwtAuth, authPermissions)
 	handler.NewCountryAPIHandler(v1, apiHandler, countryUseCase).Init(jwtAuth, authPermissions)
 	handler.NewCityAPIHandler(v1, apiHandler, cityUseCase).Init(jwtAuth, authPermissions)
@@ -172,7 +173,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
-	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
+	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, liffAuth, authPermissions)
 	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil

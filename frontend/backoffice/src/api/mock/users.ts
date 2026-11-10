@@ -98,6 +98,7 @@ const create: MockHandler = (req) => {
     status: true,
     mustChangePassword: true,
     lastLoginAt: null,
+    lineDisplayName: null,
     createDate: now,
     updateDate: now,
     password: temporaryPassword,

@@ -9,6 +9,7 @@ import { Permissions } from '../../../constants/permissions.ts';
 import { applyFieldErrors, errorMessage } from '../../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../../lib/format.ts';
 import type { LineBooking } from '../../../types/lineBooking.ts';
+import LineContactSection from './LineContactSection.tsx';
 import { lineBookingLines, type Line, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
 
 type Props = {
@@ -146,6 +147,15 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
               <Descriptions.Item label="ส่งเมื่อ">{formatDateTime(booking.createDate)}</Descriptions.Item>
             </Descriptions>
           </section>
+
+          <LineContactSection
+            booking={booking}
+            editable={editable && can(Permissions.LineContactList)}
+            onLinked={(updated) => {
+              setBooking(updated);
+              onChanged();
+            }}
+          />
 
           <section>
             <Typography.Title level={5}>สลิปโอนเงิน</Typography.Title>

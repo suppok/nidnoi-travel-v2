@@ -9,6 +9,7 @@ export type User = {
   status: boolean; // false = deactivated (soft delete)
   mustChangePassword: boolean;
   lastLoginAt: string | null;
+  lineDisplayName: string | null; // LINE account linked for the LIFF app
   createDate: string;
   updateDate: string;
 };

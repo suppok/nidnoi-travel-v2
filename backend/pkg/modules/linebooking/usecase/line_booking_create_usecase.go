@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -16,22 +15,22 @@ import (
 	"backend/pkg/constants/errorcode"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/constants/tourprogramstate"
+	coremodels "backend/pkg/core/api/models"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/utils"
 	"backend/pkg/core/validation"
 	"backend/pkg/domain"
 	"backend/pkg/modules/linebooking/models"
-	"backend/pkg/modules/shared/client/line"
 )
 
 const (
-	maxTravellers   = 50
-	maxNameRunes    = 200
-	maxNoteRunes    = 2000
-	minPhoneDigits  = 9
-	maxPhoneDigits  = 15
-	maxNoAttempts   = 3
+	maxTravellers            = 50
+	maxNameRunes             = 200
+	maxNoteRunes             = 2000
+	minPhoneDigits           = 9
+	maxPhoneDigits           = 15
+	maxNoAttempts            = 3
 	lineBookingNoUniqueIndex = "line_booking_booking_no_key"
 )
 
@@ -72,7 +71,6 @@ func normalizeCreate(r *models.LineBookingCreateRequest) {
 func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateRequest) error {
 	count := []validation.Rule{validation.Min(0), validation.Max(maxTravellers)}
 	err := validation.ValidateStruct(request,
-		validation.Field(&request.LIFFAccessToken, validation.Required),
 		validation.Field(&request.TourCode, validation.Required),
 		validation.Field(&request.PeriodID, validation.Required, validation.UUID),
 		validation.Field(&request.AdultTwin, count...),
@@ -154,8 +152,9 @@ func newBookingNo(now time.Time) (string, error) {
 	return now.In(utils.Thailand).Format("06") + random, nil
 }
 
-// Create records a LINE booking from the LIFF app. It verifies the LIFF access token, validates
-// the tour/period, quotes prices and inserts the row. No seats are reserved.
+// Create records a LINE booking from the LIFF app. The LIFF middleware has already verified the
+// token and resolved the linked staff user. It validates the tour/period, quotes prices and inserts
+// the row. No seats are reserved.
 func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBookingCreateRequest) (*models.LineBookingCreateResponse, error) {
 	normalizeCreate(request)
 	if !publicCodePattern.MatchString(request.TourCode) {
@@ -165,18 +164,9 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 		return nil, cerrors.Validation(err)
 	}
 
-	// Verify LIFF token and get LINE profile.
-	lineClient := u.shareRegistry.ClientRegistry.LINE
-	if !lineClient.Configured() {
-		return nil, cerrors.New(http.StatusServiceUnavailable, errorcode.LINENotConfigured)
-	}
-	tokenInfo, err := lineClient.VerifyAccessToken(ctx, request.LIFFAccessToken)
-	if err != nil {
-		if errors.Is(err, line.ErrNotConfigured) {
-			return nil, cerrors.New(http.StatusServiceUnavailable, errorcode.LINENotConfigured)
-		}
-		u.coreRegistry.Logger.Warn("LINE token verification failed", zap.Error(err))
-		return nil, cerrors.New(http.StatusUnauthorized, errorcode.InvalidLINEToken)
+	info := request.UserRequestInfo
+	if info == nil || info.LineUserID == "" {
+		return nil, cerrors.Unauthenticated()
 	}
 
 	var (
@@ -184,7 +174,7 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 		txErr   error
 	)
 	for attempt := 1; ; attempt++ {
-		created, txErr = u.createLineBooking(ctx, request, tokenInfo)
+		created, txErr = u.createLineBooking(ctx, request, info)
 		if attempt < maxNoAttempts && isLineBookingNoTaken(txErr) {
 			continue
 		}
@@ -197,11 +187,12 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 	u.coreRegistry.Logger.Info("line booking received",
 		zap.String("bookingNo", created.BookingNo),
 		zap.String("tourCode", created.TourCode),
-		zap.String("lineUserId", created.LineUserID))
+		zap.String("lineUserId", created.LineUserID),
+		zap.String("userId", info.UserID))
 	return &models.LineBookingCreateResponse{BookingNo: created.BookingNo, TotalPrice: created.TotalPrice}, nil
 }
 
-func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *models.LineBookingCreateRequest, tokenInfo *line.TokenInfo) (*domain.LineBooking, error) {
+func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *models.LineBookingCreateRequest, info *coremodels.UserRequestInfo) (*domain.LineBooking, error) {
 	no, err := newBookingNo(time.Now())
 	if err != nil {
 		return nil, err
@@ -231,8 +222,8 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		now := time.Now()
 		b.ID = utils.NewID()
 		b.BookingNo = no
-		b.LineUserID = tokenInfo.UserID
-		b.LineDisplayName = tokenInfo.DisplayName
+		b.LineUserID = info.LineUserID
+		b.LineDisplayName = info.LineDisplayName
 		b.TourProgramID = tour.ID
 		b.TourProgramPeriodID = period.ID
 		b.TourCode = tour.Code
@@ -247,8 +238,8 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		b.Status = true
 		b.CreateDate = now
 		b.UpdateDate = now
-		b.CreateBy = bookingstate.SystemUserID
-		b.UpdateBy = bookingstate.SystemUserID
+		b.CreateBy = info.UserID
+		b.UpdateBy = info.UserID
 		created, err = u.repositoryRegistry.LineBookingRepository.WithTx(appDB).Create(ctx, b)
 		return err
 	})

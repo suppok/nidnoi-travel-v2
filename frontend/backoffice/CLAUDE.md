@@ -358,6 +358,13 @@ Booking requests sent from the customer site (leads — no seats reserved, no pa
 - Seats are never changed by a booking — staff edit them on the tour's period table.
 - Mock: four seeded bookings; run `__mockNewBooking()` in the console to try the alert.
 
+## LINE Bookings
+
+- **Own LINE account:** user menu → "เชื่อมบัญชี LINE" (`features/line-link/LineLinkModal.tsx`). `POST /auth/line-link` returns a one-time LIFF URL (10 min) shown with antd `QRCode` (plus a copyable link for LINE on PC); the modal polls `/auth/me` every 3 s until `line` changes, then refreshes the user. "ยกเลิกการเชื่อม" calls `POST /auth/line-unlink`. Only linked sales/admin users can use the LIFF booking app. The users list shows each user's linked LINE name. The mock answers `LINE_NOT_CONFIGURED`.
+
+- `/line-bookings` — bookings sales submit from the LIFF app; `LineBookingDrawer` shows the slip, travellers, state and staff note.
+- **แชท LINE ของลูกค้า** (`LineContactSection`): links the booking to the customer's LINE OA chat so a receipt can be pushed later. A searchable `Select` over `POST /line-contacts/list` (debounced, most recent chat first) saves at once through `PUT /line-bookings/line-contact`; "ยกเลิกการเชื่อม" unlinks. Needs `line-booking:update` and `line-contact:list`. A contact with `following: false` (blocked the OA) is flagged — a push would not reach them. Customers appear only after they message or follow the OA.
+
 ## Customer Site Rebuild
 
 The customer site is fully static on Cloudflare Workers. **The backend** rebuilds it through a Cloudflare Deploy Hook after content changes, debounced (fires after 3 minutes without new changes, at most 15 minutes after the first). A build then takes a few minutes.

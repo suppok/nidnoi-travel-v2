@@ -7,9 +7,8 @@ import { SuccessView } from './SuccessView.tsx'
 import { TourSelector } from './TourSelector.tsx'
 
 type Props = {
-  userId: string
-  displayName: string
-  accessToken: string
+  // The linked backoffice user who submits the booking.
+  staffName: string
 }
 
 type SuccessData = { bookingNo: string; totalPrice: number }
@@ -44,7 +43,7 @@ type Counts = {
 
 const defaultCounts: Counts = { adultTwin: 0, adultSingle: 0, childWithBed: 0, childNoBed: 0 }
 
-export function BookingForm({ userId, displayName, accessToken }: Props) {
+export function BookingForm({ staffName }: Props) {
   const [tour, setTour] = useState<TourPublicItem | null>(null)
   const [period, setPeriod] = useState<TourPeriodItem | null>(null)
   const [counts, setCounts] = useState<Counts>(defaultCounts)
@@ -93,9 +92,6 @@ export function BookingForm({ userId, displayName, accessToken }: Props) {
     setSubmitting(true)
     try {
       const result = await createLineBooking({
-        liffAccessToken: accessToken,
-        lineUserId: userId,
-        lineDisplayName: displayName,
         tourCode: tour.code,
         periodId: period.id,
         adultTwin: counts.adultTwin,
@@ -145,7 +141,7 @@ export function BookingForm({ userId, displayName, accessToken }: Props) {
     <div className="space-y-6 px-4 pb-8 pt-4">
       <div className="text-center">
         <h1 className="text-lg font-semibold text-gray-900">บันทึกการจอง</h1>
-        <p className="text-xs text-gray-500">โดย {displayName}</p>
+        <p className="text-xs text-gray-500">โดย {staffName}</p>
       </div>
 
       {/* Tour */}
@@ -218,7 +214,7 @@ export function BookingForm({ userId, displayName, accessToken }: Props) {
       {/* Slip upload */}
       <section>
         <label className="mb-1.5 block text-sm font-medium text-gray-700">สลิปโอนเงิน</label>
-        <SlipUpload liffAccessToken={accessToken} value={slipImage} onChange={setSlipImage} />
+        <SlipUpload value={slipImage} onChange={setSlipImage} />
       </section>
 
       {/* Note */}

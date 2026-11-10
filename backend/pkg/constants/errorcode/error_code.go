@@ -65,6 +65,9 @@ var (
 	LINENotConfigured    = ErrCode("LINE_NOT_CONFIGURED", "LINE integration is not configured")
 	InvalidLINEToken     = ErrCode("INVALID_LINE_TOKEN", "Invalid or expired LINE access token")
 	InvalidLINESignature = ErrCode("INVALID_LINE_SIGNATURE", "Invalid LINE webhook signature")
+	LINENotLinked        = ErrCode("LINE_NOT_LINKED", "This LINE account is not linked to a staff user")
+	LINELinkCodeInvalid  = ErrCode("LINE_LINK_CODE_INVALID", "The LINE link code is invalid or has expired")
+	LINEAlreadyLinked    = ErrCode("LINE_ALREADY_LINKED", "This LINE account is already linked to another staff user")
 )
 
 // Customer site rebuild

@@ -42,15 +42,19 @@ All `VITE_*` — shipped to the browser, no secrets.
 1. LIFF SDK initializes with the LIFF ID
 2. If the user isn't logged in, `liff.login()` redirects to LINE Login
 3. After login, the app gets the user's profile (userId, displayName) and access token
-4. The access token is sent with each API call — the backend validates it against LINE's verify endpoint
-5. No JWT, no cookies — the LIFF access token is the only credential
+4. The access token is sent as `Authorization: Bearer <LIFF access token>` on every call (`setLiffToken` in `api/client.ts`). The backend verifies it with LINE, then maps the LINE account to the **backoffice user who linked it**.
+5. **Only linked staff can use the app.** `useStaff` calls `GET /liff/me` first; it needs `line-booking:create` (sales, admin, super admin). Unlinked LINE accounts (`LINE_NOT_LINKED`), finance (`PERMISSION_DENIED`) and users with a temporary password (`PASSWORD_CHANGE_REQUIRED`) see a screen explaining what to do. The LIFF URL itself is public — the API is what is protected.
+6. **Linking:** in the backoffice, user menu → "เชื่อมบัญชี LINE" shows a QR code for `https://liff.line.me/<LIFF ID>?lineLink=<code>` (one-time, 10 minutes). Opening it runs `POST /liff/line-link {code}` before `/liff/me`; the code is read from `lineLink` or from inside `liff.state`, then removed from the URL.
+7. No JWT, no cookies — the LIFF access token is the only credential
 
 ## API Endpoints Used
 
 - `POST /tour-programs/public/list` — search tours (public, no auth)
 - `GET /tour-programs/public/:code/periods` — get periods (public, no auth)
-- `POST /media/upload/liff` — upload slip image (LIFF token validated via `liffAccessToken` form field)
-- `POST /line-bookings` — create booking (LIFF token validated via request body)
+- `POST /liff/line-link` — finish linking with the QR code's code
+- `GET /liff/me` — the linked staff user (gate for the whole app)
+- `POST /media/upload/liff` — upload slip image (`purpose=booking-slip` only)
+- `POST /line-bookings` — create booking; the backend records the staff user as `create_by`
 
 ## CORS
 

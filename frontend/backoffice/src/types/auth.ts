@@ -23,6 +23,19 @@ export type Me = {
   roles: Role[];
   permissions: Permission[];
   mustChangePassword: boolean;
+  // The user's own LINE account, linked for the LIFF booking app; null until linked.
+  line: LineAccount | null;
+};
+
+export type LineAccount = {
+  displayName: string;
+  linkedAt: string;
+};
+
+// POST /auth/line-link — a one-time LIFF URL shown as a QR code.
+export type LineLinkResponse = {
+  url: string;
+  expiresAt: string;
 };
 
 // PUT /auth/password

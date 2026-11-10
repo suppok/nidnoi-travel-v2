@@ -17,8 +17,10 @@ type UserItem struct {
 	Status             bool      `json:"status"`
 	MustChangePassword bool      `json:"mustChangePassword"`
 	LastLoginAt        null.Time `json:"lastLoginAt" swaggertype:"string"`
-	CreateDate         time.Time `json:"createDate"`
-	UpdateDate         time.Time `json:"updateDate"`
+	// LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.
+	LineDisplayName null.String `json:"lineDisplayName" swaggertype:"string"`
+	CreateDate      time.Time   `json:"createDate"`
+	UpdateDate      time.Time   `json:"updateDate"`
 }
 
 func NewUserItem(u *domain.AppUser) UserItem {
@@ -30,6 +32,7 @@ func NewUserItem(u *domain.AppUser) UserItem {
 		Status:             u.Status,
 		MustChangePassword: u.MustChangePassword,
 		LastLoginAt:        u.LastLoginAt,
+		LineDisplayName:    null.NewString(u.LineDisplayName.String, u.LineUserID.Valid),
 		CreateDate:         u.CreateDate,
 		UpdateDate:         u.UpdateDate,
 	}

@@ -1,5 +1,6 @@
 import liff from '@line/liff'
 import { useEffect, useState } from 'react'
+import { setLiffToken } from '../api/client.ts'
 import { env } from '../config/env.ts'
 
 type LiffState =
@@ -32,6 +33,8 @@ export function useLiff(): LiffState {
           return
         }
 
+        // Every API call authenticates with this token, so set it before anything renders.
+        setLiffToken(accessToken)
         setState({
           status: 'ready',
           userId: profile.userId,

@@ -13,4 +13,6 @@ type AuthMeResponse struct {
 	Roles              []string `json:"roles"`
 	Permissions        []string `json:"permissions"` // union of the roles' permission codes
 	MustChangePassword bool     `json:"mustChangePassword"`
+	// Line is the user's own linked LINE account (for the LIFF app); null until linked.
+	Line *AuthLineAccount `json:"line"`
 }

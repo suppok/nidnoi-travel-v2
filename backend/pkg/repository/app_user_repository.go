@@ -18,6 +18,10 @@ type AppUserRepository interface {
 	Update(ctx context.Context, obj *domain.AppUser, columns ...string) (*domain.AppUser, error)
 	FindByID(ctx context.Context, id string) (*domain.AppUser, error)
 	FindByEmail(ctx context.Context, email string) (*domain.AppUser, error)
+	// FindByLineUserID returns the user who linked this LINE account, active or not.
+	FindByLineUserID(ctx context.Context, lineUserID string) (*domain.AppUser, error)
+	// FindByLineLinkCodeHash returns the user with this pending link code (expired or not).
+	FindByLineLinkCodeHash(ctx context.Context, codeHash string) (*domain.AppUser, error)
 	List(ctx context.Context, criteria repomodels.AppUserListCriteria) ([]domain.AppUser, int, error)
 	// ExistsWithRole reports whether any user (active or not) holds role.
 	ExistsWithRole(ctx context.Context, role string) (bool, error)
@@ -48,6 +52,18 @@ func (r *appUserRepository) FindByID(ctx context.Context, id string) (*domain.Ap
 func (r *appUserRepository) FindByEmail(ctx context.Context, email string) (*domain.AppUser, error) {
 	obj := new(domain.AppUser)
 	err := r.query.NewSelect().Where("au.email = ?", email).Limit(1).Scan(ctx, obj)
+	return query.NotFoundAsNil(obj, err)
+}
+
+func (r *appUserRepository) FindByLineUserID(ctx context.Context, lineUserID string) (*domain.AppUser, error) {
+	obj := new(domain.AppUser)
+	err := r.query.NewSelect().Where("au.line_user_id = ?", lineUserID).Limit(1).Scan(ctx, obj)
+	return query.NotFoundAsNil(obj, err)
+}
+
+func (r *appUserRepository) FindByLineLinkCodeHash(ctx context.Context, codeHash string) (*domain.AppUser, error) {
+	obj := new(domain.AppUser)
+	err := r.query.NewSelect().Where("au.line_link_code_hash = ?", codeHash).Limit(1).Scan(ctx, obj)
 	return query.NotFoundAsNil(obj, err)
 }
 

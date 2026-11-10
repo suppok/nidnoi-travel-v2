@@ -20,10 +20,15 @@ export type TourPeriodItem = {
   status: boolean
 }
 
+// GET /liff/me — the backoffice user linked to this LINE account.
+export type LIFFMe = {
+  name: string
+  email: string
+  roles: string[]
+  lineDisplayName: string | null
+}
+
 export type LineBookingCreateRequest = {
-  liffAccessToken: string
-  lineUserId: string
-  lineDisplayName: string
   tourCode: string
   periodId: string
   adultTwin: number

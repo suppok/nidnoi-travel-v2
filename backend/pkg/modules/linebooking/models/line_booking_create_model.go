@@ -1,18 +1,22 @@
 package models
 
-// LineBookingCreateRequest is submitted from the LIFF app (no JWT auth, LIFF token validated).
+import coremodels "backend/pkg/core/api/models"
+
+// LineBookingCreateRequest is submitted from the LIFF app by a staff user linked to the LINE account.
 type LineBookingCreateRequest struct {
-	LIFFAccessToken string `json:"liffAccessToken"`
-	TourCode        string `json:"tourCode"`
-	PeriodID        string `json:"periodId"`
-	AdultTwin       int    `json:"adultTwin"`
-	AdultSingle     int    `json:"adultSingle"`
-	ChildWithBed    int    `json:"childWithBed"`
-	ChildNoBed      int    `json:"childNoBed"`
-	CustomerName    string `json:"customerName"`
-	CustomerPhone   string `json:"customerPhone"`
-	SlipImage       string `json:"slipImage"` // R2 URL from /media/upload/liff
-	Note            string `json:"note"`
+	TourCode      string `json:"tourCode"`
+	PeriodID      string `json:"periodId"`
+	AdultTwin     int    `json:"adultTwin"`
+	AdultSingle   int    `json:"adultSingle"`
+	ChildWithBed  int    `json:"childWithBed"`
+	ChildNoBed    int    `json:"childNoBed"`
+	CustomerName  string `json:"customerName"`
+	CustomerPhone string `json:"customerPhone"`
+	SlipImage     string `json:"slipImage"` // R2 URL from /media/upload/liff
+	Note          string `json:"note"`
+
+	// The linked staff user, with the LINE account from the verified LIFF token.
+	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
 
 type LineBookingCreateResponse struct {
