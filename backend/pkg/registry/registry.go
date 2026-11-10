@@ -47,6 +47,7 @@ type RepositoryRegistry struct {
 
 	BookingRepository     repository.BookingRepository
 	LineBookingRepository repository.LineBookingRepository
+	LineContactRepository repository.LineContactRepository
 }
 
 // ShareRegistry holds cross-module services and outbound clients.

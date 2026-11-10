@@ -18,6 +18,7 @@ type DB[T any] interface {
 	FindByID(ctx context.Context, id string) (*T, error)               // nil, nil when not found
 	NewSelect() *bun.SelectQuery                                       // for custom queries
 	NewUpdate() *bun.UpdateQuery                                       // for custom bulk updates
+	NewInsert() *bun.InsertQuery                                       // for custom inserts (ON CONFLICT)
 }
 
 type db[T any] struct{ idb AppIDB }
@@ -56,6 +57,10 @@ func (d *db[T]) NewSelect() *bun.SelectQuery {
 
 func (d *db[T]) NewUpdate() *bun.UpdateQuery {
 	return d.idb.NewUpdate().Model((*T)(nil))
+}
+
+func (d *db[T]) NewInsert() *bun.InsertQuery {
+	return d.idb.NewInsert()
 }
 
 // NotFoundAsNil maps sql.ErrNoRows to (nil, nil), the repository convention for "not found".
