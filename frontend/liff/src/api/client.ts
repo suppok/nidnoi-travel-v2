@@ -2,6 +2,7 @@ import { env } from '../config/env.ts'
 import type {
   LIFFMe,
   LineContact,
+  SalesUserList,
   LineBookingCreateRequest,
   LineBookingCreateResponse,
   MediaUploadResponse,
@@ -87,6 +88,10 @@ export async function linkLineAccount(code: string): Promise<{ name: string; ema
 export async function searchLineContacts(keyword: string): Promise<LineContact[]> {
   const res = await send('POST', '/liff/line-contacts/list', { keyword, page: 1, pageSize: 20 })
   return (await parse<{ items: LineContact[] }>(res)).items
+}
+
+export async function getSalesUsers(): Promise<SalesUserList> {
+  return parse<SalesUserList>(await send('GET', '/liff/sales-users', undefined))
 }
 
 export async function uploadSlip(file: File): Promise<string> {

@@ -42,6 +42,7 @@ Table: line_booking
 [28] create_by               UUID         null: false
 [29] update_by               UUID         null: false
 [30] line_contact_id         UUID         null: true   (FK line_contact.id, the customer's LINE OA chat)
+[31] sales_user_id           UUID         null: true   (FK app_user.id, the sales person who owns the booking)
 */
 
 // LineBooking is a booking submitted by sales staff from the LIFF app inside LINE OA.
@@ -80,5 +81,8 @@ type LineBooking struct {
 	UpdateBy            string      `bun:"update_by"              json:"updateBy"`                                // [29] UUID
 	LineContactID       null.String `bun:"line_contact_id"      json:"lineContactId" swaggertype:"string"`        // [30] UUID
 
+	SalesUserID null.String `bun:"sales_user_id"          json:"salesUserId" swaggertype:"string"` // [31] UUID
+
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
+	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
 }

@@ -38,7 +38,13 @@ export type LineContact = {
   lastMessageAt: string | null
 }
 
+// GET /liff/sales-users — sales owner options; defaultId is the caller when they are sales.
+export type SalesUser = { id: string; name: string }
+export type SalesUserList = { items: SalesUser[]; defaultId: string }
+
 export type LineBookingCreateRequest = {
+  // The sales person who owns the booking.
+  salesUserId: string
   // The customer's LINE OA chat; null when they chat on a personal LINE account.
   lineContactId: string | null
   tourCode: string

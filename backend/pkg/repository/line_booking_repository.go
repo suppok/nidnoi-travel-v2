@@ -15,9 +15,9 @@ type LineBookingRepository interface {
 	WithTx(tx query.AppIDB) LineBookingRepository
 	Create(ctx context.Context, obj *domain.LineBooking) (*domain.LineBooking, error)
 	Update(ctx context.Context, obj *domain.LineBooking, columns ...string) (*domain.LineBooking, error)
-	// FindByID loads the booking with its LineContact.
+	// FindByID loads the booking with its LineContact and SalesUser.
 	FindByID(ctx context.Context, id string) (*domain.LineBooking, error)
-	// List returns LINE bookings newest first, with their LineContact.
+	// List returns LINE bookings newest first, with their LineContact and SalesUser.
 	List(ctx context.Context, criteria repomodels.LineBookingListCriteria) ([]domain.LineBooking, int, error)
 }
 
@@ -41,13 +41,13 @@ func (r *lineBookingRepository) Update(ctx context.Context, obj *domain.LineBook
 
 func (r *lineBookingRepository) FindByID(ctx context.Context, id string) (*domain.LineBooking, error) {
 	obj := new(domain.LineBooking)
-	err := r.query.NewSelect().Model(obj).Relation("LineContact").Where("lb.id = ?", id).Limit(1).Scan(ctx)
+	err := r.query.NewSelect().Model(obj).Relation("LineContact").Relation("SalesUser").Where("lb.id = ?", id).Limit(1).Scan(ctx)
 	return query.NotFoundAsNil(obj, err)
 }
 
 func (r *lineBookingRepository) List(ctx context.Context, criteria repomodels.LineBookingListCriteria) ([]domain.LineBooking, int, error) {
 	var items []domain.LineBooking
-	q := r.query.NewSelect().Model(&items).Relation("LineContact")
+	q := r.query.NewSelect().Model(&items).Relation("LineContact").Relation("SalesUser")
 
 	if kw := strings.TrimSpace(criteria.Keyword); kw != "" {
 		pattern := "%" + escapeLike(strings.ToLower(kw)) + "%"

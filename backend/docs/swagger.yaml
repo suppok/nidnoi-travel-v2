@@ -1065,6 +1065,9 @@ definitions:
         type: string
       periodId:
         type: string
+      salesUserId:
+        description: SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
+        type: string
       slipImage:
         description: R2 URL from /media/upload/liff
         type: string
@@ -1122,6 +1125,11 @@ definitions:
         type: string
       note:
         type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
       slipImage:
         type: string
       staffNote:
@@ -1193,6 +1201,11 @@ definitions:
         type: string
       note:
         type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
       slipImage:
         type: string
       staffNote:
@@ -1252,6 +1265,17 @@ definitions:
       total:
         type: integer
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse:
+    properties:
+      defaultId:
+        description: DefaultID is the caller when they are in Items, otherwise "".
+        type: string
+      items:
+        description: Items are active users with the sales role, by name.
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        type: array
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest:
     properties:
       id:
@@ -1304,6 +1328,11 @@ definitions:
         type: string
       note:
         type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
       slipImage:
         type: string
       staffNote:
@@ -1385,6 +1414,11 @@ definitions:
         type: string
       note:
         type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
       slipImage:
         type: string
       staffNote:
@@ -1420,6 +1454,13 @@ definitions:
       status:
         description: false = soft delete
         type: boolean
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
     type: object
   backend_pkg_modules_linecontact_models.LineContactItem:
     properties:
@@ -3700,6 +3741,26 @@ paths:
             additionalProperties: true
             type: object
       summary: The staff user linked to this LINE account (LIFF)
+      tags:
+      - liff
+  /liff/sales-users:
+    get:
+      description: |-
+        Active users with the sales role, by name; defaultId is the caller when they are sales.
+        Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse'
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Sales owner options for the LIFF booking form
       tags:
       - liff
   /line-bookings:

@@ -18,6 +18,8 @@ type LineBookingCreateRequest struct {
 	CustomerPhone string `json:"customerPhone"`
 	SlipImage     string `json:"slipImage"` // R2 URL from /media/upload/liff
 	Note          string `json:"note"`
+	// SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
+	SalesUserID string `json:"salesUserId"`
 	// LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.
 	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
 

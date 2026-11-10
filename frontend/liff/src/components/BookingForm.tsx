@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { ApiError, createLineBooking } from '../api/client.ts'
-import type { LineContact, TourPeriodItem, TourPublicItem } from '../types/index.ts'
+import { useEffect, useState } from 'react'
+import { ApiError, createLineBooking, getSalesUsers } from '../api/client.ts'
+import type { LineContact, SalesUser, TourPeriodItem, TourPublicItem } from '../types/index.ts'
 import { CustomerChatPicker } from './CustomerChatPicker.tsx'
 import { PeriodSelector } from './PeriodSelector.tsx'
 import { SlipUpload } from './SlipUpload.tsx'
@@ -48,6 +48,9 @@ export function BookingForm({ staffName }: Props) {
   const [tour, setTour] = useState<TourPublicItem | null>(null)
   const [period, setPeriod] = useState<TourPeriodItem | null>(null)
   const [counts, setCounts] = useState<Counts>(defaultCounts)
+  const [salesUsers, setSalesUsers] = useState<SalesUser[] | null>(null)
+  const [salesUsersError, setSalesUsersError] = useState('')
+  const [salesUserId, setSalesUserId] = useState('')
   const [lineContact, setLineContact] = useState<LineContact | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
@@ -60,6 +63,21 @@ export function BookingForm({ staffName }: Props) {
   const totalPax = counts.adultTwin + counts.adultSingle + counts.childWithBed + counts.childNoBed
   const totalPrice = calcTotal(period, counts)
 
+  // Sales owner options; the submitter is preselected when they are sales.
+  useEffect(() => {
+    let cancelled = false
+    getSalesUsers()
+      .then((res) => {
+        if (cancelled) return
+        setSalesUsers(res.items)
+        setSalesUserId((current) => current || res.defaultId)
+      })
+      .catch(() => !cancelled && setSalesUsersError('โหลดรายชื่อเซลล์ไม่สำเร็จ กรุณาเปิดแอปใหม่'))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   function updateCount(key: keyof Counts, delta: number) {
     setCounts((prev) => ({
       ...prev,
@@ -70,6 +88,10 @@ export function BookingForm({ staffName }: Props) {
   async function handleSubmit() {
     setError('')
 
+    if (!salesUserId) {
+      setError('กรุณาเลือกเซลล์เจ้าของการจอง')
+      return
+    }
     if (!tour || !period) {
       setError('กรุณาเลือกทัวร์และช่วงเดินทาง')
       return
@@ -94,6 +116,7 @@ export function BookingForm({ staffName }: Props) {
     setSubmitting(true)
     try {
       const result = await createLineBooking({
+        salesUserId,
         lineContactId: lineContact?.id ?? null,
         tourCode: tour.code,
         periodId: period.id,
@@ -146,6 +169,31 @@ export function BookingForm({ staffName }: Props) {
         <h1 className="text-lg font-semibold text-gray-900">บันทึกการจอง</h1>
         <p className="text-xs text-gray-500">โดย {staffName}</p>
       </div>
+
+      {/* Sales owner */}
+      <section>
+        <label htmlFor="sales-owner" className="mb-1.5 block text-sm font-medium text-gray-700">
+          เซลล์เจ้าของการจอง
+        </label>
+        <select
+          id="sales-owner"
+          value={salesUserId}
+          onChange={(e) => setSalesUserId(e.target.value)}
+          disabled={salesUsers === null}
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          <option value="" disabled>
+            {salesUsers === null && !salesUsersError ? 'กำลังโหลด...' : 'เลือกเซลล์'}
+          </option>
+          {salesUsers?.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </select>
+        {salesUsersError && <p className="mt-1 text-xs text-red-600">{salesUsersError}</p>}
+        {salesUsers?.length === 0 && <p className="mt-1 text-xs text-gray-500">ยังไม่มีผู้ใช้บทบาทเซลล์ในระบบ</p>}
+      </section>
 
       {/* Tour */}
       <section>

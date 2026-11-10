@@ -23,6 +23,8 @@ type AppUserRepository interface {
 	// FindByLineLinkCodeHash returns the user with this pending link code (expired or not).
 	FindByLineLinkCodeHash(ctx context.Context, codeHash string) (*domain.AppUser, error)
 	List(ctx context.Context, criteria repomodels.AppUserListCriteria) ([]domain.AppUser, int, error)
+	// ListActiveByRole returns active users holding role, by name.
+	ListActiveByRole(ctx context.Context, role string) ([]domain.AppUser, error)
 	// ExistsWithRole reports whether any user (active or not) holds role.
 	ExistsWithRole(ctx context.Context, role string) (bool, error)
 }
@@ -96,6 +98,16 @@ func (r *appUserRepository) List(ctx context.Context, criteria repomodels.AppUse
 		return nil, 0, err
 	}
 	return items, int(total), nil
+}
+
+func (r *appUserRepository) ListActiveByRole(ctx context.Context, role string) ([]domain.AppUser, error) {
+	var items []domain.AppUser
+	err := r.query.NewSelect().
+		Where("au.status = TRUE").
+		Where("au.roles @> ?", pgdialect.Array([]string{role})).
+		OrderExpr("au.name ASC, au.id ASC").
+		Scan(ctx, &items)
+	return items, err
 }
 
 func (r *appUserRepository) ExistsWithRole(ctx context.Context, role string) (bool, error) {

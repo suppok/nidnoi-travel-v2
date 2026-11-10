@@ -740,7 +740,8 @@ Bookings submitted by sales staff through a LIFF app inside LINE OA chat (`pkg/m
 - **LIFF auth** (`middleware.LIFFAuth`, resolver `authUseCase.ResolveLIFFSession`): `Authorization: Bearer <LIFF access token>`, verified with LINE on every request, then mapped to the linked user → `UserRequestInfo` (plus `LineUserID`, `LineDisplayName`), so LIFF routes use `RequiresPermissions` like JWT routes. Not linked or deactivated → `LINE_NOT_LINKED` (403); temporary password → `PASSWORD_CHANGE_REQUIRED`. LIFF routes require `line-booking:create` (sales; admin and super admin by wildcard; not finance).
 - **LIFF endpoints:**
   - `GET /liff/me` — the linked staff user; the LIFF app's gate.
-  - `POST /line-bookings` — create a LINE booking. Loads tour+period, quotes prices, generates `booking_no`, inserts in tx; `create_by` is the linked staff user.
+  - `POST /line-bookings` — create a LINE booking. Loads tour+period, quotes prices, generates `booking_no`, inserts in tx; `create_by` is the linked staff user. `salesUserId` (required) is the sales owner (`line_booking.sales_user_id`): an active user with the `sales` role, else `VALIDATION` on `salesUserId`. Staff responses carry `salesUser {id, name}` (null on older rows).
+  - `GET /liff/sales-users` — owner options: active `sales` users by name, `defaultId` = the caller when they are sales.
   - `POST /media/upload/liff` — upload slip image (`purpose` must be `booking-slip`), delegates to the media upload use case.
 - **Staff endpoints** (JWT + Casbin):
   - `POST /line-bookings/list` — `{keyword, state, status, page, pageSize}`, newest first.
