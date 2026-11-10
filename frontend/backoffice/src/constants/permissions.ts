@@ -42,6 +42,7 @@ export const Permissions = {
   BookingGet: 'booking:get',
   BookingUpdate: 'booking:update',
   BookingStatus: 'booking:status',
+  LineBookingCreate: 'line-booking:create', // LIFF app only
   LineBookingList: 'line-booking:list',
   LineBookingGet: 'line-booking:get',
   LineBookingUpdate: 'line-booking:update',

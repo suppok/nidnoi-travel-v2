@@ -15,7 +15,7 @@ const DB_KEY = 'nidnoi.mock.users.v3';
 const now = '2026-10-01T09:00:00.000Z';
 
 function seed(): MockUser[] {
-  const base = { status: true, mustChangePassword: false, lastLoginAt: null, createDate: now, updateDate: now, sessionVersion: 1 };
+  const base = { status: true, mustChangePassword: false, lastLoginAt: null, lineDisplayName: null, createDate: now, updateDate: now, sessionVersion: 1 };
   return [
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000000', email: 'owner@nidnoi.test', name: 'เจ้าของระบบ', roles: [Roles.SuperAdmin], password: MOCK_PASSWORD },
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000001', email: 'admin@nidnoi.test', name: 'แอดมิน', roles: [Roles.Admin], password: MOCK_PASSWORD },

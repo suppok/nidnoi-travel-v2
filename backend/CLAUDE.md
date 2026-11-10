@@ -736,18 +736,22 @@ Bookings submitted by sales staff through a LIFF app inside LINE OA chat (`pkg/m
 
 - **LINE client** (`pkg/modules/shared/client/line/line_client.go`): verifies LIFF access tokens via `GET https://api.line.me/oauth2/v2.1/verify?access_token=...` and fetches the user profile. Registered in `ShareRegistry.ClientRegistry.LINE`. Logs a warning and disables itself when `LINE_LIFF_CHANNEL_ID` is empty.
 - **Config:** `LINEConfig` in `pkg/core/config/config.go` loads `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_LIFF_CHANNEL_ID`, `LINE_LIFF_ID`. Only `LINE_LIFF_CHANNEL_ID` is required for token verification.
-- **LIFF endpoints** (no JWT — LIFF token validated in the use case):
-  - `POST /line-bookings` — create a LINE booking. Validates LIFF token, loads tour+period, quotes prices, generates `booking_no`, inserts in tx.
-  - `POST /media/upload/liff` — upload slip image. Validates LIFF token from `liffAccessToken` form field, delegates to media upload use case.
+- **Staff LINE link** (`app_user.line_user_id`, unique): staff link their own LINE account so the LIFF app knows who they are. `POST /auth/line-link` (JWT) stores the SHA-256 of a random one-time code (10 min) and returns `https://liff.line.me/<LINE_LIFF_ID>?lineLink=<code>`, shown as a QR code; a new call replaces the code. `POST /liff/line-link {code}` (LIFF token) finishes it → `LINE_LINK_CODE_INVALID` (400), `LINE_ALREADY_LINKED` (409, one staff user per LINE account). `POST /auth/line-unlink` removes it. `/auth/me` returns `line {displayName, linkedAt}`; user items return `lineDisplayName`.
+- **LIFF auth** (`middleware.LIFFAuth`, resolver `authUseCase.ResolveLIFFSession`): `Authorization: Bearer <LIFF access token>`, verified with LINE on every request, then mapped to the linked user → `UserRequestInfo` (plus `LineUserID`, `LineDisplayName`), so LIFF routes use `RequiresPermissions` like JWT routes. Not linked or deactivated → `LINE_NOT_LINKED` (403); temporary password → `PASSWORD_CHANGE_REQUIRED`. LIFF routes require `line-booking:create` (sales; admin and super admin by wildcard; not finance).
+- **LIFF endpoints:**
+  - `GET /liff/me` — the linked staff user; the LIFF app's gate.
+  - `POST /line-bookings` — create a LINE booking. Loads tour+period, quotes prices, generates `booking_no`, inserts in tx; `create_by` is the linked staff user.
+  - `POST /media/upload/liff` — upload slip image (`purpose` must be `booking-slip`), delegates to the media upload use case.
 - **Staff endpoints** (JWT + Casbin):
   - `POST /line-bookings/list` — `{keyword, state, status, page, pageSize}`, newest first.
   - `GET /line-bookings/:id` — get one.
   - `PUT /line-bookings` — `{id, state, staffNote}`.
+  - `PUT /line-bookings/line-contact` — `{id, lineContactId}` links the customer's LINE OA chat (`line_booking.line_contact_id`, FK `line_contact`); `null` unlinks. Permission `line-booking:update`. The receipt is pushed to this chat later. Every staff response carries `lineContact {id, displayName, pictureUrl, following}` or `null`.
   - `PUT /line-bookings/status` — soft delete/restore.
 - **States** (`pkg/constants/linebookingstate`): 10 new, 20 confirmed, 30 cancelled.
-- **Permissions** (`line-booking:list|get|update|status`): admin has all; sales has list/get/update; finance has list/get.
+- **Permissions** (`line-booking:create|list|get|update|status`): admin has all; sales has create/list/get/update; finance has list/get.
 - **Booking number format:** same as customer bookings — 2-digit Thai year + 6 random characters, unique index with retry.
-- **Error codes:** `LINE_NOT_CONFIGURED`, `INVALID_LINE_TOKEN`.
+- **Error codes:** `LINE_NOT_CONFIGURED`, `INVALID_LINE_TOKEN`, `LINE_NOT_LINKED`, `LINE_LINK_CODE_INVALID`, `LINE_ALREADY_LINKED`.
 - **Media purpose:** `booking-slip` — images only, min 200x200, key prefix `bookings/slips/`.
 - **CORS:** LIFF origins (`dev-liff.nidnoitravelv2.com`, `liff.nidnoitravelv2.com`) must be added to `CORS_ALLOWED_ORIGINS`.
 
@@ -761,6 +765,7 @@ Customers who chat with the OA, collected so sales can link a booking to the cus
 - **Profile:** `GET /v2/bot/profile/{userId}` with `LINE_CHANNEL_ACCESS_TOKEN`. 404 = not a friend (never added or blocked) → `following = false`. Without the token, contacts are kept without a profile. Other lookup failures are logged and never fail the webhook.
 - `following` is what decides whether a push can reach the customer.
 - **Staff:** `POST /line-contacts/list` (`{keyword, following?, page, pageSize}`, most recent chat first; `line-contact:list` — admin, sales, finance) for the contact picker.
+- **Contact picker in the LIFF:** not built yet. LIFF routes are now limited to linked staff (see LIFF auth), so a LIFF contact list behind `line-contact:list` is safe to add.
 - **Same provider:** the LINE Login (LIFF) channel and the Messaging API channel must be under the same LINE provider, or the user IDs from LIFF and from the webhook differ.
 - **LINE console:** Messaging API → Webhook URL `https://dev-api.nidnoitravelv2.com/api/v1/line/webhook` (prd: `api.*`), "Use webhook" on. In OA Manager keep **Chat** on so sales still chat by hand.
 

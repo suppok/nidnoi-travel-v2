@@ -1,6 +1,6 @@
-import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/useAuth.ts';
 import BrandMark from '../components/BrandMark.tsx';
@@ -12,6 +12,7 @@ import BookingAlertsProvider from '../features/booking/components/BookingAlertsP
 import { useBookingAlerts } from '../features/booking/hooks/useBookingAlerts.ts';
 import LineBookingAlertsProvider from '../features/line-booking/components/LineBookingAlertsProvider.tsx';
 import { useLineBookingAlerts } from '../features/line-booking/hooks/useLineBookingAlerts.ts';
+import LineLinkModal from '../features/line-link/LineLinkModal.tsx';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
 import { initials } from '../lib/format.ts';
 
@@ -74,6 +75,7 @@ function Shell() {
   const { newCount: lineNewCount } = useLineBookingAlerts();
   const location = useLocation();
   const navigate = useNavigate();
+  const [lineLinkOpen, setLineLinkOpen] = useState(false);
 
   const menuItems: MenuProps['items'] = NAV.map((group) => ({
     type: 'group' as const,
@@ -99,6 +101,7 @@ function Shell() {
     .filter((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
 
   const userMenu: MenuProps['items'] = [
+    { key: 'line', icon: <LinkOutlined />, label: user?.line ? 'บัญชี LINE (เชื่อมแล้ว)' : 'เชื่อมบัญชี LINE', onClick: () => setLineLinkOpen(true) },
     { key: 'password', icon: <KeyOutlined />, label: 'เปลี่ยนรหัสผ่าน', onClick: () => navigate('/change-password') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'ออกจากระบบ', danger: true, onClick: () => void logout() },
@@ -152,6 +155,7 @@ function Shell() {
           </div>
         </Layout.Content>
       </Layout>
+      <LineLinkModal open={lineLinkOpen} onClose={() => setLineLinkOpen(false)} />
     </Layout>
   );
 }

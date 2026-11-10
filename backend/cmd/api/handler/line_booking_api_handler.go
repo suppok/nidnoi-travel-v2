@@ -20,11 +20,11 @@ import (
 )
 
 type LineBookingAPIHandler struct {
-	router              fiber.Router
-	apiHandler          *api.ApiHandler
-	lineBookingUseCase  linebooking.LineBookingUseCase
-	mediaUseCase        media.MediaUseCase
-	maxUploadBytes      int64
+	router             fiber.Router
+	apiHandler         *api.ApiHandler
+	lineBookingUseCase linebooking.LineBookingUseCase
+	mediaUseCase       media.MediaUseCase
+	maxUploadBytes     int64
 }
 
 func NewLineBookingAPIHandler(
@@ -43,16 +43,18 @@ func NewLineBookingAPIHandler(
 	}
 }
 
-func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
+func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middleware.LIFFAuth, authPermissions middleware.AuthPermissions) {
 	r := h.router
 
-	// --- LIFF (LINE app) — no JWT auth, LIFF token validated in usecase. ---
-	r.Post("/line-bookings", h.LineBookingCreate)
-	r.Post("/media/upload/liff", h.LIFFMediaUpload)
+	// --- LIFF (LINE app) — Authorization is the LIFF access token of a linked staff user. ---
+	liff := []fiber.Handler{liffAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingCreate)}
+	r.Post("/line-bookings", append(liff, h.LineBookingCreate)...)
+	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
 
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Put("/line-bookings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdate)
 	r.Post("/line-bookings/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingList), h.LineBookingList)
+	r.Put("/line-bookings/line-contact", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdateLineContact)
 	r.Put("/line-bookings/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingStatus), h.LineBookingUpdateStatus)
 	r.Get("/line-bookings/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingGet)
 }
@@ -60,7 +62,8 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, authPermissions mi
 // LineBookingCreate godoc
 // @Summary     Create a LINE booking from LIFF
 // @Description Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted
-// @Description from the period. The LIFF access token is verified against LINE's API.
+// @Description from the period. Authorization: Bearer <LIFF access token> of a LINE account linked
+// @Description to a staff user with line-booking:create.
 // @Tags        line-bookings
 // @Accept      json
 // @Produce     json
@@ -68,47 +71,43 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, authPermissions mi
 // @Success     200 {object} models.LineBookingCreateResponse
 // @Failure     400 {object} map[string]any "VALIDATION"
 // @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
 // @Failure     404 {object} map[string]any "NOT_FOUND (tour)"
 // @Failure     409 {object} map[string]any "PERIOD_UNAVAILABLE"
 // @Failure     503 {object} map[string]any "LINE_NOT_CONFIGURED"
 // @Router      /line-bookings [post]
 func (h *LineBookingAPIHandler) LineBookingCreate(c *fiber.Ctx) error {
 	request := &models.LineBookingCreateRequest{}
-	return h.apiHandler.Do(c, request, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.Create(ctx, request)
 	})
 }
 
 // LIFFMediaUpload godoc
 // @Summary     Upload a payment slip image from LIFF
-// @Description multipart/form-data with "file", "purpose" (booking-slip) and "liffAccessToken".
-// @Description The LIFF token is validated; no JWT required.
+// @Description multipart/form-data with "file" and "purpose" (booking-slip).
+// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
 // @Tags        line-bookings
 // @Accept      multipart/form-data
 // @Produce     json
 // @Param       file            formData file   true "Image file"
 // @Param       purpose         formData string true "Purpose (booking-slip)"
-// @Param       liffAccessToken formData string true "LIFF access token"
 // @Success     200 {object} mediamodels.MediaUploadResponse
 // @Failure     400 {object} map[string]any "VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL"
 // @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
 // @Failure     413 {object} map[string]any "MEDIA_TOO_LARGE"
 // @Failure     503 {object} map[string]any "STORAGE_UNAVAILABLE, LINE_NOT_CONFIGURED"
 // @Router      /media/upload/liff [post]
 func (h *LineBookingAPIHandler) LIFFMediaUpload(c *fiber.Ctx) error {
 	request := &mediamodels.MediaUploadRequest{Purpose: c.FormValue("purpose")}
-	liffToken := c.FormValue("liffAccessToken")
-	return h.apiHandler.Do(c, nil, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
-		// Validate LIFF token.
-		if liffToken == "" {
-			return nil, cerrors.New(http.StatusUnauthorized, errorcode.InvalidLINEToken)
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		// The LIFF app may only upload payment slips.
+		if request.Purpose != mediamodels.PurposeBookingSlip {
+			return nil, cerrors.New(http.StatusBadRequest, errorcode.MediaTypeNotAllowed)
 		}
-		// We don't need the profile here, just verify the token is valid.
-		// The LINE client is accessed through the usecase's share registry, but the handler
-		// doesn't have direct access. We'll do a minimal approach: pass a dummy UserRequestInfo
-		// since the media usecase logs the user ID.
-		// For now, set a placeholder; the upload itself doesn't need a real user.
-		request.UserRequestInfo = &coremodels.UserRequestInfo{UserID: "00000000-0000-0000-0000-000000000000"}
+		request.UserRequestInfo = requestInfo.UserRequestInfo
 
 		if fh, err := c.FormFile("file"); err == nil {
 			if fh.Size > h.maxUploadBytes {
@@ -179,6 +178,27 @@ func (h *LineBookingAPIHandler) LineBookingUpdate(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.Update(ctx, request)
+	})
+}
+
+// LineBookingUpdateLineContact godoc
+// @Summary     Link a LINE booking to the customer's LINE OA chat
+// @Description lineContactId comes from POST /line-contacts/list; null unlinks. The receipt is
+// @Description pushed to this chat later.
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.LineBookingUpdateLineContactRequest true "Booking and contact"
+// @Success     200 {object} models.LineBookingUpdateLineContactResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Router      /line-bookings/line-contact [put]
+func (h *LineBookingAPIHandler) LineBookingUpdateLineContact(c *fiber.Ctx) error {
+	request := &models.LineBookingUpdateLineContactRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.UpdateLineContact(ctx, request)
 	})
 }
 

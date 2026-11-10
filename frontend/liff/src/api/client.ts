@@ -1,5 +1,6 @@
 import { env } from '../config/env.ts'
 import type {
+  LIFFMe,
   LineBookingCreateRequest,
   LineBookingCreateResponse,
   MediaUploadResponse,
@@ -20,13 +21,22 @@ export class ApiError extends Error {
   }
 }
 
+// The LIFF access token authenticates every staff call ("Authorization: Bearer"). The backend
+// maps it to the backoffice user who linked this LINE account.
+let liffToken = ''
+
+export function setLiffToken(token: string) {
+  liffToken = token
+}
+
 async function send(method: string, path: string, body: unknown): Promise<Response> {
   const isForm = body instanceof FormData
   try {
     return await fetch(`${env.API_BASE_URL}${path}`, {
       method,
       headers: {
-        ...(isForm ? {} : { 'Content-Type': 'application/json' }),
+        ...(isForm || body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(liffToken ? { Authorization: `Bearer ${liffToken}` } : {}),
       },
       body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     })
@@ -63,11 +73,21 @@ export async function getTourPeriods(code: string): Promise<TourPeriodItem[]> {
   return parse<TourPeriodItem[]>(res)
 }
 
-export async function uploadSlip(file: File, liffAccessToken: string): Promise<string> {
+// The staff user linked to this LINE account. Throws LINE_NOT_LINKED, PERMISSION_DENIED (e.g.
+// finance) or PASSWORD_CHANGE_REQUIRED when the app may not be used.
+export async function getLiffMe(): Promise<LIFFMe> {
+  return parse<LIFFMe>(await send('GET', '/liff/me', undefined))
+}
+
+// Finishes linking this LINE account with the one-time code from the backoffice QR code.
+export async function linkLineAccount(code: string): Promise<{ name: string; email: string }> {
+  return parse<{ name: string; email: string }>(await send('POST', '/liff/line-link', { code }))
+}
+
+export async function uploadSlip(file: File): Promise<string> {
   const form = new FormData()
   form.append('file', file)
   form.append('purpose', 'booking-slip')
-  form.append('liffAccessToken', liffAccessToken)
   const res = await send('POST', '/media/upload/liff', form)
   const data = await parse<MediaUploadResponse>(res)
   return data.url

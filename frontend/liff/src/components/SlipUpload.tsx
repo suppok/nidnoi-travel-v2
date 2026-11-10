@@ -2,12 +2,11 @@ import { useRef, useState } from 'react'
 import { uploadSlip, ApiError } from '../api/client.ts'
 
 type Props = {
-  liffAccessToken: string
   value: string
   onChange: (url: string) => void
 }
 
-export function SlipUpload({ liffAccessToken, value, onChange }: Props) {
+export function SlipUpload({ value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +20,7 @@ export function SlipUpload({ liffAccessToken, value, onChange }: Props) {
     setError('')
     setUploading(true)
     try {
-      const url = await uploadSlip(file, liffAccessToken)
+      const url = await uploadSlip(file)
       onChange(url)
     } catch (err) {
       if (err instanceof ApiError) {

@@ -242,6 +242,63 @@
                 }
             }
         },
+        "/auth/line-link": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a one-time LIFF URL (valid 10 minutes) that the backoffice shows as a QR code.\nOpening it in LINE links the LINE account to the caller. A new call replaces the old code.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Start linking my LINE account",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.AuthLineLinkCreateResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/line-unlink": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Unlink my LINE account",
+                "responses": {
+                    "200": {
+                        "description": "data: {}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Returns a short-lived access token and sets the HttpOnly refresh cookie. Rate-limited.",
@@ -1198,6 +1255,102 @@
                 }
             }
         },
+        "/liff/line-link": {
+            "post": {
+                "description": "Called by the LIFF app with the code from the backoffice QR code.\nAuthorization: Bearer \u003cLIFF access token\u003e.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "liff"
+                ],
+                "summary": "Finish linking a LINE account (LIFF)",
+                "parameters": [
+                    {
+                        "description": "Link code",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.LIFFLineLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.LIFFLineLinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "LINE_LINK_CODE_INVALID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_ALREADY_LINKED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/liff/me": {
+            "get": {
+                "description": "Authorization: Bearer \u003cLIFF access token\u003e. Requires line-booking:create (sales, admin).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "liff"
+                ],
+                "summary": "The staff user linked to this LINE account (LIFF)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.LIFFMeResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED, PASSWORD_CHANGE_REQUIRED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/line-bookings": {
             "put": {
                 "security": [
@@ -1250,7 +1403,7 @@
                 }
             },
             "post": {
-                "description": "Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted\nfrom the period. The LIFF access token is verified against LINE's API.",
+                "description": "Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted\nfrom the period. Authorization: Bearer \u003cLIFF access token\u003e of a LINE account linked\nto a staff user with line-booking:create.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1293,6 +1446,13 @@
                             "additionalProperties": true
                         }
                     },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "NOT_FOUND (tour)",
                         "schema": {
@@ -1309,6 +1469,59 @@
                     },
                     "503": {
                         "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/line-contact": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "lineContactId comes from POST /line-contacts/list; null unlinks. The receipt is\npushed to this chat later.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Link a LINE booking to the customer's LINE OA chat",
+                "parameters": [
+                    {
+                        "description": "Booking and contact",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1606,7 +1819,7 @@
         },
         "/media/upload/liff": {
             "post": {
-                "description": "multipart/form-data with \"file\", \"purpose\" (booking-slip) and \"liffAccessToken\".\nThe LIFF token is validated; no JWT required.",
+                "description": "multipart/form-data with \"file\" and \"purpose\" (booking-slip).\nAuthorization: Bearer \u003cLIFF access token\u003e of a linked staff user with line-booking:create.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1631,13 +1844,6 @@
                         "name": "purpose",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "LIFF access token",
-                        "name": "liffAccessToken",
-                        "in": "formData",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -1656,6 +1862,13 @@
                     },
                     "401": {
                         "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -3075,6 +3288,30 @@
                 }
             }
         },
+        "backend_pkg_modules_auth_models.AuthLineAccount": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "linkedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.AuthLineLinkCreateResponse": {
+            "type": "object",
+            "properties": {
+                "expiresAt": {
+                    "type": "string"
+                },
+                "url": {
+                    "description": "URL opens the LIFF app with the one-time code; the backoffice shows it as a QR code.",
+                    "type": "string",
+                    "example": "https://liff.line.me/1234567890-AbCdEfGh?lineLink=..."
+                }
+            }
+        },
         "backend_pkg_modules_auth_models.AuthLoginRequest": {
             "type": "object",
             "properties": {
@@ -3110,6 +3347,14 @@
                 "id": {
                     "type": "string"
                 },
+                "line": {
+                    "description": "Line is the user's own linked LINE account (for the LIFF app); null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.AuthLineAccount"
+                        }
+                    ]
+                },
                 "mustChangePassword": {
                     "type": "boolean"
                 },
@@ -3140,6 +3385,45 @@
                 "expiresIn": {
                     "description": "seconds",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.LIFFLineLinkRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.LIFFLineLinkResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.LIFFMeResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -4289,6 +4573,24 @@
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingContact": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "following": {
+                    "description": "Following is false once the customer blocks the OA: a push would not reach them.",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pictureUrl": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingCreateRequest": {
             "type": "object",
             "properties": {
@@ -4308,9 +4610,6 @@
                     "type": "string"
                 },
                 "customerPhone": {
-                    "type": "string"
-                },
-                "liffAccessToken": {
                     "type": "string"
                 },
                 "note": {
@@ -4386,6 +4685,14 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
                 },
                 "lineDisplayName": {
                     "type": "string"
@@ -4484,6 +4791,14 @@
                 "id": {
                     "type": "string"
                 },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
                 "lineDisplayName": {
                     "type": "string"
                 },
@@ -4579,6 +4894,123 @@
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "lineContactId": {
+                    "description": "LineContactID is a line_contact id from POST /line-contacts/list; null unlinks.",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactResponse": {
+            "type": "object",
+            "properties": {
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingUpdateRequest": {
             "type": "object",
             "properties": {
@@ -4640,6 +5072,14 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
                 },
                 "lineDisplayName": {
                     "type": "string"
@@ -6176,6 +6616,10 @@
                 "lastLoginAt": {
                     "type": "string"
                 },
+                "lineDisplayName": {
+                    "description": "LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.",
+                    "type": "string"
+                },
                 "mustChangePassword": {
                     "type": "boolean"
                 },
@@ -6211,6 +6655,10 @@
                 "lastLoginAt": {
                     "type": "string"
                 },
+                "lineDisplayName": {
+                    "description": "LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.",
+                    "type": "string"
+                },
                 "mustChangePassword": {
                     "type": "boolean"
                 },
@@ -6244,6 +6692,10 @@
                     "type": "string"
                 },
                 "lastLoginAt": {
+                    "type": "string"
+                },
+                "lineDisplayName": {
+                    "description": "LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.",
                     "type": "string"
                 },
                 "mustChangePassword": {
@@ -6356,6 +6808,10 @@
                     "type": "string"
                 },
                 "lastLoginAt": {
+                    "type": "string"
+                },
+                "lineDisplayName": {
+                    "description": "LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.",
                     "type": "string"
                 },
                 "mustChangePassword": {

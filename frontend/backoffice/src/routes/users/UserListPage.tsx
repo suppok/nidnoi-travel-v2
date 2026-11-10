@@ -146,6 +146,11 @@ export default function UserListPage() {
         </span>
       ),
     },
+    {
+      title: 'LINE',
+      dataIndex: 'lineDisplayName',
+      render: (v: string | null) => (v ? <span title="เชื่อมบัญชี LINE แล้ว">{v}</span> : <span className="text-ink-muted">ยังไม่เชื่อม</span>),
+    },
     { title: 'เข้าสู่ระบบล่าสุด', dataIndex: 'lastLoginAt', render: (v: string | null) => formatDateTime(v) },
     {
       key: 'actions',

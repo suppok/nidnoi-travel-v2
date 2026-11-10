@@ -64,6 +64,7 @@ const me: MockHandler = (req) => {
     roles: user.roles,
     permissions: permissionsFor(user.roles),
     mustChangePassword: user.mustChangePassword,
+    line: null,
   } satisfies Me);
 };
 
@@ -87,10 +88,23 @@ const changePassword: MockHandler = (req) => {
   return ok(null);
 };
 
+// The mock has no LIFF app to finish a link with.
+const lineLink: MockHandler = (req) => {
+  authenticate(req, 'POST /auth/line-link');
+  throw new MockFail(503, ErrorCodes.LineNotConfigured, 'LINE integration is not configured');
+};
+
+const lineUnlink: MockHandler = (req) => {
+  authenticate(req, 'POST /auth/line-unlink');
+  return ok(null);
+};
+
 export const authRoutes: Record<string, MockHandler> = {
   'POST /auth/login': login,
   'POST /auth/refresh': refresh,
   'POST /auth/logout': logout,
   'GET /auth/me': me,
   'PUT /auth/password': changePassword,
+  'POST /auth/line-link': lineLink,
+  'POST /auth/line-unlink': lineUnlink,
 };

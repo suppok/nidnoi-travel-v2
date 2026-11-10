@@ -1,6 +1,10 @@
 package models
 
-import coremodels "backend/pkg/core/api/models"
+import (
+	"github.com/guregu/null/v5"
+
+	coremodels "backend/pkg/core/api/models"
+)
 
 // --- list ---
 
@@ -44,6 +48,20 @@ type LineBookingUpdateRequest struct {
 }
 
 type LineBookingUpdateResponse struct {
+	LineBookingItem
+}
+
+// --- link the customer's LINE OA chat ---
+
+type LineBookingUpdateLineContactRequest struct {
+	ID string `json:"id"`
+	// LineContactID is a line_contact id from POST /line-contacts/list; null unlinks.
+	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
+
+	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
+}
+
+type LineBookingUpdateLineContactResponse struct {
 	LineBookingItem
 }
 

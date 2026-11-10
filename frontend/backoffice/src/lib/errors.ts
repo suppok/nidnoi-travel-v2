@@ -23,6 +23,7 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.StorageUnavailable]: 'ระบบจัดเก็บไฟล์ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.SiteRebuildUnavailable]: 'ยังไม่ได้ตั้งค่าการอัปเดตหน้าเว็บ กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.SiteRebuildFailed]: 'สั่งอัปเดตหน้าเว็บไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+  [ErrorCodes.LineNotConfigured]: 'ยังไม่ได้ตั้งค่าการเชื่อมต่อ LINE กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 
