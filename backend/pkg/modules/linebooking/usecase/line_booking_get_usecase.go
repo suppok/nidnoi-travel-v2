@@ -23,7 +23,7 @@ func (u *lineBookingUseCase) Get(ctx context.Context, request *models.LineBookin
 	if err != nil {
 		return nil, cerrors.Wrap(err, "get line booking")
 	}
-	if found == nil {
+	if found == nil || !visibleTo(found, request.UserRequestInfo) {
 		return nil, cerrors.NotFound()
 	}
 	return &models.LineBookingGetResponse{LineBookingItem: models.NewLineBookingItem(found)}, nil

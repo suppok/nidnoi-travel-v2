@@ -95,6 +95,7 @@ type DatabaseConfig struct {
 	MaxOpenConns    int           `mapstructure:"maxOpenConns"`
 	MaxIdleConns    int           `mapstructure:"maxIdleConns"`
 	ConnMaxLifetime time.Duration `mapstructure:"connMaxLifetime"`
+	ConnMaxIdleTime time.Duration `mapstructure:"connMaxIdleTime"`
 }
 
 type AuthConfig struct {

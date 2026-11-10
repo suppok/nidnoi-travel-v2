@@ -42,7 +42,7 @@ func (u *lineBookingUseCase) UpdateLineContact(ctx context.Context, request *mod
 		if err != nil {
 			return err
 		}
-		if target == nil {
+		if target == nil || !visibleTo(target, request.UserRequestInfo) {
 			return cerrors.NotFound()
 		}
 

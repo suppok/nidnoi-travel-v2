@@ -65,6 +65,9 @@ func (r *lineBookingRepository) List(ctx context.Context, criteria repomodels.Li
 	if criteria.Status != nil {
 		q = q.Where("lb.status = ?", *criteria.Status)
 	}
+	if criteria.SalesUserID != "" {
+		q = q.Where("lb.sales_user_id = ?", criteria.SalesUserID)
+	}
 
 	total, err := q.
 		OrderExpr("lb.create_date DESC, lb.id ASC").

@@ -35,7 +35,7 @@ func (u *lineBookingUseCase) Update(ctx context.Context, request *models.LineBoo
 		if err != nil {
 			return err
 		}
-		if target == nil {
+		if target == nil || !visibleTo(target, request.UserRequestInfo) {
 			return cerrors.NotFound()
 		}
 

@@ -2,9 +2,11 @@ package repomodels
 
 // LineBookingListCriteria filters POST /line-bookings/list.
 type LineBookingListCriteria struct {
-	Keyword  string // matches booking no, customer name, customer phone, tour code or LINE display name
-	State    int    // 0 = any
-	Status   *bool  // nil = any
-	Page     int
-	PageSize int
+	Keyword string // matches booking no, customer name, customer phone, tour code or LINE display name
+	State   int    // 0 = any
+	Status  *bool  // nil = any
+	// SalesUserID limits the list to bookings owned by this user; "" = any owner.
+	SalesUserID string
+	Page        int
+	PageSize    int
 }

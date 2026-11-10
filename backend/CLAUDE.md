@@ -166,7 +166,7 @@ Rules:
 Supabase is used as **managed Postgres only** (no Supabase Auth, Storage or Realtime).
 
 - Connect through the **session pooler** (`aws-*.pooler.supabase.com:5432`, IPv4). Not the direct host (IPv6-only by default), not transaction mode (port 6543 — for serverless).
-- Keep `MaxOpenConns` small (≈10): prd runs on Micro compute.
+- Keep the pool small (`database.*` in `config_api.yml`: 5 open, 2 idle, idle conns closed after 5 min). Session mode gives every client connection its own pooler slot (`pool_size` 15 on the Free org) and **local + dev share one database**, so two API instances plus `migrate` must fit; exceeding it fails requests with `EMAXCONNSESSION`.
 
 ### Transactions
 
@@ -741,6 +741,7 @@ Bookings submitted by sales staff through a LIFF app inside LINE OA chat (`pkg/m
 - **LIFF endpoints:**
   - `GET /liff/me` — the linked staff user; the LIFF app's gate.
   - `POST /line-bookings` — create a LINE booking. Loads tour+period, quotes prices, generates `booking_no`, inserts in tx; `create_by` is the linked staff user. `salesUserId` (required) is the sales owner (`line_booking.sales_user_id`): an active user with the `sales` role, else `VALIDATION` on `salesUserId`. Staff responses carry `salesUser {id, name}` (null on older rows).
+  - **Owner scope:** staff whose roles don't include `super_admin`, `admin` or `finance` (i.e. sales) see only bookings with `sales_user_id` = themselves — list is filtered, get/update/line-contact/status return `NOT_FOUND` for others (`usecase/line_booking_owner_scope.go`). Ownerless rows (before `sales_user_id`) are visible to see-all roles only.
   - `GET /liff/sales-users` — owner options: active `sales` users by name, `defaultId` = the caller when they are sales.
   - `POST /media/upload/liff` — upload slip image (`purpose` must be `booking-slip`), delegates to the media upload use case.
 - **Staff endpoints** (JWT + Casbin):
