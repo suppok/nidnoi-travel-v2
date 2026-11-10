@@ -25,7 +25,7 @@ func NewLineContactAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, l
 	return &LineContactAPIHandler{router: router, apiHandler: apiHandler, lineContactUseCase: lineContactUseCase}
 }
 
-func (h *LineContactAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
+func (h *LineContactAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middleware.LIFFAuth, authPermissions middleware.AuthPermissions) {
 	r := h.router
 
 	// --- LINE Platform — no JWT; the X-Line-Signature header is verified in the use case. ---
@@ -33,6 +33,9 @@ func (h *LineContactAPIHandler) Init(jwtAuth middleware.Auth, authPermissions mi
 
 	// --- Staff (backoffice) ---
 	r.Post("/line-contacts/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineContactList), h.LineContactList)
+
+	// --- LIFF app (linked staff) — same list for the booking form's customer chat picker. ---
+	r.Post("/liff/line-contacts/list", liffAuth.Auth, authPermissions.RequiresPermissions(apicode.LineContactList), h.LIFFLineContactList)
 }
 
 // LineWebhook godoc
@@ -55,6 +58,22 @@ func (h *LineContactAPIHandler) LineWebhook(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
 		return h.lineContactUseCase.HandleWebhook(ctx, request)
 	})
+}
+
+// LIFFLineContactList godoc
+// @Summary     List LINE OA contacts for the LIFF booking form
+// @Description Same as POST /line-contacts/list. Authorization: Bearer <LIFF access token> of a linked
+// @Description staff user with line-contact:list.
+// @Tags        liff
+// @Accept      json
+// @Produce     json
+// @Param       body body models.LineContactListRequest true "Filter"
+// @Success     200 {object} models.LineContactListResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Router      /liff/line-contacts/list [post]
+func (h *LineContactAPIHandler) LIFFLineContactList(c *fiber.Ctx) error {
+	return h.LineContactList(c)
 }
 
 // LineContactList godoc

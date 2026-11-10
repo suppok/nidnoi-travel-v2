@@ -35,7 +35,7 @@ export function PeriodSelector({ tourCode, onSelect, selected }: Props) {
       .then((items) => {
         if (cancelled) return
         // Show only active periods with seats
-        setPeriods(items.filter((p) => p.status && p.seatsAvailable > 0))
+        setPeriods(items.filter((p) => !p.soldOut && p.seatsAvailable > 0))
       })
       .catch(() => {
         if (!cancelled) setPeriods([])

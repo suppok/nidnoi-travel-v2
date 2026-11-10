@@ -1,6 +1,7 @@
 import { env } from '../config/env.ts'
 import type {
   LIFFMe,
+  LineContact,
   LineBookingCreateRequest,
   LineBookingCreateResponse,
   MediaUploadResponse,
@@ -59,18 +60,16 @@ async function parse<T>(res: Response): Promise<T> {
 }
 
 export async function searchTours(keyword: string): Promise<TourPublicItem[]> {
-  const res = await send('POST', '/tour-programs/public/list', {
-    keyword,
-    page: 1,
-    pageSize: 20,
-  })
+  const query = new URLSearchParams({ keyword, page: '1', pageSize: '20' })
+  const res = await send('GET', `/tour-programs/public?${query}`, undefined)
   const data = await parse<{ items: TourPublicItem[] }>(res)
   return data.items
 }
 
 export async function getTourPeriods(code: string): Promise<TourPeriodItem[]> {
-  const res = await send('GET', `/tour-programs/public/${code}/periods`, undefined)
-  return parse<TourPeriodItem[]>(res)
+  const res = await send('GET', `/tour-programs/public/${encodeURIComponent(code)}/periods`, undefined)
+  const data = await parse<{ items: TourPeriodItem[] }>(res)
+  return data.items
 }
 
 // The staff user linked to this LINE account. Throws LINE_NOT_LINKED, PERMISSION_DENIED (e.g.
@@ -82,6 +81,12 @@ export async function getLiffMe(): Promise<LIFFMe> {
 // Finishes linking this LINE account with the one-time code from the backoffice QR code.
 export async function linkLineAccount(code: string): Promise<{ name: string; email: string }> {
   return parse<{ name: string; email: string }>(await send('POST', '/liff/line-link', { code }))
+}
+
+// Customers who chatted with the OA, most recent chat first; matches the LINE display name.
+export async function searchLineContacts(keyword: string): Promise<LineContact[]> {
+  const res = await send('POST', '/liff/line-contacts/list', { keyword, page: 1, pageSize: 20 })
+  return (await parse<{ items: LineContact[] }>(res)).items
 }
 
 export async function uploadSlip(file: File): Promise<string> {

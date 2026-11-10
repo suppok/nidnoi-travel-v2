@@ -1057,6 +1057,10 @@ definitions:
         type: string
       customerPhone:
         type: string
+      lineContactId:
+        description: LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list);
+          optional.
+        type: string
       note:
         type: string
       periodId:
@@ -3596,6 +3600,40 @@ paths:
       summary: Liveness check
       tags:
       - health
+  /liff/line-contacts/list:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Same as POST /line-contacts/list. Authorization: Bearer <LIFF access token> of a linked
+        staff user with line-contact:list.
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List LINE OA contacts for the LIFF booking form
+      tags:
+      - liff
   /liff/line-link:
     post:
       consumes:
@@ -4328,6 +4366,10 @@ paths:
         Active tours in a public state (selling, closed), ordered by code. Prices and dates
         cover upcoming periods only (departing after today, Thailand time). No auth.
       parameters:
+      - description: Matches tour name or code (LIFF tour search)
+        in: query
+        name: keyword
+        type: string
       - description: Country slug
         in: query
         name: country

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ApiError, createLineBooking } from '../api/client.ts'
-import type { TourPeriodItem, TourPublicItem } from '../types/index.ts'
+import type { LineContact, TourPeriodItem, TourPublicItem } from '../types/index.ts'
+import { CustomerChatPicker } from './CustomerChatPicker.tsx'
 import { PeriodSelector } from './PeriodSelector.tsx'
 import { SlipUpload } from './SlipUpload.tsx'
 import { SuccessView } from './SuccessView.tsx'
@@ -47,6 +48,7 @@ export function BookingForm({ staffName }: Props) {
   const [tour, setTour] = useState<TourPublicItem | null>(null)
   const [period, setPeriod] = useState<TourPeriodItem | null>(null)
   const [counts, setCounts] = useState<Counts>(defaultCounts)
+  const [lineContact, setLineContact] = useState<LineContact | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [slipImage, setSlipImage] = useState('')
@@ -92,6 +94,7 @@ export function BookingForm({ staffName }: Props) {
     setSubmitting(true)
     try {
       const result = await createLineBooking({
+        lineContactId: lineContact?.id ?? null,
         tourCode: tour.code,
         periodId: period.id,
         adultTwin: counts.adultTwin,
@@ -189,6 +192,16 @@ export function BookingForm({ staffName }: Props) {
       </section>
 
       {/* Customer info */}
+      <section>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+          แชท LINE ของลูกค้า <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
+        </label>
+        <CustomerChatPicker selected={lineContact} onSelect={setLineContact} />
+        <p className="mt-1 text-xs text-gray-400">
+          เลือกเมื่อลูกค้าคุยกับ OA เพื่อส่งใบเสร็จทาง LINE ได้ ถ้าคุยผ่าน LINE ส่วนตัวไม่ต้องเลือก
+        </p>
+      </section>
+
       <section>
         <label className="mb-1.5 block text-sm font-medium text-gray-700">ชื่อลูกค้า</label>
         <input

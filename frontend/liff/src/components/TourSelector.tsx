@@ -22,7 +22,7 @@ export function TourSelector({ onSelect, selected }: Props) {
     setLoading(true)
     try {
       const items = await searchTours(q)
-      setResults(items.filter((t) => t.isSelling))
+      setResults(items)
     } catch {
       setResults([])
     } finally {
@@ -79,7 +79,7 @@ export function TourSelector({ onSelect, selected }: Props) {
       {open && results.length > 0 && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
           {results.map((tour) => (
-            <li key={tour.id}>
+            <li key={tour.code}>
               <button
                 type="button"
                 className="w-full px-3 py-2.5 text-left hover:bg-blue-50"

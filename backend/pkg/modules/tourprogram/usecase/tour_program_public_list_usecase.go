@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -28,7 +29,9 @@ func (u *tourProgramUseCase) PublicListValidate(request *models.TourProgramPubli
 	if request.PageSize == 0 {
 		request.PageSize = defaultPageSize
 	}
+	request.Keyword = strings.TrimSpace(request.Keyword)
 	return validation.ValidateStruct(request,
+		validation.Field(&request.Keyword, validation.RuneLength(0, 100)),
 		validation.Field(&request.Country, validation.Slug, validation.RuneLength(0, 60)),
 		validation.Field(&request.City, validation.Slug, validation.RuneLength(0, 60)),
 		validation.Field(&request.DateFrom, validation.Date(time.DateOnly)),
@@ -56,6 +59,7 @@ func (u *tourProgramUseCase) PublicList(ctx context.Context, request *models.Tou
 
 	today := utils.TodayInThailand(time.Now())
 	tours, total, err := u.repositoryRegistry.TourProgramRepository.ListPublic(ctx, repomodels.TourProgramPublicListCriteria{
+		Keyword:     request.Keyword,
 		CountrySlug: request.Country,
 		CitySlug:    request.City,
 		DepartAfter: today,
