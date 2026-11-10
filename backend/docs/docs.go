@@ -1456,6 +1456,97 @@ const docTemplate = `{
                 }
             }
         },
+        "/line-contacts/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-contacts"
+                ],
+                "summary": "List LINE OA contacts, most recent chat first",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineContactListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineContactListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line/webhook": {
+            "post": {
+                "description": "Called by the LINE Platform. Verifies X-Line-Signature, then records follow, unfollow\nand message events from users as LINE contacts (profile only, never message text).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-contacts"
+                ],
+                "summary": "Messaging API webhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Base64 HMAC-SHA256 of the body",
+                        "name": "X-Line-Signature",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineWebhookResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_SIGNATURE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/media/upload": {
             "post": {
                 "security": [
@@ -4619,6 +4710,73 @@ const docTemplate = `{
                     "type": "boolean"
                 }
             }
+        },
+        "backend_pkg_modules_linecontact_models.LineContactItem": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastMessageAt": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "pictureUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linecontact_models.LineContactListRequest": {
+            "type": "object",
+            "properties": {
+                "following": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                },
+                "keyword": {
+                    "description": "display name",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 100",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_linecontact_models.LineContactListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineContactItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_linecontact_models.LineWebhookResponse": {
+            "type": "object"
         },
         "backend_pkg_modules_media_models.MediaUploadResponse": {
             "type": "object",

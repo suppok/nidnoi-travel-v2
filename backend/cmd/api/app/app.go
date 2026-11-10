@@ -36,6 +36,7 @@ import (
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
 	linebookingusecase "backend/pkg/modules/linebooking/usecase"
+	linecontactusecase "backend/pkg/modules/linecontact/usecase"
 	cityusecase "backend/pkg/modules/city/usecase"
 	countryusecase "backend/pkg/modules/country/usecase"
 	mediausecase "backend/pkg/modules/media/usecase"
@@ -96,7 +97,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 	repositoryRegistry := initializer.NewRepositoryRegistry(db)
 	deployHook := deployhook.New(cfg.DeployHookURL)
-	lineClient := line.New(cfg.LINE.LIFFChannelID)
+	lineClient := line.New(cfg.LINE)
 	revalidator := revalidation.New(deployHook, revalidation.NewRepositoryBuildLog(repositoryRegistry.SiteBuildRepository, log), log, cfg.Revalidation)
 	shareRegistry := &registry.ShareRegistry{
 		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
@@ -110,6 +111,9 @@ func New(ctx context.Context) (*App, error) {
 	}
 	if !lineClient.Configured() {
 		log.Warn("LINE is not configured: LIFF endpoints return LINE_NOT_CONFIGURED until LINE_LIFF_CHANNEL_ID is set")
+	}
+	if !lineClient.WebhookConfigured() {
+		log.Warn("LINE_CHANNEL_SECRET is not set: the LINE webhook returns LINE_NOT_CONFIGURED")
 	}
 
 	// Use cases
@@ -125,6 +129,7 @@ func New(ctx context.Context) (*App, error) {
 	siteUseCase := siteusecase.NewSiteUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	bookingUseCase := bookingusecase.NewBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineBookingUseCase := linebookingusecase.NewLineBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	lineContactUseCase := linecontactusecase.NewLineContactUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 
 	// HTTP
 	response := api.NewApiResponseHandler(log)
@@ -168,6 +173,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
 	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
+	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
 }

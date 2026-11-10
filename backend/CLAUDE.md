@@ -751,6 +751,19 @@ Bookings submitted by sales staff through a LIFF app inside LINE OA chat (`pkg/m
 - **Media purpose:** `booking-slip` — images only, min 200x200, key prefix `bookings/slips/`.
 - **CORS:** LIFF origins (`dev-liff.nidnoitravelv2.com`, `liff.nidnoitravelv2.com`) must be added to `CORS_ALLOWED_ORIGINS`.
 
+### LINE contacts (Messaging API webhook)
+
+Customers who chat with the OA, collected so sales can link a booking to the customer's chat and the backend can later push messages (receipts) to them (`pkg/modules/linecontact`, table `line_contact`).
+
+- **Webhook:** `POST /line/webhook` (no JWT). The use case checks `X-Line-Signature` (base64 HMAC-SHA256 of the raw body, keyed with `LINE_CHANNEL_SECRET`) → `INVALID_LINE_SIGNATURE` (401); without the secret → `LINE_NOT_CONFIGURED` (503). An empty event list (the console's "Verify" button) answers 200.
+- Only events from a **user** source are kept: `follow` (following = true, refresh profile), `unfollow` (following = false), `message` (`last_message_at`, profile refreshed when older than 24 h). Group/room events and other types are ignored. **Message text is never stored or logged** (PDPA) — only the profile.
+- Rows are created race-free with `INSERT … ON CONFLICT (line_user_id) DO NOTHING` (`CreateIfAbsent`), then updated; redelivered events are harmless.
+- **Profile:** `GET /v2/bot/profile/{userId}` with `LINE_CHANNEL_ACCESS_TOKEN`. 404 = not a friend (never added or blocked) → `following = false`. Without the token, contacts are kept without a profile. Other lookup failures are logged and never fail the webhook.
+- `following` is what decides whether a push can reach the customer.
+- **Staff:** `POST /line-contacts/list` (`{keyword, following?, page, pageSize}`, most recent chat first; `line-contact:list` — admin, sales, finance) for the contact picker.
+- **Same provider:** the LINE Login (LIFF) channel and the Messaging API channel must be under the same LINE provider, or the user IDs from LIFF and from the webhook differ.
+- **LINE console:** Messaging API → Webhook URL `https://dev-api.nidnoitravelv2.com/api/v1/line/webhook` (prd: `api.*`), "Use webhook" on. In OA Manager keep **Chat** on so sales still chat by hand.
+
 ---
 
 ## Open questions

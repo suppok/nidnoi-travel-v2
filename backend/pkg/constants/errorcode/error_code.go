@@ -62,8 +62,9 @@ var (
 
 // LINE
 var (
-	LINENotConfigured = ErrCode("LINE_NOT_CONFIGURED", "LINE integration is not configured")
-	InvalidLINEToken  = ErrCode("INVALID_LINE_TOKEN", "Invalid or expired LINE access token")
+	LINENotConfigured    = ErrCode("LINE_NOT_CONFIGURED", "LINE integration is not configured")
+	InvalidLINEToken     = ErrCode("INVALID_LINE_TOKEN", "Invalid or expired LINE access token")
+	InvalidLINESignature = ErrCode("INVALID_LINE_SIGNATURE", "Invalid LINE webhook signature")
 )
 
 // Customer site rebuild

@@ -46,6 +46,7 @@ export const Permissions = {
   LineBookingGet: 'line-booking:get',
   LineBookingUpdate: 'line-booking:update',
   LineBookingStatus: 'line-booking:status',
+  LineContactList: 'line-contact:list',
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

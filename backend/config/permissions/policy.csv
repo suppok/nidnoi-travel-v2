@@ -30,3 +30,5 @@ p, sales, line-booking, get
 p, sales, line-booking, update
 p, finance, line-booking, list
 p, finance, line-booking, get
+p, sales, line-contact, list
+p, finance, line-contact, list

@@ -1264,6 +1264,51 @@ definitions:
         description: false = soft delete
         type: boolean
     type: object
+  backend_pkg_modules_linecontact_models.LineContactItem:
+    properties:
+      displayName:
+        type: string
+      following:
+        type: boolean
+      id:
+        type: string
+      lastMessageAt:
+        type: string
+      lineUserId:
+        type: string
+      pictureUrl:
+        type: string
+    type: object
+  backend_pkg_modules_linecontact_models.LineContactListRequest:
+    properties:
+      following:
+        description: omitted = all
+        type: boolean
+      keyword:
+        description: display name
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+    type: object
+  backend_pkg_modules_linecontact_models.LineContactListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_linecontact_models.LineWebhookResponse:
+    type: object
   backend_pkg_modules_media_models.MediaUploadResponse:
     properties:
       fileName:
@@ -3508,6 +3553,67 @@ paths:
       summary: Delete or restore a LINE booking
       tags:
       - line-bookings
+  /line-contacts/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List LINE OA contacts, most recent chat first
+      tags:
+      - line-contacts
+  /line/webhook:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Called by the LINE Platform. Verifies X-Line-Signature, then records follow, unfollow
+        and message events from users as LINE contacts (profile only, never message text).
+      parameters:
+      - description: Base64 HMAC-SHA256 of the body
+        in: header
+        name: X-Line-Signature
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineWebhookResponse'
+        "401":
+          description: INVALID_LINE_SIGNATURE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: LINE_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Messaging API webhook
+      tags:
+      - line-contacts
   /media/upload:
     post:
       consumes:
