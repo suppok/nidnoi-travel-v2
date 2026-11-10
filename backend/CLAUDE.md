@@ -625,9 +625,9 @@ CORS origins per environment:
 
 | Env | Origins |
 |---|---|
-| local | `http://localhost:4321`, `http://localhost:5173` |
-| dev | `https://dev.nidnoitravelv2.com`, `https://dev-admin.nidnoitravelv2.com` |
-| prd | `https://www.nidnoitravelv2.com`, `https://admin.nidnoitravelv2.com` |
+| local | `http://localhost:4321`, `http://localhost:5173`, `http://localhost:5174` |
+| dev | `https://dev.nidnoitravelv2.com`, `https://dev-admin.nidnoitravelv2.com`, `https://dev-liff.nidnoitravelv2.com` |
+| prd | `https://www.nidnoitravelv2.com`, `https://admin.nidnoitravelv2.com`, `https://liff.nidnoitravelv2.com` |
 
 > **CRITICAL — secrets protection:**
 > **NEVER read, view, open, cat, grep, edit, or modify any `.env` / `*.env` file** (`config/local.env` or any variant). If a value is needed, **stop and ask the user**. Only `*.example` files are safe.
@@ -661,6 +661,7 @@ cd backend
 task run-api                       # go run ./cmd/api with config/local.env
 task migrate-up                    # also: migrate-down, migrate-status, migrate-create -- <desc>
 task create-super-admin -- <email> <name> # first user (super admin); prints a temporary password once
+task seed-mock-tours               # local/dev only: ~22 multi-country tours from the legacy site (cmd/migrate/seeddata/mock_tours.json); `-- remove` deletes them and bookings on them
 task swag                          # swag init -g cmd/api/main.go --parseDependency --parseInternal
 task lint                          # golangci-lint
 go build ./...
@@ -726,6 +727,29 @@ When a field is added, removed or renamed, propagate it through every layer:
 - OpenTelemetry, HMAC partner auth, error notifier (Discord/email)
 - Server-side image variants (thumbnails, fixed-size OG images)
 - Any new Go dependency
+
+---
+
+## LINE OA bookings
+
+Bookings submitted by sales staff through a LIFF app inside LINE OA chat (`pkg/modules/linebooking`, table `line_booking`). Unlike customer bookings (which are self-service leads), LINE bookings come with a payment slip and are pre-confirmed by a sales person.
+
+- **LINE client** (`pkg/modules/shared/client/line/line_client.go`): verifies LIFF access tokens via `GET https://api.line.me/oauth2/v2.1/verify?access_token=...` and fetches the user profile. Registered in `ShareRegistry.ClientRegistry.LINE`. Logs a warning and disables itself when `LINE_LIFF_CHANNEL_ID` is empty.
+- **Config:** `LINEConfig` in `pkg/core/config/config.go` loads `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_LIFF_CHANNEL_ID`, `LINE_LIFF_ID`. Only `LINE_LIFF_CHANNEL_ID` is required for token verification.
+- **LIFF endpoints** (no JWT — LIFF token validated in the use case):
+  - `POST /line-bookings` — create a LINE booking. Validates LIFF token, loads tour+period, quotes prices, generates `booking_no`, inserts in tx.
+  - `POST /media/upload/liff` — upload slip image. Validates LIFF token from `liffAccessToken` form field, delegates to media upload use case.
+- **Staff endpoints** (JWT + Casbin):
+  - `POST /line-bookings/list` — `{keyword, state, status, page, pageSize}`, newest first.
+  - `GET /line-bookings/:id` — get one.
+  - `PUT /line-bookings` — `{id, state, staffNote}`.
+  - `PUT /line-bookings/status` — soft delete/restore.
+- **States** (`pkg/constants/linebookingstate`): 10 new, 20 confirmed, 30 cancelled.
+- **Permissions** (`line-booking:list|get|update|status`): admin has all; sales has list/get/update; finance has list/get.
+- **Booking number format:** same as customer bookings — 2-digit Thai year + 6 random characters, unique index with retry.
+- **Error codes:** `LINE_NOT_CONFIGURED`, `INVALID_LINE_TOKEN`.
+- **Media purpose:** `booking-slip` — images only, min 200x200, key prefix `bookings/slips/`.
+- **CORS:** LIFF origins (`dev-liff.nidnoitravelv2.com`, `liff.nidnoitravelv2.com`) must be added to `CORS_ALLOWED_ORIGINS`.
 
 ---
 

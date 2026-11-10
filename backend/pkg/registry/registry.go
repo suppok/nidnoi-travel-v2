@@ -9,6 +9,7 @@ import (
 	"backend/pkg/core/config"
 	"backend/pkg/core/database/query"
 	"backend/pkg/modules/shared/client/deployhook"
+	"backend/pkg/modules/shared/client/line"
 	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
@@ -44,7 +45,8 @@ type RepositoryRegistry struct {
 
 	SiteBuildRepository repository.SiteBuildRepository
 
-	BookingRepository repository.BookingRepository
+	BookingRepository     repository.BookingRepository
+	LineBookingRepository repository.LineBookingRepository
 }
 
 // ShareRegistry holds cross-module services and outbound clients.
@@ -61,4 +63,5 @@ type ServiceRegistry struct {
 type ClientRegistry struct {
 	ObjectStorage objectstorage.ObjectStorage
 	DeployHook    deployhook.DeployHook
+	LINE          line.Client
 }

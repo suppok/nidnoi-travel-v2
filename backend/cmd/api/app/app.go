@@ -26,6 +26,7 @@ import (
 	"backend/pkg/core/database/query"
 	corelogger "backend/pkg/core/logger"
 	"backend/pkg/modules/shared/client/deployhook"
+	"backend/pkg/modules/shared/client/line"
 	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
@@ -34,6 +35,7 @@ import (
 	airlineusecase "backend/pkg/modules/airline/usecase"
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
+	linebookingusecase "backend/pkg/modules/linebooking/usecase"
 	cityusecase "backend/pkg/modules/city/usecase"
 	countryusecase "backend/pkg/modules/country/usecase"
 	mediausecase "backend/pkg/modules/media/usecase"
@@ -94,16 +96,20 @@ func New(ctx context.Context) (*App, error) {
 	}
 	repositoryRegistry := initializer.NewRepositoryRegistry(db)
 	deployHook := deployhook.New(cfg.DeployHookURL)
+	lineClient := line.New(cfg.LINE.LIFFChannelID)
 	revalidator := revalidation.New(deployHook, revalidation.NewRepositoryBuildLog(repositoryRegistry.SiteBuildRepository, log), log, cfg.Revalidation)
 	shareRegistry := &registry.ShareRegistry{
 		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
-		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook},
+		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook, LINE: lineClient},
 	}
 	if !cfg.R2.Configured() {
 		log.Warn("R2 is not configured: media uploads return STORAGE_UNAVAILABLE until every R2_* variable is set")
 	}
 	if !deployHook.Configured() {
 		log.Warn("CLOUDFLARE_DEPLOY_HOOK_URL is not set: customer-site rebuilds are logged and skipped")
+	}
+	if !lineClient.Configured() {
+		log.Warn("LINE is not configured: LIFF endpoints return LINE_NOT_CONFIGURED until LINE_LIFF_CHANNEL_ID is set")
 	}
 
 	// Use cases
@@ -118,6 +124,7 @@ func New(ctx context.Context) (*App, error) {
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	siteUseCase := siteusecase.NewSiteUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	bookingUseCase := bookingusecase.NewBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	lineBookingUseCase := linebookingusecase.NewLineBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 
 	// HTTP
 	response := api.NewApiResponseHandler(log)
@@ -160,6 +167,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
+	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
 }

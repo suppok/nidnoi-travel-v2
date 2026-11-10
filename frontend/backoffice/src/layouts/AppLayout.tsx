@@ -1,4 +1,4 @@
-import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShopOutlined, KeyOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -10,6 +10,8 @@ import { BookingStates } from '../constants/bookingStates.ts';
 import { roleInfo } from '../constants/roles.ts';
 import BookingAlertsProvider from '../features/booking/components/BookingAlertsProvider.tsx';
 import { useBookingAlerts } from '../features/booking/hooks/useBookingAlerts.ts';
+import LineBookingAlertsProvider from '../features/line-booking/components/LineBookingAlertsProvider.tsx';
+import { useLineBookingAlerts } from '../features/line-booking/hooks/useLineBookingAlerts.ts';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
 import { initials } from '../lib/format.ts';
 
@@ -24,6 +26,7 @@ const NAV: NavGroup[] = [
     label: 'ฝ่ายขาย',
     items: [
       { path: '/bookings', label: 'ใบจอง', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
+      { path: '/line-bookings', label: 'ใบจอง LINE', icon: <MessageOutlined />, permission: Permissions.LineBookingList },
       { path: '/tour-programs', label: 'โปรแกรมทัวร์', icon: <CompassOutlined />, permission: Permissions.TourProgramList },
       { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
       { path: '/taxonomy/cities', label: 'เมือง', icon: <EnvironmentOutlined />, permission: Permissions.CityList },
@@ -44,7 +47,9 @@ const NAV: NavGroup[] = [
 export default function AppLayout() {
   return (
     <BookingAlertsProvider>
-      <Shell />
+      <LineBookingAlertsProvider>
+        <Shell />
+      </LineBookingAlertsProvider>
     </BookingAlertsProvider>
   );
 }
@@ -66,6 +71,7 @@ function NewBookingsBell() {
 function Shell() {
   const { user, can, logout } = useAuth();
   const { newCount } = useBookingAlerts();
+  const { newCount: lineNewCount } = useLineBookingAlerts();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -82,6 +88,7 @@ function Shell() {
           <Link to={item.path} className="flex items-center justify-between gap-2">
             {item.label}
             {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
+            {item.path === '/line-bookings' && !!lineNewCount && <Badge count={lineNewCount} size="small" />}
           </Link>
         ),
       })),

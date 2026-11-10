@@ -23,7 +23,8 @@ type Config struct {
 	DatabaseURL        string   `mapstructure:"-"`
 	JWTSecret          string   `mapstructure:"-"`
 	CORSAllowedOrigins []string `mapstructure:"-"`
-	R2                 R2Config `mapstructure:"-"`
+	R2                 R2Config   `mapstructure:"-"`
+	LINE               LINEConfig `mapstructure:"-"`
 	// DeployHookURL is the customer Worker's Cloudflare Deploy Hook (the URL is the credential).
 	// Optional: without it, rebuilds are logged and skipped (local).
 	DeployHookURL string `mapstructure:"-"`
@@ -62,6 +63,19 @@ type R2Config struct {
 
 func (r R2Config) Configured() bool {
 	return r.AccountID != "" && r.AccessKeyID != "" && r.SecretAccessKey != "" && r.Bucket != "" && r.PublicURL != ""
+}
+
+// LINEConfig comes from LINE_* environment variables. LINE integration is disabled until the
+// required values are set.
+type LINEConfig struct {
+	ChannelSecret      string // Messaging API channel secret
+	ChannelAccessToken string // Messaging API channel access token (long-lived)
+	LIFFChannelID      string // LINE Login channel ID (the channel that owns the LIFF app)
+	LIFFID             string // LIFF app ID
+}
+
+func (l LINEConfig) Configured() bool {
+	return l.LIFFChannelID != ""
 }
 
 type MediaConfig struct {
@@ -170,6 +184,12 @@ func read(path string) (*Config, error) {
 		PublicURL:       strings.TrimRight(os.Getenv("R2_PUBLIC_URL"), "/"),
 	}
 	cfg.DeployHookURL = strings.TrimSpace(os.Getenv("CLOUDFLARE_DEPLOY_HOOK_URL"))
+	cfg.LINE = LINEConfig{
+		ChannelSecret:      strings.TrimSpace(os.Getenv("LINE_CHANNEL_SECRET")),
+		ChannelAccessToken: strings.TrimSpace(os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")),
+		LIFFChannelID:      strings.TrimSpace(os.Getenv("LINE_LIFF_CHANNEL_ID")),
+		LIFFID:             strings.TrimSpace(os.Getenv("LINE_LIFF_ID")),
+	}
 	return cfg, nil
 }
 

@@ -1,0 +1,31 @@
+name: liff
+
+on:
+  push:
+    branches: [develop, main]
+    paths: ["frontend/liff/**", ".github/workflows/liff.yml"]
+  pull_request:
+    paths: ["frontend/liff/**", ".github/workflows/liff.yml"]
+
+defaults:
+  run:
+    working-directory: frontend/liff
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: https://dev-api.nidnoitravelv2.com/api/v1
+      VITE_APP_ENV: dev
+      VITE_LIFF_ID: placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/liff/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build

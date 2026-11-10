@@ -28,6 +28,11 @@ tasks:
     cmds:
       - go run ./cmd/migrate create-super-admin {{.CLI_ARGS}}
 
+  seed-mock-tours:
+    desc: "Add ~22 multi-country mock tours from the legacy site (local/dev only; task seed-mock-tours -- remove deletes them)"
+    cmds:
+      - go run ./cmd/migrate seed-mock-tours {{.CLI_ARGS}}
+
   migrate-create:
     desc: "Create an up/down SQL pair (task migrate-create -- <description>)"
     cmds:

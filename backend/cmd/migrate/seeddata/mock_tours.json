@@ -1,0 +1,286 @@
+[
+  {
+    "legacyCode": "NIDN263859",
+    "name": "ทัวร์ยุโรป สวยของจริงไม่อิงฟิลเตอร์ เที่ยวคุ้มจนงง เยอรมนี สวิตเซอร์แลนด์ ฝรั่งเศส อิตาลี",
+    "countries": ["germany", "switzerland", "france", "italy"],
+    "cities": ["milan", "como"],
+    "days": 7, "nights": 5, "airline": "G9",
+    "highlight": "น้ำตกไรน์, ทะเลสาบโคโม่, มหาวิหารดูโอโม่, ย่านเมืองเก่าซุก, ช้อปปิ้งกลางเมืองมิลาน",
+    "periods": [
+      {"start": "2026-12-05", "end": "2026-12-11", "price": 49000, "before": 55991, "single": 68000},
+      {"start": "2027-01-30", "end": "2027-02-05", "price": 49991, "single": 68991},
+      {"start": "2027-02-20", "end": "2027-02-26", "price": 50881, "single": 69881}
+    ]
+  },
+  {
+    "legacyCode": "NIDN263145",
+    "name": "ทัวร์ยุโรป เช็คอินเมืองดัง ครบจบทั้งภูเขา ทะเลสาบ และแฟชั่น ออสเตรีย เช็ก เยอรมนี อิตาลี",
+    "countries": ["austria", "czech-republic", "germany", "italy"],
+    "cities": ["vienna", "cesky-krumlov", "milan"],
+    "days": 7, "nights": 5, "airline": "G9",
+    "highlight": "พระราชวังฮอฟบวร์ก, เชสกี้ ครุมลอฟ, ทะเลสาบคอนิกซี, มหาวิหารดูโอโม่",
+    "periods": [
+      {"start": "2026-12-28", "end": "2027-01-03", "price": 57771, "single": 73900},
+      {"start": "2027-01-25", "end": "2027-01-31", "price": 49991, "single": 69891},
+      {"start": "2027-02-20", "end": "2027-02-26", "price": 51551, "single": 71451}
+    ]
+  },
+  {
+    "legacyCode": "NIDN262524",
+    "name": "ทัวร์สแกนดิเนเวีย Scandinavian Lover Capital SWEDEN NORWAY DENMARK",
+    "countries": ["sweden", "norway", "denmark"],
+    "cities": ["copenhagen"],
+    "days": 9, "nights": 6, "airline": "EK",
+    "highlight": "ล่องเรือสำราญสู่ประเทศเดนมาร์ก, พระราชวังคริสเตียนบอร์ก, พระราชวังอมาเลียนบอร์ก, ปราสาทโอเรโบร",
+    "periods": [
+      {"start": "2026-12-02", "end": "2026-12-10", "price": 79888, "single": 98388}
+    ]
+  },
+  {
+    "legacyCode": "NIDN263144",
+    "name": "ทัวร์ยุโรป เช็ก เยอรมนี ออสเตรีย สวยจนต้องกด Like โดนใจใช่เลย Prague Konigssee Vienna",
+    "countries": ["czech-republic", "germany", "austria"],
+    "cities": ["prague", "munich", "vienna"],
+    "days": 7, "nights": 5, "airline": "G9",
+    "highlight": "จัตุรัสมาเรียนพลัทซ์, ปราสาทปราก, สะพานชาร์ลส์, ทะเลสาบคอนิกซี, ถนนคาร์ทเนอร์",
+    "periods": [
+      {"start": "2026-12-04", "end": "2026-12-10", "price": 50000, "before": 55881, "single": 69900},
+      {"start": "2026-12-28", "end": "2027-01-03", "price": 48000, "before": 55881, "single": 67900},
+      {"start": "2027-01-25", "end": "2027-01-31", "price": 49991, "single": 69891},
+      {"start": "2027-02-19", "end": "2027-02-25", "price": 50881, "single": 70781},
+      {"start": "2027-04-09", "end": "2027-04-15", "price": 51991, "single": 71891}
+    ]
+  },
+  {
+    "legacyCode": "NIDN262965",
+    "name": "ทัวร์ยุโรป Europe Prague Vienna Budapest จบครบเส้นทางฮิต",
+    "countries": ["czech-republic", "austria", "hungary"],
+    "cities": ["prague", "cesky-krumlov", "vienna", "budapest"],
+    "days": 6, "nights": 4, "airline": "G9",
+    "highlight": "หอนาฬิกาดาราศาสตร์, สะพานชาร์ลส์, เชสกี้ ครุมลอฟ, พระราชวังฮอฟบวร์ก, ช้อปปิ้ง McArthurGlen Outlet",
+    "periods": [
+      {"start": "2026-12-05", "end": "2026-12-10", "price": 39000, "before": 47888, "single": 51000},
+      {"start": "2027-02-20", "end": "2027-02-25", "price": 45666, "single": 57666},
+      {"start": "2027-04-03", "end": "2027-04-08", "price": 49999, "single": 63999}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265397",
+    "name": "ทัวร์ยุโรป Highlight ถูกใจ ยุโรปตะวันออก ออสเตรีย เช็ก",
+    "countries": ["austria", "czech-republic"],
+    "cities": ["hallstatt", "vienna", "cesky-krumlov"],
+    "days": 6, "nights": 4, "airline": "G9",
+    "highlight": "ฮัลล์สตัทท์, เชสกี้ ครุมลอฟ, พระราชวังฮอฟบวร์ก, ช้อปปิ้งย่านคาร์ทเนอร์สตรีท",
+    "periods": [
+      {"start": "2026-12-10", "end": "2026-12-15", "price": 49999, "single": 64999}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265700",
+    "name": "ทัวร์สแกนดิเนเวีย EXPERIENCE SCANDINAVIA SWEDEN NORWAY DENMARK STOCKHOLM OREBRO KARLSTAD OSLO COPENHAGEN",
+    "countries": ["sweden", "norway", "denmark"],
+    "cities": ["stockholm", "karlstad", "oslo", "copenhagen"],
+    "days": 9, "nights": 6, "airline": "EK",
+    "highlight": "พิพิธภัณฑ์วาซา, ศาลาว่าการออสโล, สวนมนุษยชาติ, พระราชวังอมาเลียนบอร์ก, ย่านนูฮาวน์",
+    "periods": [
+      {"start": "2027-02-19", "end": "2027-02-27", "price": 82888, "single": 99388},
+      {"start": "2027-03-18", "end": "2027-03-26", "price": 82888, "single": 99388},
+      {"start": "2027-04-05", "end": "2027-04-13", "price": 85888, "single": 102388},
+      {"start": "2027-04-28", "end": "2027-05-06", "price": 84888, "single": 101388}
+    ]
+  },
+  {
+    "legacyCode": "NIDN260804",
+    "name": "ทัวร์สแกนดิเนเวีย SCANDINAVIA DENMARK NORWAY SWEDEN",
+    "countries": ["denmark", "norway", "sweden"],
+    "cities": ["bergen", "oslo"],
+    "days": 8, "nights": 5, "airline": "QR",
+    "highlight": "ล่องเรือสำราญ Fjord Line, รถรางขึ้นยอดเขาฟลอเยน, สวนประติมากรรมวิกแลนด์",
+    "periods": [
+      {"start": "2027-03-21", "end": "2027-03-28", "price": 82900, "single": 101800},
+      {"start": "2027-04-07", "end": "2027-04-14", "price": 89900, "single": 108800},
+      {"start": "2027-04-28", "end": "2027-05-05", "price": 87900, "single": 106800},
+      {"start": "2027-05-17", "end": "2027-05-24", "price": 89900, "single": 108800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265977",
+    "name": "ทัวร์ยุโรป The Grand Scandinavia Finland Sweden Norway Denmark",
+    "countries": ["finland", "sweden", "norway", "denmark"],
+    "cities": ["helsinki", "stockholm", "copenhagen"],
+    "days": 10, "nights": 7, "airline": "EK",
+    "highlight": "จัตุรัสวุฒิสภาเฮลซิงกิ, พิพิธภัณฑ์วาซา, ท่าเรือโคเปนเฮเกน, ช้อปปิ้งเอสปลานาดี",
+    "periods": [
+      {"start": "2027-02-18", "end": "2027-02-27", "price": 89888, "single": 109388},
+      {"start": "2027-03-25", "end": "2027-04-03", "price": 89888, "single": 109388},
+      {"start": "2027-04-08", "end": "2027-04-17", "price": 95888, "single": 115388}
+    ]
+  },
+  {
+    "legacyCode": "NIDN262000",
+    "name": "ทัวร์ยุโรป BALTIC บอลติก ฟินแลนด์ เอสโตเนีย ลัตเวีย ลิทัวเนีย",
+    "countries": ["estonia", "latvia", "lithuania", "finland"],
+    "cities": ["helsinki"],
+    "days": 9, "nights": 6, "airline": "TK",
+    "highlight": "ปราสาททราไก, อุทยานแห่งชาติกัวจา, นั่งเรือเฟอร์รี่ชมวิวทะเลบอลติก, ย่านถนนเอสปลานาดิ",
+    "periods": [
+      {"start": "2027-10-31", "end": "2027-11-08", "price": 98900, "single": 114800},
+      {"start": "2028-02-13", "end": "2028-02-21", "price": 98900, "single": 114800},
+      {"start": "2028-04-03", "end": "2028-04-11", "price": 105900, "single": 124800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265415",
+    "name": "ทัวร์สแกนดิเนเวีย Scandinavia Denmark Norway Sweden Finland",
+    "countries": ["denmark", "norway", "sweden", "finland"],
+    "cities": ["copenhagen", "bergen"],
+    "days": 9, "nights": 6, "airline": "QR",
+    "highlight": "รูปปั้นเงือกน้อย, ล่องเรือสำราญ Fjord Line, รถรางขึ้นยอดเขาฟลอเยน",
+    "periods": [
+      {"start": "2026-12-05", "end": "2026-12-13", "price": 95900, "single": 121800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN266118",
+    "name": "ทัวร์สแกนดิเนเวีย Scandinavia Denmark Norway Sweden Finland สัมผัสฟยอร์ดเมืองมรดกโลก",
+    "countries": ["denmark", "norway", "sweden", "finland"],
+    "cities": [],
+    "days": 10, "nights": 7, "airline": "QR",
+    "highlight": "ปราสาทเอเกสโคฟ, ล่องเรือชมฟยอร์ด, นั่งรถไฟสายโรแมนติก",
+    "periods": [
+      {"start": "2027-01-30", "end": "2027-02-08", "price": 98900, "single": 124800},
+      {"start": "2027-02-17", "end": "2027-02-26", "price": 98900, "single": 124800},
+      {"start": "2027-03-11", "end": "2027-03-20", "price": 98900, "single": 124800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN192868",
+    "name": "ทัวร์นอร์เวย์ สวีเดน Magic of the Fjords",
+    "countries": ["norway", "sweden"],
+    "cities": ["stockholm", "karlstad", "flam"],
+    "days": 8, "nights": 6, "airline": "A1",
+    "highlight": "เมืองสต็อกโฮล์ม, เมืองคาร์ลสตัท, จุดชมวิวลานสกี, ล่องเรือซอนน์ฟยอร์ด, รถไฟสายฟลัมสบานา",
+    "periods": [
+      {"start": "2027-02-10", "end": "2027-02-17", "price": 87900, "single": 106800},
+      {"start": "2027-02-17", "end": "2027-02-24", "price": 85900, "single": 104800},
+      {"start": "2027-03-10", "end": "2027-03-17", "price": 85900, "single": 104800},
+      {"start": "2027-03-31", "end": "2027-04-07", "price": 85900, "single": 104800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN264613",
+    "name": "ทัวร์จอร์เจีย อุซเบกิสถาน GEORGIA + UZBEKISTAN",
+    "countries": ["georgia", "uzbekistan"],
+    "cities": [],
+    "days": 8, "nights": 6, "airline": "C6",
+    "highlight": "ป้อมนาริคาล่า, อนุสาวรีย์ประวัติศาสตร์จอร์เจีย, โบสถ์เกอร์เกตี้, อาหารครบ 17 มื้อ",
+    "periods": [
+      {"start": "2026-11-17", "end": "2026-11-24", "price": 55988, "single": 64988},
+      {"start": "2026-12-01", "end": "2026-12-08", "price": 57988, "single": 66988},
+      {"start": "2026-12-22", "end": "2026-12-29", "price": 57988, "single": 66988}
+    ]
+  },
+  {
+    "legacyCode": "NIDN252279",
+    "name": "ทัวร์ GRAND CAUCASUS คอเคซัส อาเซอร์ไบจาน จอร์เจีย อาร์เมเนีย",
+    "countries": ["azerbaijan", "georgia", "armenia"],
+    "cities": [],
+    "days": 13, "nights": 10, "airline": "QR",
+    "highlight": "พระราชวังเชกี, ภาพสลักหินโบราณ, มหาวิหารแห่งความรัก, เมืองเก่าทบิลิซี, ล่องเรือทะเลสาบเซวาน",
+    "periods": [
+      {"start": "2026-12-03", "end": "2026-12-15", "price": 129900, "single": 169800},
+      {"start": "2026-12-23", "end": "2027-01-04", "price": 139900, "single": 185800},
+      {"start": "2027-01-28", "end": "2027-02-09", "price": 129900, "single": 169800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265471",
+    "name": "ทัวร์ยุโรป เอเดรียติก 4 ประเทศ สโลวีเนีย โครเอเชีย บอสเนีย มอนเตเนโกร",
+    "countries": ["slovenia", "croatia", "bosnia-and-herzegovina", "montenegro"],
+    "cities": ["bled", "split"],
+    "days": 11, "nights": 8, "airline": "TK",
+    "highlight": "ล่องเรือทะเลสาบเบลด, ปราสาทลูบลิยานา, หมู่บ้านสเวติสเตฟาน, พระราชวังดิโอคลีเธียน",
+    "periods": [
+      {"start": "2027-03-12", "end": "2027-03-22", "price": 129996, "single": 159996},
+      {"start": "2027-04-28", "end": "2027-05-08", "price": 134996, "single": 164996},
+      {"start": "2027-06-11", "end": "2027-06-21", "price": 134996, "single": 164996}
+    ]
+  },
+  {
+    "legacyCode": "NIDN261573",
+    "name": "ทัวร์ยุโรป CROATIA MONTENEGRO BOSNIA SLOVENIA",
+    "countries": ["croatia", "montenegro", "bosnia-and-herzegovina", "slovenia"],
+    "cities": ["dubrovnik"],
+    "days": 9, "nights": 6, "airline": "TK",
+    "highlight": "ถ้ำโพสตอยนา, ชมเมืองดูบรอฟนิก, ชมบ้านแบบเติร์ก, เมืองลูบลิยานา",
+    "periods": [
+      {"start": "2027-12-05", "end": "2027-12-13", "price": 95900, "single": 111800},
+      {"start": "2027-12-26", "end": "2028-01-03", "price": 99900, "single": 115800},
+      {"start": "2028-02-13", "end": "2028-02-21", "price": 89900, "single": 105800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN263847",
+    "name": "ทัวร์อียิปต์ จอร์แดน มโหฬารพีระมิด กรี๊ดกร๊าดเพตรา หน้าลอยบนเดดซี",
+    "countries": ["egypt", "jordan"],
+    "cities": ["cairo", "giza"],
+    "days": 8, "nights": 5, "airline": "RJ",
+    "highlight": "ป้อมปราการซิทาเดล, มหาพีระมิดแห่งกีซ่า, ทะเลสาบเดดซี, เมืองเพตรา",
+    "periods": [
+      {"start": "2026-11-19", "end": "2026-11-26", "price": 69900, "single": 80800},
+      {"start": "2026-12-03", "end": "2026-12-10", "price": 69900, "single": 80800},
+      {"start": "2026-12-27", "end": "2027-01-03", "price": 79900, "single": 94800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN265538",
+    "name": "ทัวร์อียิปต์ จอร์แดน ไคโร อัมมาน เพตรา วาดิรัม เดดซี",
+    "countries": ["egypt", "jordan"],
+    "cities": ["cairo", "giza"],
+    "days": 7, "nights": 5, "airline": "EY",
+    "highlight": "มหาพีระมิดกีซ่า, ล่องเรือแม่น้ำไนล์, ทะเลทรายวาดิรัม, ป้อมปราการแห่งกรุงอัมมาน",
+    "periods": [
+      {"start": "2027-01-25", "end": "2027-01-31", "price": 89991, "single": 103891},
+      {"start": "2027-02-22", "end": "2027-02-28", "price": 89991, "single": 103891},
+      {"start": "2027-04-05", "end": "2027-04-11", "price": 95985, "single": 109885}
+    ]
+  },
+  {
+    "legacyCode": "NIDN264832",
+    "name": "ทัวร์ยุโรป PORTUGAL & SPAIN SOUTH OF SPAIN",
+    "countries": ["portugal", "spain"],
+    "cities": ["sintra", "barcelona"],
+    "days": 8, "nights": 5, "airline": "QR",
+    "highlight": "แหลมโรก้า, กระเช้าสู่ยอดเขามอนต์เซอร์รัต, มหาวิหารซากราด้า ฟามิเลีย, ช้อปปิ้งถนนลารัมบลา",
+    "periods": [
+      {"start": "2026-12-03", "end": "2026-12-10", "price": 83900, "single": 102800},
+      {"start": "2027-01-21", "end": "2027-01-28", "price": 79900, "single": 98800},
+      {"start": "2027-02-20", "end": "2027-02-27", "price": 79900, "single": 98800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN262559",
+    "name": "ทัวร์สเปน สุดขอบฟ้าไอบีเรีย มนตราสองแผ่นดิน โปรตุเกส สเปน",
+    "countries": ["portugal", "spain"],
+    "cities": ["lisbon", "seville"],
+    "days": 10, "nights": 7, "airline": "EK",
+    "highlight": "โบสถ์แม่พระฟาติมา, ระบำฟลามิงโก, หอคอยเบเลม",
+    "periods": [
+      {"start": "2026-12-25", "end": "2027-01-03", "price": 105900, "single": 120800},
+      {"start": "2027-02-16", "end": "2027-02-25", "price": 99900, "single": 112800},
+      {"start": "2027-03-04", "end": "2027-03-13", "price": 95900, "single": 108800}
+    ]
+  },
+  {
+    "legacyCode": "NIDN253471",
+    "name": "ทัวร์มาเลเซีย สิงคโปร์ DUO PLUS+ #วันหยุดสุดจัด",
+    "countries": ["malaysia", "singapore"],
+    "cities": ["kuala-lumpur"],
+    "days": 4, "nights": 3, "airline": "",
+    "highlight": "ตึกแฝดปิโตรนาส, โชว์แสงสีเสียง, วัดพระเขี้ยวแก้ว, ช้อปปิ้งถนนออร์ชาร์ด",
+    "periods": [
+      {"start": "2026-12-30", "end": "2027-01-02", "price": 19999, "single": 24899},
+      {"start": "2026-12-31", "end": "2027-01-03", "price": 19999, "single": 24899}
+    ]
+  }
+]

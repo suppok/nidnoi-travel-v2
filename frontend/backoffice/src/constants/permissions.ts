@@ -42,6 +42,10 @@ export const Permissions = {
   BookingGet: 'booking:get',
   BookingUpdate: 'booking:update',
   BookingStatus: 'booking:status',
+  LineBookingList: 'line-booking:list',
+  LineBookingGet: 'line-booking:get',
+  LineBookingUpdate: 'line-booking:update',
+  LineBookingStatus: 'line-booking:status',
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

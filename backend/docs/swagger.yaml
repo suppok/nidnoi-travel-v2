@@ -983,6 +983,287 @@ definitions:
         description: false = soft delete
         type: boolean
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingCreateRequest:
+    properties:
+      adultSingle:
+        type: integer
+      adultTwin:
+        type: integer
+      childNoBed:
+        type: integer
+      childWithBed:
+        type: integer
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      liffAccessToken:
+        type: string
+      note:
+        type: string
+      periodId:
+        type: string
+      slipImage:
+        description: R2 URL from /media/upload/liff
+        type: string
+      tourCode:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingCreateResponse:
+    properties:
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      totalPrice:
+        type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingGetResponse:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingItem:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingListRequest:
+    properties:
+      keyword:
+        description: booking no, customer name, phone, tour code or LINE display name
+        type: string
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      state:
+        description: 0 = all
+        type: integer
+      status:
+        description: omitted = all
+        type: boolean
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingUpdateRequest:
+    properties:
+      id:
+        type: string
+      staffNote:
+        type: string
+      state:
+        description: 10 new, 20 confirmed, 30 cancelled
+        type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingUpdateResponse:
+    properties:
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      createDate:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      id:
+        type: string
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingUpdateStatusRequest:
+    properties:
+      id:
+        type: string
+      status:
+        description: false = soft delete
+        type: boolean
+    type: object
   backend_pkg_modules_media_models.MediaUploadResponse:
     properties:
       fileName:
@@ -3064,6 +3345,169 @@ paths:
       summary: Liveness check
       tags:
       - health
+  /line-bookings:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted
+        from the period. The LIFF access token is verified against LINE's API.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCreateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND (tour)
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: PERIOD_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: LINE_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a LINE booking from LIFF
+      tags:
+      - line-bookings
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: State and note
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a LINE booking's state and staff note
+      tags:
+      - line-bookings
+  /line-bookings/{id}:
+    get:
+      parameters:
+      - description: LINE Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List LINE bookings, newest first
+      tags:
+      - line-bookings
+  /line-bookings/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: null'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete or restore a LINE booking
+      tags:
+      - line-bookings
   /media/upload:
     post:
       consumes:
@@ -3109,6 +3553,59 @@ paths:
       summary: Upload an image or document to R2
       tags:
       - media
+  /media/upload/liff:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        multipart/form-data with "file", "purpose" (booking-slip) and "liffAccessToken".
+        The LIFF token is validated; no JWT required.
+      parameters:
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Purpose (booking-slip)
+        in: formData
+        name: purpose
+        required: true
+        type: string
+      - description: LIFF access token
+        in: formData
+        name: liffAccessToken
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_media_models.MediaUploadResponse'
+        "400":
+          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "413":
+          description: MEDIA_TOO_LARGE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: STORAGE_UNAVAILABLE, LINE_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Upload a payment slip image from LIFF
+      tags:
+      - line-bookings
   /site-builds/list:
     post:
       consumes:

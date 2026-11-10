@@ -2,6 +2,7 @@
 //
 //	go run ./cmd/migrate up | down | status | create <description>
 //	go run ./cmd/migrate create-super-admin <email> <name>
+//	go run ./cmd/migrate seed-mock-tours [remove]   # local/dev only
 package main
 
 import (
@@ -62,13 +63,15 @@ func main() {
 			usage()
 		}
 		check(createSuperAdmin(ctx, db, cfg.Auth.BcryptCost, os.Args[2], strings.Join(os.Args[3:], " ")))
+	case "seed-mock-tours":
+		check(seedMockTours(ctx, db, cfg, len(os.Args) > 2 && os.Args[2] == "remove"))
 	default:
 		usage()
 	}
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: migrate up | down | status | create <description> | create-super-admin <email> <name>")
+	fmt.Fprintln(os.Stderr, "usage: migrate up | down | status | create <description> | create-super-admin <email> <name> | seed-mock-tours [remove]")
 	os.Exit(2)
 }
 
