@@ -25,3 +25,8 @@ p, finance, tour-program, get
 p, finance, tour-program-period, list
 p, finance, booking, list
 p, finance, booking, get
+p, sales, line-booking, list
+p, sales, line-booking, get
+p, sales, line-booking, update
+p, finance, line-booking, list
+p, finance, line-booking, get

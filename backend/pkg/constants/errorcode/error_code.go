@@ -60,6 +60,12 @@ var (
 	PeriodUnavailable = ErrCode("PERIOD_UNAVAILABLE", "This departure is no longer open for booking")
 )
 
+// LINE
+var (
+	LINENotConfigured = ErrCode("LINE_NOT_CONFIGURED", "LINE integration is not configured")
+	InvalidLINEToken  = ErrCode("INVALID_LINE_TOKEN", "Invalid or expired LINE access token")
+)
+
 // Customer site rebuild
 var (
 	SiteRebuildUnavailable = ErrCode("SITE_REBUILD_UNAVAILABLE", "The site rebuild hook is not configured")

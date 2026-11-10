@@ -10,6 +10,7 @@ import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
 import AirlineListPage from './routes/airlines/AirlineListPage.tsx';
 import BookingListPage from './routes/bookings/BookingListPage.tsx';
+import LineBookingListPage from './routes/line-bookings/LineBookingListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.BookingList} />,
             children: [{ path: '/bookings', element: <BookingListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.LineBookingList} />,
+            children: [{ path: '/line-bookings', element: <LineBookingListPage /> }],
           },
           {
             element: <RequirePermission code={Permissions.TourProgramList} />,

@@ -16,7 +16,8 @@ This is a **multi-project repository** with two top-level domains: `frontend/` a
 ├── backend/                  # Go API (Fiber + Bun + PostgreSQL)
 ├── frontend/
 │   ├── customer/             # Public site (Astro, fully static, React islands)
-│   └── backoffice/           # Staff admin (React + Vite + Ant Design)
+│   ├── backoffice/           # Staff admin (React + Vite + Ant Design)
+│   └── liff/                 # LINE LIFF booking app (React + Vite)
 ├── .editorconfig
 ├── .gitignore                # .env*, !*.example, dist/, bin/, node_modules/
 ├── CLAUDE.md
@@ -29,7 +30,8 @@ Each subproject has its own `CLAUDE.md` with details specific to that codebase. 
 
 - **`frontend/customer`** — Public site where customers browse tour programs. Built with **Astro** as a **fully static site** (no adapter, no server routes) and served from **Cloudflare Workers static assets**. Tour content is baked into HTML at build time; the backend triggers a rebuild when content changes. Fast-changing data (seats, per-period prices) is fetched live by a small React island. SEO, Core Web Vitals and visual polish are hard requirements.
 - **`frontend/backoffice`** — Internal tool for staff to create and edit tour programs, periods, seats and prices. Authenticated with JWT and protected by **Cloudflare Access**. Static SPA on Cloudflare Workers. Allowed to ship heavier dependencies (Ant Design).
-- **`backend`** — Single Go service exposing the REST API for both frontends. Owns the PostgreSQL database and all secrets. Layered architecture (Handler → UseCase → Repository, shared services/clients via registries). Triggers customer-site rebuilds through a Cloudflare Deploy Hook — frontends never call it. See `backend/CLAUDE.md`.
+- **`frontend/liff`** — LINE LIFF booking app for sales staff to submit bookings with payment slips from inside LINE OA chat. Built with **React + Vite + Tailwind**. Authenticated via **LIFF access token** (no JWT). Static SPA on Cloudflare Workers. See `frontend/liff/CLAUDE.md`.
+- **`backend`** — Single Go service exposing the REST API for all frontends. Owns the PostgreSQL database and all secrets. Layered architecture (Handler → UseCase → Repository, shared services/clients via registries). Triggers customer-site rebuilds through a Cloudflare Deploy Hook — frontends never call it. See `backend/CLAUDE.md`.
 
 ### Hosting and data
 
@@ -37,6 +39,7 @@ Each subproject has its own `CLAUDE.md` with details specific to that codebase. 
 |---|---|---|
 | Customer site | Cloudflare Workers (static assets only) | Prerendered HTML; rebuilt via deploy hook |
 | Backoffice | Cloudflare Workers (static assets, SPA fallback) | Behind Cloudflare Access |
+| LIFF app | Cloudflare Workers (static assets, SPA fallback) | Opens inside LINE; auth via LIFF token |
 | Backend | Railway, Singapore | Exactly one always-on instance per environment |
 | Database | Supabase Postgres, Singapore | Postgres only (no Supabase Auth/Storage/Realtime); session pooler |
 | Media | Cloudflare R2 | Backend-only credentials; public via `media.*` custom domain |
@@ -133,6 +136,15 @@ npm run lint        # ESLint
 npm run typecheck   # tsc --noEmit
 ```
 
+### Frontend — `frontend/liff` (Vite + React)
+```bash
+npm install
+npm run dev         # Vite dev server (localhost:5174)
+npm run build       # production build
+npm run lint        # oxlint
+npm run typecheck   # tsc -b
+```
+
 ### Backend
 ```bash
 task run-api        # start the API with config/local.env
@@ -224,9 +236,9 @@ Cross-cutting principle: **no public-facing URL pattern is introduced without fi
 
 | Env | Allowed origins |
 |---|---|
-| local | `http://localhost:4321`, `http://localhost:5173` |
-| dev | `https://dev.nidnoitravelv2.com`, `https://dev-admin.nidnoitravelv2.com` |
-| prd | `https://www.nidnoitravelv2.com`, `https://admin.nidnoitravelv2.com` |
+| local | `http://localhost:4321`, `http://localhost:5173`, `http://localhost:5174` |
+| dev | `https://dev.nidnoitravelv2.com`, `https://dev-admin.nidnoitravelv2.com`, `https://dev-liff.nidnoitravelv2.com` |
+| prd | `https://www.nidnoitravelv2.com`, `https://admin.nidnoitravelv2.com`, `https://liff.nidnoitravelv2.com` |
 
 Set through the backend's `CORS_ALLOWED_ORIGINS`. Workers preview URLs are not allowlisted — test against `dev`.
 
