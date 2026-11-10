@@ -86,10 +86,17 @@ export default function LineBookingListPage() {
       ),
     },
     {
-      title: 'LINE',
-      key: 'line',
+      title: 'เซลล์',
+      key: 'sales',
       width: 140,
-      render: (_, b) => <span className="text-sm text-ink-muted">{b.lineDisplayName}</span>,
+      render: (_, b) => (
+        <div className="flex flex-col">
+          <span className="text-sm">{b.salesUser?.name ?? '-'}</span>
+          <span className="text-xs text-ink-muted" title="ผู้ส่งผ่าน LINE">
+            ส่งโดย {b.lineDisplayName}
+          </span>
+        </div>
+      ),
     },
     {
       title: 'ทัวร์',

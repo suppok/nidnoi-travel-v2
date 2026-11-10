@@ -40,8 +40,16 @@ type LineBookingItem struct {
 	Status              bool      `json:"status"`
 	CreateDate          time.Time `json:"createDate"`
 	UpdateDate          time.Time `json:"updateDate"`
+	// SalesUser owns the booking; null on bookings made before it was recorded.
+	SalesUser *LineBookingUser `json:"salesUser"`
 	// LineContact is the customer's LINE OA chat picked by staff; null until linked.
 	LineContact *LineBookingContact `json:"lineContact"`
+}
+
+// LineBookingUser is a staff user referenced by a booking.
+type LineBookingUser struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // LineBookingContact is the customer's LINE OA chat linked to a booking.
@@ -83,6 +91,9 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 		Status:              b.Status,
 		CreateDate:          b.CreateDate,
 		UpdateDate:          b.UpdateDate,
+	}
+	if s := b.SalesUser; s != nil {
+		item.SalesUser = &LineBookingUser{ID: s.ID, Name: s.Name}
 	}
 	if c := b.LineContact; c != nil {
 		item.LineContact = &LineBookingContact{ID: c.ID, DisplayName: c.DisplayName, PictureURL: c.PictureURL, Following: c.Following}

@@ -50,6 +50,7 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	liff := []fiber.Handler{liffAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingCreate)}
 	r.Post("/line-bookings", append(liff, h.LineBookingCreate)...)
 	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
+	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
 
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Put("/line-bookings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdate)
@@ -124,6 +125,23 @@ func (h *LineBookingAPIHandler) LIFFMediaUpload(c *fiber.Ctx) error {
 			request.FileName = fh.Filename
 		}
 		return h.mediaUseCase.Upload(ctx, request)
+	})
+}
+
+// LIFFSalesUserList godoc
+// @Summary     Sales owner options for the LIFF booking form
+// @Description Active users with the sales role, by name; defaultId is the caller when they are sales.
+// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
+// @Tags        liff
+// @Produce     json
+// @Success     200 {object} models.LineBookingSalesUserListResponse
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Router      /liff/sales-users [get]
+func (h *LineBookingAPIHandler) LIFFSalesUserList(c *fiber.Ctx) error {
+	request := &models.LineBookingSalesUserListRequest{}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.SalesUserList(ctx, request)
 	})
 }
 

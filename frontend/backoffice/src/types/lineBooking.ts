@@ -33,6 +33,8 @@ export type LineBooking = {
   status: boolean;
   createDate: string;
   updateDate: string;
+  // The sales person who owns the booking; null on bookings made before it was recorded.
+  salesUser: { id: string; name: string } | null;
   // The customer's LINE OA chat; null until staff link it.
   lineContact: LineBookingContact | null;
 };

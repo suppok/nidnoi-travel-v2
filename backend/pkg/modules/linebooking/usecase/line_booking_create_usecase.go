@@ -61,6 +61,7 @@ func phoneRule(value any) error {
 }
 
 func normalizeCreate(r *models.LineBookingCreateRequest) {
+	r.SalesUserID = strings.TrimSpace(r.SalesUserID)
 	r.TourCode = strings.TrimSpace(r.TourCode)
 	r.CustomerName = strings.TrimSpace(r.CustomerName)
 	r.CustomerPhone = strings.TrimSpace(r.CustomerPhone)
@@ -75,6 +76,7 @@ func normalizeCreate(r *models.LineBookingCreateRequest) {
 func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateRequest) error {
 	count := []validation.Rule{validation.Min(0), validation.Max(maxTravellers)}
 	err := validation.ValidateStruct(request,
+		validation.Field(&request.SalesUserID, validation.Required, validation.UUID),
 		validation.Field(&request.TourCode, validation.Required),
 		validation.Field(&request.PeriodID, validation.Required, validation.UUID),
 		validation.Field(&request.AdultTwin, count...),
@@ -227,6 +229,10 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		if err != nil {
 			return cerrors.Validation(err)
 		}
+		if err := u.checkSalesUser(ctx, appDB, request.SalesUserID); err != nil {
+			return err
+		}
+		b.SalesUserID = null.StringFrom(request.SalesUserID)
 		if request.LineContactID.Valid {
 			contact, err := u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, request.LineContactID.String)
 			if err != nil {

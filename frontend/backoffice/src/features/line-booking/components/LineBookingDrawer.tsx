@@ -133,7 +133,8 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
           <section>
             <Typography.Title level={5}>ข้อมูลจาก LINE</Typography.Title>
             <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
-              <Descriptions.Item label="LINE ชื่อ">{booking.lineDisplayName}</Descriptions.Item>
+              <Descriptions.Item label="เซลล์เจ้าของ">{booking.salesUser?.name ?? <span className="text-ink-muted">-</span>}</Descriptions.Item>
+              <Descriptions.Item label="ส่งโดย (LINE)">{booking.lineDisplayName}</Descriptions.Item>
               <Descriptions.Item label="ชื่อลูกค้า">{booking.customerName}</Descriptions.Item>
               <Descriptions.Item label="เบอร์โทร">
                 <a href={`tel:${booking.customerPhone.replace(/[^\d+]/g, '')}`}>

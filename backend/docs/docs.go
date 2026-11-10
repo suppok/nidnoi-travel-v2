@@ -1407,6 +1407,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/liff/sales-users": {
+            "get": {
+                "description": "Active users with the sales role, by name; defaultId is the caller when they are sales.\nAuthorization: Bearer \u003cLIFF access token\u003e of a linked staff user with line-booking:create.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "liff"
+                ],
+                "summary": "Sales owner options for the LIFF booking form",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/line-bookings": {
             "put": {
                 "security": [
@@ -4684,6 +4711,10 @@ const docTemplate = `{
                 "periodId": {
                     "type": "string"
                 },
+                "salesUserId": {
+                    "description": "SalesUserID is the sales person who owns the booking (GET /liff/sales-users).",
+                    "type": "string"
+                },
                 "slipImage": {
                     "description": "R2 URL from /media/upload/liff",
                     "type": "string"
@@ -4768,6 +4799,14 @@ const docTemplate = `{
                 },
                 "note": {
                     "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "slipImage": {
                     "type": "string"
@@ -4874,6 +4913,14 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "slipImage": {
                     "type": "string"
                 },
@@ -4960,6 +5007,22 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse": {
+            "type": "object",
+            "properties": {
+                "defaultId": {
+                    "description": "DefaultID is the caller when they are in Items, otherwise \"\".",
+                    "type": "string"
+                },
+                "items": {
+                    "description": "Items are active users with the sales role, by name.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                    }
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest": {
             "type": "object",
             "properties": {
@@ -5035,6 +5098,14 @@ const docTemplate = `{
                 },
                 "note": {
                     "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "slipImage": {
                     "type": "string"
@@ -5156,6 +5227,14 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "slipImage": {
                     "type": "string"
                 },
@@ -5206,6 +5285,17 @@ const docTemplate = `{
                 "status": {
                     "description": "false = soft delete",
                     "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
