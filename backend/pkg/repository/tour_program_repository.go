@@ -164,6 +164,12 @@ func (r *tourProgramRepository) ListPublic(ctx context.Context, criteria repomod
 	var items []domain.TourProgram
 	q := wherePublic(publicRelations(r.query.NewSelect().Model(&items)))
 
+	if kw := strings.TrimSpace(criteria.Keyword); kw != "" {
+		pattern := "%" + escapeLike(strings.ToLower(kw)) + "%"
+		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("lower(tp.name) LIKE ?", pattern).WhereOr("lower(tp.code) LIKE ?", pattern)
+		})
+	}
 	if criteria.CountrySlug != "" {
 		q = q.Where(`EXISTS (SELECT 1 FROM tour_program_country x JOIN country c ON c.id = x.country_id
 			WHERE x.tour_program_id = tp.id AND c.slug = ? AND c.status = TRUE)`, criteria.CountrySlug)

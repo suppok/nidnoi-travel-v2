@@ -49,10 +49,11 @@ All `VITE_*` — shipped to the browser, no secrets.
 
 ## API Endpoints Used
 
-- `POST /tour-programs/public/list` — search tours (public, no auth)
-- `GET /tour-programs/public/:code/periods` — get periods (public, no auth)
+- `GET /tour-programs/public?keyword=` — search tours by name or code (public, no auth)
+- `GET /tour-programs/public/:code/periods` — get periods (public, no auth; `{items}`, hide `soldOut`)
 - `POST /liff/line-link` — finish linking with the QR code's code
 - `GET /liff/me` — the linked staff user (gate for the whole app)
+- `POST /liff/line-contacts/list` — customer chat picker (`CustomerChatPicker`, optional; sent as `lineContactId`)
 - `POST /media/upload/liff` — upload slip image (`purpose=booking-slip` only)
 - `POST /line-bookings` — create booking; the backend records the staff user as `create_by`
 

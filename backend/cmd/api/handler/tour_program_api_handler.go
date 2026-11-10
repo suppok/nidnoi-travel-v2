@@ -143,6 +143,7 @@ func (h *TourProgramAPIHandler) TourProgramUpdateStatus(c *fiber.Ctx) error {
 // @Description cover upcoming periods only (departing after today, Thailand time). No auth.
 // @Tags        public
 // @Produce     json
+// @Param       keyword  query string false "Matches tour name or code (LIFF tour search)"
 // @Param       country  query string false "Country slug"
 // @Param       city     query string false "City slug"
 // @Param       dateFrom query string false "Has an upcoming departure on/after (YYYY-MM-DD)"
@@ -154,6 +155,7 @@ func (h *TourProgramAPIHandler) TourProgramUpdateStatus(c *fiber.Ctx) error {
 // @Router      /tour-programs/public [get]
 func (h *TourProgramAPIHandler) TourProgramPublicList(c *fiber.Ctx) error {
 	request := &models.TourProgramPublicListRequest{
+		Keyword:  c.Query("keyword"),
 		Country:  c.Query("country"),
 		City:     c.Query("city"),
 		DateFrom: c.Query("dateFrom"),

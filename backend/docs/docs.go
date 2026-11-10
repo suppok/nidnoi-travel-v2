@@ -1263,6 +1263,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/liff/line-contacts/list": {
+            "post": {
+                "description": "Same as POST /line-contacts/list. Authorization: Bearer \u003cLIFF access token\u003e of a linked\nstaff user with line-contact:list.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "liff"
+                ],
+                "summary": "List LINE OA contacts for the LIFF booking form",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineContactListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linecontact_models.LineContactListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/liff/line-link": {
             "post": {
                 "description": "Called by the LIFF app with the code from the backoffice QR code.\nAuthorization: Bearer \u003cLIFF access token\u003e.",
@@ -2323,6 +2371,12 @@ const docTemplate = `{
                 ],
                 "summary": "List public tour programs (customer site build)",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Matches tour name or code (LIFF tour search)",
+                        "name": "keyword",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Country slug",
@@ -4618,6 +4672,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerPhone": {
+                    "type": "string"
+                },
+                "lineContactId": {
+                    "description": "LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.",
                     "type": "string"
                 },
                 "note": {

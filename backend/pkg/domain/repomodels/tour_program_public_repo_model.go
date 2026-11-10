@@ -9,6 +9,7 @@ import (
 // TourProgramPublicListCriteria filters GET /tour-programs/public. Only active tours in a public
 // state are ever returned; that rule lives in the repository, not here.
 type TourProgramPublicListCriteria struct {
+	Keyword     string    // "" = any; matches name or code
 	CountrySlug string    // "" = any
 	CitySlug    string    // "" = any
 	DepartAfter time.Time // only upcoming periods count: start_date > DepartAfter (date)

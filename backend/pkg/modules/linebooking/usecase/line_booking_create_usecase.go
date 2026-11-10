@@ -66,6 +66,10 @@ func normalizeCreate(r *models.LineBookingCreateRequest) {
 	r.CustomerPhone = strings.TrimSpace(r.CustomerPhone)
 	r.SlipImage = strings.TrimSpace(r.SlipImage)
 	r.Note = strings.TrimSpace(r.Note)
+	if r.LineContactID.Valid {
+		id := strings.TrimSpace(r.LineContactID.String)
+		r.LineContactID = null.NewString(id, id != "")
+	}
 }
 
 func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateRequest) error {
@@ -84,6 +88,11 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 	)
 	if err != nil {
 		return err
+	}
+	if request.LineContactID.Valid {
+		if err := validation.Validate(request.LineContactID.String, validation.UUID); err != nil {
+			return validation.Errors{"lineContactId": err}
+		}
 	}
 	switch adults, total := request.AdultTwin+request.AdultSingle, request.AdultTwin+request.AdultSingle+request.ChildWithBed+request.ChildNoBed; {
 	case adults < 1:
@@ -217,6 +226,16 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		b, err := quoteLine(period, request)
 		if err != nil {
 			return cerrors.Validation(err)
+		}
+		if request.LineContactID.Valid {
+			contact, err := u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, request.LineContactID.String)
+			if err != nil {
+				return err
+			}
+			if contact == nil || !contact.Status {
+				return cerrors.FieldError("lineContactId", "no such LINE contact")
+			}
+			b.LineContactID = request.LineContactID
 		}
 
 		now := time.Now()

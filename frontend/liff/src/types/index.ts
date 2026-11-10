@@ -1,11 +1,10 @@
+// GET /tour-programs/public — selling and closed tours (closed ones have only sold-out periods).
 export type TourPublicItem = {
-  id: string
   code: string
   name: string
-  coverImage: string
+  cardImage: string | null
   countries: { slug: string; nameTh: string }[]
   startingPrice: number | null
-  isSelling: boolean
 }
 
 export type TourPeriodItem = {
@@ -17,7 +16,8 @@ export type TourPeriodItem = {
   childWithBedPrice: number | null
   childNoBedPrice: number | null
   seatsAvailable: number
-  status: boolean
+  // True when no seat is left or the tour is closed.
+  soldOut: boolean
 }
 
 // GET /liff/me — the backoffice user linked to this LINE account.
@@ -28,7 +28,19 @@ export type LIFFMe = {
   lineDisplayName: string | null
 }
 
+// POST /liff/line-contacts/list — a customer known from LINE OA chats.
+export type LineContact = {
+  id: string
+  displayName: string
+  pictureUrl: string | null
+  // False once the customer blocked the OA: a LINE push would not reach them.
+  following: boolean
+  lastMessageAt: string | null
+}
+
 export type LineBookingCreateRequest = {
+  // The customer's LINE OA chat; null when they chat on a personal LINE account.
+  lineContactId: string | null
   tourCode: string
   periodId: string
   adultTwin: number

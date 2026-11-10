@@ -1,6 +1,10 @@
 package models
 
-import coremodels "backend/pkg/core/api/models"
+import (
+	"github.com/guregu/null/v5"
+
+	coremodels "backend/pkg/core/api/models"
+)
 
 // LineBookingCreateRequest is submitted from the LIFF app by a staff user linked to the LINE account.
 type LineBookingCreateRequest struct {
@@ -14,6 +18,8 @@ type LineBookingCreateRequest struct {
 	CustomerPhone string `json:"customerPhone"`
 	SlipImage     string `json:"slipImage"` // R2 URL from /media/upload/liff
 	Note          string `json:"note"`
+	// LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.
+	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
 
 	// The linked staff user, with the LINE account from the verified LIFF token.
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`

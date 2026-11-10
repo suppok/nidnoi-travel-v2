@@ -3,6 +3,7 @@ package models
 // TourProgramPublicListRequest is read from the query string of GET /tour-programs/public.
 // The json tags name the query parameters in VALIDATION errors.
 type TourProgramPublicListRequest struct {
+	Keyword  string `json:"keyword"`  // name or code, optional (LIFF tour search)
 	Country  string `json:"country"`  // country slug, optional
 	City     string `json:"city"`     // city slug, optional
 	DateFrom string `json:"dateFrom"` // YYYY-MM-DD, optional: has an upcoming departure on/after
