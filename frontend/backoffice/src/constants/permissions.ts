@@ -53,7 +53,10 @@ export const Permissions = {
   LineBookingGet: 'line-booking:get',
   LineBookingUpdate: 'line-booking:update',
   LineBookingStatus: 'line-booking:status',
+  LineBookingDocument: 'line-booking:document', // finance: upload and send AI / IV / RE
   LineContactList: 'line-contact:list',
+  SalesFinanceGet: 'sales-finance:get', // GET /sales-finances, your own finance users
+  SalesFinanceUpdate: 'sales-finance:update',
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

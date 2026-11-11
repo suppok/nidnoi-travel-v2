@@ -36,11 +36,12 @@ import (
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
 	bookingsourceusecase "backend/pkg/modules/bookingsource/usecase"
-	linebookingusecase "backend/pkg/modules/linebooking/usecase"
-	linecontactusecase "backend/pkg/modules/linecontact/usecase"
 	cityusecase "backend/pkg/modules/city/usecase"
 	countryusecase "backend/pkg/modules/country/usecase"
+	linebookingusecase "backend/pkg/modules/linebooking/usecase"
+	linecontactusecase "backend/pkg/modules/linecontact/usecase"
 	mediausecase "backend/pkg/modules/media/usecase"
+	salesfinanceusecase "backend/pkg/modules/salesfinance/usecase"
 	siteusecase "backend/pkg/modules/site/usecase"
 	tourprogramusecase "backend/pkg/modules/tourprogram/usecase"
 	periodusecase "backend/pkg/modules/tourprogramperiod/usecase"
@@ -125,6 +126,7 @@ func New(ctx context.Context) (*App, error) {
 	wholesaleUseCase := wholesaleusecase.NewWholesaleUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	airlineUseCase := airlineusecase.NewAirlineUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	bookingSourceUseCase := bookingsourceusecase.NewBookingSourceUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	salesFinanceUseCase := salesfinanceusecase.NewSalesFinanceUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	mediaUseCase := mediausecase.NewMediaUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	tourProgramUseCase := tourprogramusecase.NewTourProgramUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
@@ -171,6 +173,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewWholesaleAPIHandler(v1, apiHandler, wholesaleUseCase).Init(jwtAuth, authPermissions)
 	handler.NewAirlineAPIHandler(v1, apiHandler, airlineUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingSourceAPIHandler(v1, apiHandler, bookingSourceUseCase).Init(jwtAuth, authPermissions)
+	handler.NewSalesFinanceAPIHandler(v1, apiHandler, salesFinanceUseCase).Init(jwtAuth, authPermissions)
 	handler.NewMediaAPIHandler(v1, apiHandler, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramAPIHandler(v1, apiHandler, tourProgramUseCase).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)

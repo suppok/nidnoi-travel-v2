@@ -1176,6 +1176,169 @@ definitions:
         description: false = soft delete
         type: boolean
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingCancelRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingCancelResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingChargeReq:
     properties:
       count:
@@ -1194,6 +1357,174 @@ definitions:
         type: string
       price:
         type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingConfirmRequest:
+    properties:
+      financeUserId:
+        description: |-
+          FinanceUserID is one of GET /line-bookings/:id/finance-users. The state becomes 20 (deposit
+          paid) or 25 (paid in full) by the booking's payment plan.
+        type: string
+      id:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingConfirmResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
     type: object
   backend_pkg_modules_linebooking_models.LineBookingContact:
     properties:
@@ -1312,7 +1643,12 @@ definitions:
         description: TotalPrice is the grand total, card fee included.
         type: integer
     type: object
-  backend_pkg_modules_linebooking_models.LineBookingGetResponse:
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveResponse:
     properties:
       adultPriceBeforeDiscount:
         type: integer
@@ -1324,6 +1660,10 @@ definitions:
         type: integer
       adultTwinPrice:
         type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
       bookingNo:
         example: 26X8K9AQ
         type: string
@@ -1347,6 +1687,8 @@ definitions:
         type: integer
       childWithBedPrice:
         type: integer
+      confirmedAt:
+        type: string
       createDate:
         type: string
       creditFeePercent:
@@ -1356,6 +1698,8 @@ definitions:
       customerName:
         type: string
       customerPhone:
+        type: string
+      customerSentAt:
         type: string
       depositDueDate:
         example: "2026-12-01"
@@ -1367,8 +1711,28 @@ definitions:
         type: integer
       discountPerPerson:
         type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
       endDate:
         example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
         type: string
       fullDueDate:
         type: string
@@ -1382,6 +1746,8 @@ definitions:
         type: integer
       isDeposit:
         type: boolean
+      ivFile:
+        type: string
       lineContact:
         allOf:
         - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
@@ -1397,6 +1763,8 @@ definitions:
         enum:
         - transfer
         - credit
+        type: string
+      reFile:
         type: string
       refBookingNo:
         type: string
@@ -1420,6 +1788,514 @@ definitions:
         enum:
         - 10
         - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectRequest:
+    properties:
+      id:
+        type: string
+      note:
+        description: required, max 1000
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsRequest:
+    properties:
+      aiFile:
+        type: string
+      id:
+        type: string
+      ivFile:
+        type: string
+      reFile:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDocumentsResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse:
+    properties:
+      defaultId:
+        description: DefaultID is the sales owner's default finance user, "" when
+          none.
+        type: string
+      items:
+        description: |-
+          Items are the sales owner's finance users (active ones); every active finance user when the
+          booking has no owner.
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        type: array
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingGetResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
         - 30
         type: integer
       status:
@@ -1449,6 +2325,10 @@ definitions:
         type: integer
       adultTwinPrice:
         type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
       bookingNo:
         example: 26X8K9AQ
         type: string
@@ -1472,6 +2352,8 @@ definitions:
         type: integer
       childWithBedPrice:
         type: integer
+      confirmedAt:
+        type: string
       createDate:
         type: string
       creditFeePercent:
@@ -1481,6 +2363,8 @@ definitions:
       customerName:
         type: string
       customerPhone:
+        type: string
+      customerSentAt:
         type: string
       depositDueDate:
         example: "2026-12-01"
@@ -1492,8 +2376,28 @@ definitions:
         type: integer
       discountPerPerson:
         type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
       endDate:
         example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
         type: string
       fullDueDate:
         type: string
@@ -1507,6 +2411,8 @@ definitions:
         type: integer
       isDeposit:
         type: boolean
+      ivFile:
+        type: string
       lineContact:
         allOf:
         - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
@@ -1522,6 +2428,8 @@ definitions:
         enum:
         - transfer
         - credit
+        type: string
+      reFile:
         type: string
       refBookingNo:
         type: string
@@ -1545,6 +2453,7 @@ definitions:
         enum:
         - 10
         - 20
+        - 25
         - 30
         type: integer
       status:
@@ -1564,15 +2473,35 @@ definitions:
     type: object
   backend_pkg_modules_linebooking_models.LineBookingListRequest:
     properties:
+      assignedToMe:
+        description: AssignedToMe lists only bookings sent to the caller as finance
+          (the finance alert).
+        type: boolean
+      documentsApproved:
+        description: 'DocumentsApproved: true = the sales owner approved the documents,
+          false = not yet, omitted = any.'
+        type: boolean
+      documentsDone:
+        description: 'DocumentsDone: true = finance sent the documents (newest first),
+          false = waiting for finance, omitted = any.'
+        type: boolean
       keyword:
         description: booking no, customer name, phone, tour code or LINE display name
         type: string
+      ownedByMe:
+        description: OwnedByMe lists only bookings the caller owns as sales (the documents-ready
+          alert).
+        type: boolean
       page:
         description: default 1
         type: integer
       pageSize:
         description: default 20, max 100
         type: integer
+      paid:
+        description: Paid lists confirmed bookings only (states 20 and 25), newest
+          confirmation first.
+        type: boolean
       state:
         description: 0 = all
         type: integer
@@ -1643,6 +2572,10 @@ definitions:
         type: integer
       adultTwinPrice:
         type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
       bookingNo:
         example: 26X8K9AQ
         type: string
@@ -1666,6 +2599,8 @@ definitions:
         type: integer
       childWithBedPrice:
         type: integer
+      confirmedAt:
+        type: string
       createDate:
         type: string
       creditFeePercent:
@@ -1675,6 +2610,8 @@ definitions:
       customerName:
         type: string
       customerPhone:
+        type: string
+      customerSentAt:
         type: string
       depositDueDate:
         example: "2026-12-01"
@@ -1686,8 +2623,28 @@ definitions:
         type: integer
       discountPerPerson:
         type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
       endDate:
         example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
         type: string
       fullDueDate:
         type: string
@@ -1701,6 +2658,8 @@ definitions:
         type: integer
       isDeposit:
         type: boolean
+      ivFile:
+        type: string
       lineContact:
         allOf:
         - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
@@ -1716,6 +2675,8 @@ definitions:
         enum:
         - transfer
         - credit
+        type: string
+      reFile:
         type: string
       refBookingNo:
         type: string
@@ -1739,6 +2700,7 @@ definitions:
         enum:
         - 10
         - 20
+        - 25
         - 30
         type: integer
       status:
@@ -1762,9 +2724,6 @@ definitions:
         type: string
       staffNote:
         type: string
-      state:
-        description: 10 new, 20 confirmed, 30 cancelled
-        type: integer
     type: object
   backend_pkg_modules_linebooking_models.LineBookingUpdateResponse:
     properties:
@@ -1778,6 +2737,10 @@ definitions:
         type: integer
       adultTwinPrice:
         type: integer
+      aiFile:
+        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
+          ivFile, full payment → reFile.'
+        type: string
       bookingNo:
         example: 26X8K9AQ
         type: string
@@ -1801,6 +2764,8 @@ definitions:
         type: integer
       childWithBedPrice:
         type: integer
+      confirmedAt:
+        type: string
       createDate:
         type: string
       creditFeePercent:
@@ -1810,6 +2775,8 @@ definitions:
       customerName:
         type: string
       customerPhone:
+        type: string
+      customerSentAt:
         type: string
       depositDueDate:
         example: "2026-12-01"
@@ -1821,8 +2788,28 @@ definitions:
         type: integer
       discountPerPerson:
         type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
       endDate:
         example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
         type: string
       fullDueDate:
         type: string
@@ -1836,6 +2823,8 @@ definitions:
         type: integer
       isDeposit:
         type: boolean
+      ivFile:
+        type: string
       lineContact:
         allOf:
         - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
@@ -1851,6 +2840,8 @@ definitions:
         enum:
         - transfer
         - credit
+        type: string
+      reFile:
         type: string
       refBookingNo:
         type: string
@@ -1874,6 +2865,7 @@ definitions:
         enum:
         - 10
         - 20
+        - 25
         - 30
         type: integer
       status:
@@ -1970,6 +2962,63 @@ definitions:
       width:
         description: 0 for documents
         type: integer
+    type: object
+  backend_pkg_modules_salesfinance_models.SalesFinanceGetResponse:
+    properties:
+      defaultFinanceUserId:
+        description: DefaultFinanceUserID is preselected in the confirm dialog; ""
+          when none.
+        type: string
+      financeUserIds:
+        description: FinanceUserIDs are the caller's finance users (active ones),
+          by name.
+        items:
+          type: string
+        type: array
+      options:
+        description: Options are every active finance user (except the caller), by
+          name.
+        items:
+          $ref: '#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUser'
+        type: array
+    type: object
+  backend_pkg_modules_salesfinance_models.SalesFinanceUpdateRequest:
+    properties:
+      defaultFinanceUserId:
+        description: DefaultFinanceUserID must be in FinanceUserIDs; "" = the only
+          one when there is one, else none.
+        type: string
+      financeUserIds:
+        description: active finance users, max 20
+        items:
+          type: string
+        type: array
+    type: object
+  backend_pkg_modules_salesfinance_models.SalesFinanceUpdateResponse:
+    properties:
+      defaultFinanceUserId:
+        description: DefaultFinanceUserID is preselected in the confirm dialog; ""
+          when none.
+        type: string
+      financeUserIds:
+        description: FinanceUserIDs are the caller's finance users (active ones),
+          by name.
+        items:
+          type: string
+        type: array
+      options:
+        description: Options are every active finance user (except the caller), by
+          name.
+        items:
+          $ref: '#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUser'
+        type: array
+    type: object
+  backend_pkg_modules_salesfinance_models.SalesFinanceUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
     type: object
   backend_pkg_modules_site_models.SiteBuildItem:
     properties:
@@ -4474,8 +5523,9 @@ paths:
     put:
       consumes:
       - application/json
+      description: The state changes only through PUT /line-bookings/confirm and /cancel.
       parameters:
-      - description: State and note
+      - description: Note
         in: body
         name: body
         required: true
@@ -4500,7 +5550,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Update a LINE booking's state and staff note
+      summary: Update a LINE booking's staff note
       tags:
       - line-bookings
   /line-bookings/{id}:
@@ -4526,6 +5576,263 @@ paths:
       security:
       - BearerAuth: []
       summary: Get a LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/{id}/finance-users:
+    get:
+      description: |-
+        The sales owner's active finance users and their default (every active finance user
+        when the booking has no owner).
+      parameters:
+      - description: LINE booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Finance users a LINE booking can be sent to on confirm
+      tags:
+      - line-bookings
+  /line-bookings/cancel:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCancelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCancelResponse'
+        "403":
+          description: PERMISSION_DENIED (not the sales owner)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_NEW
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel a new LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/confirm:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        The sales owner (or an admin) checked the payment. The state becomes 20 (deposit paid) or
+        25 (paid in full) by the payment plan; financeUserId must be one of
+        GET /line-bookings/{id}/finance-users.
+      parameters:
+      - description: Booking and finance user
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED (not the sales owner)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_NEW
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Confirm a new LINE booking and send it to a finance user
+      tags:
+      - line-bookings
+  /line-bookings/documents:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Its finance user (or an admin). A deposit booking needs aiFile (ใบรับเงินมัดจำ) + ivFile
+        (ใบแจ้งหนี้); a full payment needs reFile (ใบเสร็จรับเงิน). The first send sets documentsAt,
+        which alerts the sales owner; later sends replace the files.
+      parameters:
+      - description: Documents
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED (not its finance user)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send the finance documents of a confirmed LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/documents/approve:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        The sales owner (or an admin). When the booking is linked to a LINE chat whose customer
+        follows the OA, a Flex card with a button per PDF is pushed there first (one message of
+        the OA quota); otherwise the documents are only approved.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveResponse'
+        "403":
+          description: PERMISSION_DENIED (not the sales owner)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_DOCUMENTS_NOT_READY
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: LINE_QUOTA_EXCEEDED
+          schema:
+            additionalProperties: true
+            type: object
+        "502":
+          description: LINE_PUSH_FAILED
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: LINE_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Approve the finance documents and send them to the customer
+      tags:
+      - line-bookings
+  /line-bookings/documents/reject:
+    put:
+      consumes:
+      - application/json
+      description: The sales owner (or an admin). The booking waits for its finance
+        user again.
+      parameters:
+      - description: Booking and note
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED (not the sales owner)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_DOCUMENTS_NOT_READY
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send the finance documents back to finance with a note
       tags:
       - line-bookings
   /line-bookings/line-contact:
@@ -4780,6 +6087,93 @@ paths:
       summary: Upload a payment slip image from LIFF
       tags:
       - line-bookings
+  /media/upload/line-booking:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        multipart/form-data with "file" (PDF). Stored under bookings/documents/; send the URL with
+        PUT /line-bookings/documents.
+      parameters:
+      - description: PDF (max media.maxUploadMB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_media_models.MediaUploadResponse'
+        "400":
+          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED
+          schema:
+            additionalProperties: true
+            type: object
+        "413":
+          description: MEDIA_TOO_LARGE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: STORAGE_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload a finance document PDF of a LINE booking
+      tags:
+      - line-bookings
+  /sales-finances:
+    get:
+      description: |-
+        The finance users you can send a confirmed LINE booking to, your default, and every
+        active finance user as options.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceGetResponse'
+      security:
+      - BearerAuth: []
+      summary: Your finance users for confirmed LINE bookings
+      tags:
+      - sales-finances
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Replaces your list. defaultFinanceUserId must be in financeUserIds ("" = the only one
+        when there is one).
+      parameters:
+      - description: Finance users
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Choose your finance users for confirmed LINE bookings
+      tags:
+      - sales-finances
   /site-builds/list:
     post:
       consumes:

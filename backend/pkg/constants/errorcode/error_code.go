@@ -74,6 +74,12 @@ var (
 	LINENotLinked        = ErrCode("LINE_NOT_LINKED", "This LINE account is not linked to a staff user")
 	LINELinkCodeInvalid  = ErrCode("LINE_LINK_CODE_INVALID", "The LINE link code is invalid or has expired")
 	LINEAlreadyLinked    = ErrCode("LINE_ALREADY_LINKED", "This LINE account is already linked to another staff user")
+	// LineBookingNotNew: confirm or cancel on a booking that is no longer new.
+	LineBookingNotNew = ErrCode("LINE_BOOKING_NOT_NEW", "This booking was already confirmed or cancelled")
+	// LineBookingDocumentsNotReady: approve/reject when finance hasn't sent the documents, or they were already approved.
+	LineBookingDocumentsNotReady = ErrCode("LINE_BOOKING_DOCUMENTS_NOT_READY", "The documents are not waiting for review")
+	LINEPushFailed               = ErrCode("LINE_PUSH_FAILED", "Could not send the LINE message")
+	LINEQuotaExceeded            = ErrCode("LINE_QUOTA_EXCEEDED", "The LINE OA has reached its monthly message limit")
 )
 
 // Customer site rebuild

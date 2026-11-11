@@ -1,14 +1,18 @@
-import { DeleteOutlined, PhoneOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Descriptions, Drawer, Form, Image, Input, Segmented, Skeleton, Table, Tag, Typography } from 'antd';
+import { CheckOutlined, CloseOutlined, DeleteOutlined, PhoneOutlined, UndoOutlined } from '@ant-design/icons';
+import { Alert, App, Button, Descriptions, Drawer, Form, Image, Input, Skeleton, Table, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { lineBookingsApi } from '../../../api/lineBookings.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
-import { LINE_BOOKING_STATE_INFO, type LineBookingState, lineBookingStateInfo } from '../../../constants/lineBookingStates.ts';
+import { LINE_BOOKING_STATE_INFO, LineBookingStates } from '../../../constants/lineBookingStates.ts';
 import { Permissions } from '../../../constants/permissions.ts';
+import { Roles } from '../../../constants/roles.ts';
 import { applyFieldErrors, errorMessage } from '../../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../../lib/format.ts';
 import type { LineBooking } from '../../../types/lineBooking.ts';
+import ConfirmLineBookingModal from './ConfirmLineBookingModal.tsx';
+import DocumentsReviewModal from './DocumentsReviewModal.tsx';
+import FinanceDocumentsSection from './FinanceDocumentsSection.tsx';
 import LineContactSection from './LineContactSection.tsx';
 import { dueDate, lineBookingLines, type Line, paymentPlan, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
 
@@ -20,19 +24,30 @@ type Props = {
 
 const DESCRIPTION_STYLES = { label: { width: 150, whiteSpace: 'nowrap' as const } };
 
-type FormValues = { state: LineBookingState; staffNote: string };
+type FormValues = { staffNote: string };
 
 export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Props) {
   const { message, modal } = App.useApp();
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const [form] = Form.useForm<FormValues>();
   const [loaded, setLoaded] = useState<{ id: string; booking: LineBooking | null; error: unknown } | null>(null);
+  // The documents review popup; opens by itself when the sales owner opens a booking whose documents wait.
+  const [reviewing, setReviewing] = useState(false);
   const current = loaded?.id === bookingId ? loaded : null;
   const booking = current?.booking ?? null;
   const loadError = current?.error ?? null;
   const setBooking = (b: LineBooking) => setLoaded({ id: b.id, booking: b, error: null });
   const [saving, setSaving] = useState(false);
   const editable = can(Permissions.LineBookingUpdate) && booking?.status === true;
+  const isOwner = !!user && booking?.salesUser?.id === user.id;
+  const seesAll = !!user && user.roles.some((r) => r === Roles.Admin || r === Roles.SuperAdmin);
+  // The sales owner (or an admin) confirms or cancels a new booking; the backend re-checks.
+  const decidable = editable && booking?.state === LineBookingStates.New && (isOwner || seesAll);
+  const [confirming, setConfirming] = useState(false);
+  const paid = booking?.state === LineBookingStates.DepositPaid || booking?.state === LineBookingStates.PaidInFull;
+  // Its finance user (or an admin) uploads and sends the documents; the backend re-checks.
+  const sendsDocuments =
+    can(Permissions.LineBookingDocument) && booking?.status === true && paid && (seesAll || (!!user && booking?.financeUser?.id === user.id));
 
   useEffect(() => {
     if (!bookingId) return;
@@ -42,19 +57,20 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
       .then((b) => {
         if (cancelled) return;
         setLoaded({ id: bookingId, booking: b, error: null });
-        form.setFieldsValue({ state: b.state, staffNote: b.staffNote });
+        form.setFieldsValue({ staffNote: b.staffNote });
+        setReviewing(!!user && b.salesUser?.id === user.id && waitsForReview(b));
       })
       .catch((err: unknown) => !cancelled && setLoaded({ id: bookingId, booking: null, error: err }));
     return () => {
       cancelled = true;
     };
-  }, [bookingId, form]);
+  }, [bookingId, form, user]);
 
   const save = async (values: FormValues) => {
     if (!booking) return;
     setSaving(true);
     try {
-      const updated = await lineBookingsApi.update({ id: booking.id, state: values.state, staffNote: values.staffNote ?? '' });
+      const updated = await lineBookingsApi.update({ id: booking.id, staffNote: values.staffNote ?? '' });
       setBooking(updated);
       message.success(`บันทึกใบจอง LINE ${updated.bookingNo} แล้ว`);
       onChanged();
@@ -88,7 +104,28 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
     });
   };
 
-  const state = booking ? lineBookingStateInfo(booking.state) : null;
+  const cancelBooking = () => {
+    if (!booking) return;
+    modal.confirm({
+      title: `ยกเลิกใบจอง ${booking.bookingNo}?`,
+      content: 'ใบจองจะเปลี่ยนเป็น "ยกเลิก" และยืนยันภายหลังไม่ได้ ระบุเหตุผลในบันทึกของเจ้าหน้าที่ได้',
+      okText: 'ยกเลิกใบจอง',
+      okButtonProps: { danger: true },
+      cancelText: 'ปิด',
+      onOk: async () => {
+        try {
+          const updated = await lineBookingsApi.cancel(booking.id);
+          setBooking(updated);
+          message.success(`ยกเลิกใบจอง ${updated.bookingNo} แล้ว`);
+          onChanged();
+        } catch (err) {
+          message.error(errorMessage(err));
+        }
+      },
+    });
+  };
+
+  const state = booking ? LINE_BOOKING_STATE_INFO.find((s) => s.value === booking.state) : null;
 
   return (
     <Drawer
@@ -130,6 +167,24 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
       {!booking && loadError === null && <Skeleton active paragraph={{ rows: 10 }} />}
       {booking && (
         <div className="flex flex-col gap-6">
+          {decidable && (
+            <Alert
+              type="warning"
+              showIcon
+              title="รอยืนยันการชำระเงิน"
+              description="ตรวจสอบสลิปและข้อมูลใบจอง แล้วกดยืนยันเพื่อส่งให้ฝ่ายการเงินออกใบเสร็จ"
+              action={
+                <div className="flex flex-col gap-2">
+                  <Button type="primary" icon={<CheckOutlined />} onClick={() => setConfirming(true)}>
+                    ยืนยัน
+                  </Button>
+                  <Button danger icon={<CloseOutlined />} onClick={cancelBooking}>
+                    ยกเลิก
+                  </Button>
+                </div>
+              }
+            />
+          )}
           <section>
             <Typography.Title level={5}>ข้อมูลจาก LINE</Typography.Title>
             <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
@@ -231,12 +286,36 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
 
           <PaymentDetails booking={booking} />
 
+          {paid && (
+            <FinanceDocumentsSection
+              key={`${booking.id}:${booking.updateDate}`}
+              booking={booking}
+              canSend={sendsDocuments}
+              onSent={(updated) => {
+                setBooking(updated);
+                onChanged();
+              }}
+              onReview={editable && (isOwner || seesAll) && waitsForReview(booking) ? () => setReviewing(true) : undefined}
+            />
+          )}
+
           <section>
             <Typography.Title level={5}>การติดตาม</Typography.Title>
+            <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES} className="mb-4">
+              <Descriptions.Item label="สถานะ">
+                {state ? (
+                  <>
+                    <Tag color={state.color}>{state.label}</Tag>
+                    <span className="text-ink-muted">{state.hint}</span>
+                  </>
+                ) : (
+                  booking.state
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="ฝ่ายการเงิน">{booking.financeUser?.name ?? <span className="text-ink-muted">-</span>}</Descriptions.Item>
+              {booking.confirmedAt && <Descriptions.Item label="ยืนยันเมื่อ">{formatDateTime(booking.confirmedAt)}</Descriptions.Item>}
+            </Descriptions>
             <Form<FormValues> form={form} layout="vertical" onFinish={save} disabled={!editable}>
-              <Form.Item name="state" label="สถานะ" rules={[{ required: true }]}>
-                <Segmented<LineBookingState> options={LINE_BOOKING_STATE_INFO.map((s) => ({ value: s.value, label: s.label, title: s.hint }))} />
-              </Form.Item>
               <Form.Item name="staffNote" label="บันทึกของเจ้าหน้าที่" rules={[{ max: 2000, message: 'ไม่เกิน 2,000 ตัวอักษร' }]}>
                 <Input.TextArea rows={4} placeholder="เช่น ตรวจสอบสลิปแล้ว ยอดตรง / สลิปไม่ชัด ขอใหม่" showCount maxLength={2000} />
               </Form.Item>
@@ -244,8 +323,32 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
           </section>
         </div>
       )}
+      <DocumentsReviewModal
+        booking={reviewing && booking && waitsForReview(booking) ? booking : null}
+        onClose={() => setReviewing(false)}
+        onDone={(updated) => {
+          setReviewing(false);
+          setBooking(updated);
+          onChanged();
+        }}
+      />
+      <ConfirmLineBookingModal
+        booking={confirming ? booking : null}
+        isOwner={isOwner}
+        onClose={() => setConfirming(false)}
+        onConfirmed={(updated) => {
+          setConfirming(false);
+          setBooking(updated);
+          onChanged();
+        }}
+      />
     </Drawer>
   );
+}
+
+// Finance sent the documents and the sales owner hasn't approved or returned them yet.
+function waitsForReview(b: LineBooking): boolean {
+  return b.status && b.documentsAt !== null && b.documentsApprovedAt === null;
 }
 
 function PaymentDetails({ booking }: { booking: LineBooking }) {

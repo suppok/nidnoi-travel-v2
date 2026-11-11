@@ -3,6 +3,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useNavigate } from 'react-router';
 import { bookingsApi } from '../../../api/bookings.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
+import { Roles, worksAs } from '../../../constants/roles.ts';
 import { BookingStates } from '../../../constants/bookingStates.ts';
 import { Permissions } from '../../../constants/permissions.ts';
 import type { Booking } from '../../../types/booking.ts';
@@ -21,10 +22,11 @@ function customerName(b: { firstName: string; lastName: string }) {
  * the tab title with the count and pops a notification when a booking arrives while the app is open.
  */
 export default function BookingAlertsProvider({ children }: { children: ReactNode }) {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const { notification } = App.useApp();
   const navigate = useNavigate();
-  const enabled = can(Permissions.BookingList);
+  // Customer booking requests are sales work: finance-only users get no bell, badge or popup.
+  const enabled = can(Permissions.BookingList) && worksAs(user?.roles, Roles.Sales);
   const [newCount, setNewCount] = useState<number | null>(null);
   // Newest createDate (ms) already seen; null until the first poll sets the baseline.
   const seenRef = useRef<number | null>(null);

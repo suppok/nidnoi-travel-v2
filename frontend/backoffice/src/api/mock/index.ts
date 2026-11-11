@@ -11,6 +11,7 @@ import { mediaRoutes } from './media.ts';
 import { siteRoutes } from './site.ts';
 import { taxonomyRoutes } from './taxonomy.ts';
 import { tourProgramRoutes } from './tourPrograms.ts';
+import { salesFinanceRoutes } from './salesFinances.ts';
 import { userRoutes } from './users.ts';
 import { wholesaleRoutes } from './wholesales.ts';
 
@@ -25,6 +26,7 @@ const routes: Record<string, MockHandler> = {
   ...tourProgramRoutes,
   ...siteRoutes,
   ...bookingRoutes,
+  ...salesFinanceRoutes,
 };
 
 const LATENCY_MS = 300;

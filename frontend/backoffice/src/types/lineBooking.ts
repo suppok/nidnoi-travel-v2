@@ -56,6 +56,22 @@ export type LineBooking = {
   refBookingNo: string;
   // The sales person who owns the booking; null on bookings made before it was recorded.
   salesUser: { id: string; name: string } | null;
+  // The finance user who issues the receipt, and when the sales owner confirmed; null while new.
+  financeUser: { id: string; name: string } | null;
+  confirmedAt: string | null;
+  // Finance documents (PDF URLs, '' = none): deposit → aiFile + ivFile, full payment → reFile.
+  aiFile: string;
+  ivFile: string;
+  reFile: string;
+  // When finance sent them; null on a confirmed booking = waiting for finance.
+  documentsAt: string | null;
+  // The sales owner approved the documents; customerSentAt = the card was pushed to the customer's
+  // LINE chat (null = approved without sending).
+  documentsApprovedAt: string | null;
+  customerSentAt: string | null;
+  // The latest fix request from sales to finance ('' = none).
+  fixNote: string;
+  fixRequestedAt: string | null;
   // The customer's LINE OA chat; null until staff link it.
   lineContact: LineBookingContact | null;
 };
@@ -77,13 +93,25 @@ export type LineBookingListRequest = Paging & {
   keyword?: string;
   state?: LineBookingState;
   status?: boolean;
+  paid?: boolean; // confirmed only (deposit paid / paid in full), newest confirmation first
+  assignedToMe?: boolean; // only bookings sent to the caller as finance
+  ownedByMe?: boolean; // only bookings the caller owns as sales
+  documentsDone?: boolean; // true = finance sent the documents (newest first), false = waiting
+  documentsApproved?: boolean; // true = the sales owner approved them, false = not yet
 };
 
-export type LineBookingUpdateRequest = {
-  id: string;
-  state: LineBookingState;
-  staffNote: string;
-};
+// The state changes only through confirm / cancel.
+export type LineBookingUpdateRequest = { id: string; staffNote: string };
+
+// financeUserId is one of GET /line-bookings/:id/finance-users.
+export type LineBookingConfirmRequest = { id: string; financeUserId: string };
+
+export type LineBookingDocumentKey = 'aiFile' | 'ivFile' | 'reFile';
+
+// PDF URLs from POST /media/upload/line-booking; '' for documents the plan doesn't use.
+export type LineBookingDocumentsRequest = { id: string } & Record<LineBookingDocumentKey, string>;
+
+export type LineBookingFinanceUsers = { items: { id: string; name: string }[]; defaultId: string };
 
 export type LineBookingUpdateStatusRequest = { id: string; status: boolean };
 

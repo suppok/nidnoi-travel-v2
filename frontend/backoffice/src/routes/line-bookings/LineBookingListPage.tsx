@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader.tsx';
 import { LINE_BOOKING_STATE_INFO, type LineBookingState, LineBookingStates, lineBookingStateInfo } from '../../constants/lineBookingStates.ts';
 import LineBookingDrawer from '../../features/line-booking/components/LineBookingDrawer.tsx';
 import { useLineBookingAlerts } from '../../features/line-booking/hooks/useLineBookingAlerts.ts';
-import { travellerSummary, tripDates } from '../../features/line-booking/lib/lineBookingFormat.ts';
+import { requiredDocuments, travellerSummary, tripDates } from '../../features/line-booking/lib/lineBookingFormat.ts';
 import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../lib/format.ts';
@@ -14,8 +14,16 @@ import type { LineBooking } from '../../types/lineBooking.ts';
 
 const DEFAULT_PAGE_SIZE = 20;
 const STATES = new Set<number>(LINE_BOOKING_STATE_INFO.map((s) => s.value));
+const PAID_STATES: readonly number[] = [LineBookingStates.DepositPaid, LineBookingStates.PaidInFull];
 
 type StateFilter = LineBookingState | 0;
+// Finance page: which bookings by documents. Default "waiting".
+type DocsFilter = 'waiting' | 'done' | 'all';
+const DOCS_FILTERS: { value: DocsFilter; label: string }[] = [
+  { value: 'waiting', label: 'รอออกเอกสาร' },
+  { value: 'done', label: 'ส่งเอกสารแล้ว' },
+  { value: 'all', label: 'ทั้งหมด' },
+];
 
 function useFilters() {
   const [params, setParams] = useSearchParams();
@@ -27,9 +35,10 @@ function useFilters() {
     page: Math.max(1, Number(params.get('page')) || 1),
     pageSize: Number(params.get('pageSize')) || DEFAULT_PAGE_SIZE,
     open: params.get('open'),
+    docs: (['done', 'all'].includes(params.get('docs') ?? '') ? params.get('docs') : 'waiting') as DocsFilter,
   };
 
-  const update = (patch: Partial<Record<'q' | 'state' | 'deleted' | 'page' | 'pageSize' | 'open', string | undefined>>) => {
+  const update = (patch: Partial<Record<'q' | 'state' | 'deleted' | 'page' | 'pageSize' | 'open' | 'docs', string | undefined>>) => {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -47,12 +56,16 @@ function useFilters() {
   return { filters, update };
 }
 
-export default function LineBookingListPage() {
+export default function LineBookingListPage({ finance = false }: { finance?: boolean }) {
   const { filters, update } = useFilters();
-  const { newCount, refresh } = useLineBookingAlerts();
+  const { newCount, waitingDocumentsCount, refresh } = useLineBookingAlerts();
+  const states = finance ? LINE_BOOKING_STATE_INFO.filter((s) => PAID_STATES.includes(s.value)) : LINE_BOOKING_STATE_INFO;
+  const state = finance && !PAID_STATES.includes(filters.state) ? 0 : filters.state;
   const { data, loading, error, reload } = useListQuery(lineBookingsApi.list, {
     keyword: filters.keyword || undefined,
-    state: filters.state || undefined,
+    state: state || undefined,
+    paid: finance || undefined,
+    documentsDone: finance && filters.docs !== 'all' ? filters.docs === 'done' : undefined,
     status: !filters.deleted,
     page: filters.page,
     pageSize: filters.pageSize,
@@ -112,6 +125,49 @@ export default function LineBookingListPage() {
     },
     { title: 'ผู้เดินทาง', key: 'pax', width: 130, render: (_, b) => travellerSummary(b) },
     { title: 'ยอดรวม', dataIndex: 'totalPrice', width: 120, align: 'right', render: (v: number) => formatBaht(v) },
+    ...(finance
+      ? [
+          {
+            title: 'ยืนยันเมื่อ',
+            key: 'confirmedAt',
+            width: 150,
+            render: (_: unknown, b: LineBooking) => (b.confirmedAt ? formatDateTime(b.confirmedAt) : '-'),
+          },
+          {
+            title: 'เอกสาร',
+            key: 'documents',
+            width: 150,
+            render: (_: unknown, b: LineBooking) => {
+              const codes = requiredDocuments(b)
+                .map((d) => d.code)
+                .join(' + ');
+              if (b.documentsApprovedAt) {
+                return (
+                  <Tag color="green" className="m-0">
+                    {b.customerSentAt ? 'ส่งลูกค้าแล้ว' : 'เซลล์ยืนยันแล้ว'}
+                  </Tag>
+                );
+              }
+              if (b.documentsAt) {
+                return (
+                  <Tag color="blue" className="m-0">
+                    ส่ง {codes} แล้ว · รอเซลล์ตรวจ
+                  </Tag>
+                );
+              }
+              return b.fixRequestedAt ? (
+                <Tag color="red" className="m-0">
+                  ต้องแก้ {codes}
+                </Tag>
+              ) : (
+                <Tag color="orange" className="m-0">
+                  รอ {codes}
+                </Tag>
+              );
+            },
+          },
+        ]
+      : []),
     {
       title: 'สถานะ',
       key: 'state',
@@ -130,8 +186,12 @@ export default function LineBookingListPage() {
   return (
     <>
       <PageHeader
-        title="ใบจอง LINE"
-        subtitle="ใบจองที่เจ้าหน้าที่ส่งจาก LINE OA พร้อมสลิปโอนเงิน"
+        title={finance ? 'ใบจองรอออกเอกสาร' : 'ใบจอง LINE'}
+        subtitle={
+          finance
+            ? 'ใบจอง LINE ที่เซลล์ยืนยันการชำระเงินแล้ว — มัดจำ: ออก AI ใบรับเงินมัดจำ + IV ใบแจ้งหนี้, ชำระเต็มจำนวน: ออก RE ใบเสร็จรับเงิน'
+            : 'ใบจองที่เจ้าหน้าที่ส่งจาก LINE OA พร้อมสลิปโอนเงิน'
+        }
         actions={
           <Button icon={<ReloadOutlined />} onClick={reloadAll}>
             รีเฟรช
@@ -149,11 +209,28 @@ export default function LineBookingListPage() {
             onSearch={(q) => update({ q: q.trim() || undefined })}
             className="max-w-[360px] flex-[1_1_260px]"
           />
+          {finance && (
+            <Segmented<DocsFilter>
+              value={filters.docs}
+              options={DOCS_FILTERS.map((d) => ({
+                value: d.value,
+                label:
+                  d.value === 'waiting' && waitingDocumentsCount ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {d.label} <Badge count={waitingDocumentsCount} size="small" />
+                    </span>
+                  ) : (
+                    d.label
+                  ),
+              }))}
+              onChange={(docs) => update({ docs: docs === 'waiting' ? undefined : docs })}
+            />
+          )}
           <Segmented<StateFilter>
-            value={filters.state}
+            value={state}
             options={[
               { value: 0, label: 'ทั้งหมด' },
-              ...LINE_BOOKING_STATE_INFO.map((s) => ({
+              ...states.map((s) => ({
                 value: s.value,
                 label:
                   s.value === LineBookingStates.New && newCount ? (

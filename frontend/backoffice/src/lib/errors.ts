@@ -25,6 +25,10 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.SiteRebuildUnavailable]: 'ยังไม่ได้ตั้งค่าการอัปเดตหน้าเว็บ กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.SiteRebuildFailed]: 'สั่งอัปเดตหน้าเว็บไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
   [ErrorCodes.LineNotConfigured]: 'ยังไม่ได้ตั้งค่าการเชื่อมต่อ LINE กรุณาติดต่อผู้ดูแลระบบ',
+  [ErrorCodes.LinePushFailed]: 'ส่งข้อความ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+  [ErrorCodes.LineQuotaExceeded]: 'LINE OA ส่งข้อความครบโควตาของเดือนนี้แล้ว กรุณาติดต่อผู้ดูแลระบบ',
+  [ErrorCodes.LineBookingNotNew]: 'ใบจองนี้ถูกยืนยันหรือยกเลิกไปแล้ว',
+  [ErrorCodes.LineBookingDocumentsNotReady]: 'เอกสารนี้ไม่ได้รอตรวจแล้ว (อาจถูกยืนยันหรือส่งกลับไปแล้ว)',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

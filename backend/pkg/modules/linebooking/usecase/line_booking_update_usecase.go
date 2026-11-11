@@ -17,7 +17,6 @@ const maxStaffNoteRunes = 2000
 func (u *lineBookingUseCase) UpdateValidate(request *models.LineBookingUpdateRequest) error {
 	return validation.ValidateStruct(request,
 		validation.Field(&request.ID, validation.Required, validation.UUID),
-		validation.Field(&request.State, validation.Required, validation.In(stateValues()...)),
 		validation.Field(&request.StaffNote, validation.RuneLength(0, maxStaffNoteRunes)),
 	)
 }
@@ -39,11 +38,10 @@ func (u *lineBookingUseCase) Update(ctx context.Context, request *models.LineBoo
 			return cerrors.NotFound()
 		}
 
-		target.State = request.State
 		target.StaffNote = request.StaffNote
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
-		if _, err = repo.Update(ctx, target, "state", "staff_note", "update_date", "update_by"); err != nil {
+		if _, err = repo.Update(ctx, target, "staff_note", "update_date", "update_by"); err != nil {
 			return err
 		}
 		updated, err = repo.FindByID(ctx, target.ID)
