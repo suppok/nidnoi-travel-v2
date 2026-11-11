@@ -35,6 +35,7 @@ import (
 	airlineusecase "backend/pkg/modules/airline/usecase"
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
+	bookingsourceusecase "backend/pkg/modules/bookingsource/usecase"
 	linebookingusecase "backend/pkg/modules/linebooking/usecase"
 	linecontactusecase "backend/pkg/modules/linecontact/usecase"
 	cityusecase "backend/pkg/modules/city/usecase"
@@ -123,6 +124,7 @@ func New(ctx context.Context) (*App, error) {
 	cityUseCase := cityusecase.NewCityUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	wholesaleUseCase := wholesaleusecase.NewWholesaleUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	airlineUseCase := airlineusecase.NewAirlineUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	bookingSourceUseCase := bookingsourceusecase.NewBookingSourceUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	mediaUseCase := mediausecase.NewMediaUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	tourProgramUseCase := tourprogramusecase.NewTourProgramUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
@@ -168,6 +170,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewCityAPIHandler(v1, apiHandler, cityUseCase).Init(jwtAuth, authPermissions)
 	handler.NewWholesaleAPIHandler(v1, apiHandler, wholesaleUseCase).Init(jwtAuth, authPermissions)
 	handler.NewAirlineAPIHandler(v1, apiHandler, airlineUseCase).Init(jwtAuth, authPermissions)
+	handler.NewBookingSourceAPIHandler(v1, apiHandler, bookingSourceUseCase).Init(jwtAuth, authPermissions)
 	handler.NewMediaAPIHandler(v1, apiHandler, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramAPIHandler(v1, apiHandler, tourProgramUseCase).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)

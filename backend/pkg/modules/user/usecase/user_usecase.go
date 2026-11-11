@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -43,6 +44,24 @@ func emailRules() []validation.Rule {
 
 func nameRules() []validation.Rule {
 	return []validation.Rule{validation.Required, validation.RuneLength(1, 100)}
+}
+
+// phoneRe matches a phone number after normalizePhone: digits, optionally with a leading +.
+var phoneRe = regexp.MustCompile(`^\+?[0-9]{9,15}$`)
+
+func phoneRules() []validation.Rule {
+	return []validation.Rule{validation.Match(phoneRe).Error("must be 9-15 digits")}
+}
+
+// normalizePhone removes spaces, dashes, dots and parentheses ("081-234 5678" → "0812345678").
+func normalizePhone(phone *string) {
+	*phone = strings.Map(func(r rune) rune {
+		switch r {
+		case ' ', '-', '.', '(', ')':
+			return -1
+		}
+		return r
+	}, strings.TrimSpace(*phone))
 }
 
 // rolesRules accepts the given roles only; create passes role.Assignable, update role.All (the

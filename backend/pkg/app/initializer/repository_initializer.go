@@ -16,6 +16,7 @@ func NewRepositoryRegistry(db query.AppIDB) *registry.RepositoryRegistry {
 		WholesaleRepository:        repository.NewWholesaleRepository(db),
 		WholesaleContactRepository: repository.NewWholesaleContactRepository(db),
 		AirlineRepository:          repository.NewAirlineRepository(db),
+		BookingSourceRepository:    repository.NewBookingSourceRepository(db),
 
 		TourProgramRepository:        repository.NewTourProgramRepository(db),
 		TourProgramCountryRepository: repository.NewTourProgramCountryRepository(db),

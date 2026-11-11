@@ -9,7 +9,7 @@ import RoleTags from '../../components/RoleTags.tsx';
 import { Permissions } from '../../constants/permissions.ts';
 import { ASSIGNABLE_ROLES, canManageUser, isSuperAdmin, type Role, ROLE_INFO } from '../../constants/roles.ts';
 import { errorMessage } from '../../lib/errors.ts';
-import { formatDateTime } from '../../lib/format.ts';
+import { formatDateTime, formatPhone } from '../../lib/format.ts';
 import ResetPasswordModal from '../../features/user/components/ResetPasswordModal.tsx';
 import UserFormModal from '../../features/user/components/UserFormModal.tsx';
 import { useUserList } from '../../features/user/hooks/useUserList.ts';
@@ -132,6 +132,7 @@ export default function UserListPage() {
             {user.id === me?.id && <span className="ml-1.5 text-[13px] text-ink-muted">(คุณ)</span>}
           </span>
           <span className="text-[13px] text-ink-muted">{user.email}</span>
+          {user.phone && <span className="text-[13px] text-ink-muted">{formatPhone(user.phone)}</span>}
         </div>
       ),
     },

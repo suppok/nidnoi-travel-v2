@@ -9,12 +9,15 @@ import { Permissions } from './constants/permissions.ts';
 import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
 import AirlineListPage from './routes/airlines/AirlineListPage.tsx';
+import BookingSourceListPage from './routes/booking-sources/BookingSourceListPage.tsx';
 import BookingListPage from './routes/bookings/BookingListPage.tsx';
 import LineBookingListPage from './routes/line-bookings/LineBookingListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
 import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
+import { SALES_TOOLS } from './features/sales-tool/tools.tsx';
+import SalesToolComingSoon from './routes/sales-tools/SalesToolComingSoon.tsx';
 import SiteBuildListPage from './routes/site-builds/SiteBuildListPage.tsx';
 import CityListPage from './routes/taxonomy/cities/CityListPage.tsx';
 import CountryDetailPage from './routes/taxonomy/countries/CountryDetailPage.tsx';
@@ -82,6 +85,14 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.AirlineList} />,
             children: [{ path: '/airlines', element: <AirlineListPage /> }],
+          },
+          ...SALES_TOOLS.map((tool) => {
+            const route = { path: tool.path, element: tool.element ?? <SalesToolComingSoon tool={tool} /> };
+            return tool.permission ? { element: <RequirePermission code={tool.permission} />, children: [route] } : route;
+          }),
+          {
+            element: <RequirePermission code={Permissions.BookingSourceList} />,
+            children: [{ path: '/booking-sources', element: <BookingSourceListPage /> }],
           },
           {
             element: <RequirePermission code={Permissions.UserList} />,

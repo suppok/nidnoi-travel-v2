@@ -48,6 +48,11 @@ var (
 	CodeTaken = ErrCode("CODE_TAKEN", "Code is already in use")
 )
 
+// Booking source
+var (
+	NameTaken = ErrCode("NAME_TAKEN", "Name is already in use")
+)
+
 // Media upload
 var (
 	MediaTypeNotAllowed = ErrCode("MEDIA_TYPE_NOT_ALLOWED", "This file type is not allowed for this purpose")

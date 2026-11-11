@@ -17,6 +17,7 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.SlugTaken]: 'Slug นี้ถูกใช้แล้ว',
   [ErrorCodes.RefIdTaken]: 'Ref ID นี้ถูกใช้แล้ว',
   [ErrorCodes.CodeTaken]: 'รหัสนี้ถูกใช้แล้ว',
+  [ErrorCodes.NameTaken]: 'ชื่อนี้ถูกใช้แล้ว',
   [ErrorCodes.MediaTypeNotAllowed]: 'ไฟล์ประเภทนี้อัปโหลดในช่องนี้ไม่ได้',
   [ErrorCodes.MediaTooLarge]: 'ไฟล์ใหญ่เกินไป (ไม่เกิน 10 MB)',
   [ErrorCodes.ImageTooSmall]: 'รูปมีขนาดเล็กเกินไป',

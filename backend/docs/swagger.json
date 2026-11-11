@@ -474,6 +474,241 @@
                 }
             }
         },
+        "/booking-sources": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces every editable field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking-sources"
+                ],
+                "summary": "Update a booking source",
+                "parameters": [
+                    {
+                        "description": "Booking source",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "NAME_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Names are unique, case-insensitive.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking-sources"
+                ],
+                "summary": "Create a booking source",
+                "parameters": [
+                    {
+                        "description": "Booking source",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "NAME_TAKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/booking-sources/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking-sources"
+                ],
+                "summary": "List booking sources",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/booking-sources/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking-sources"
+                ],
+                "summary": "Soft-delete or restore a booking source",
+                "parameters": [
+                    {
+                        "description": "Status",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceUpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data: null",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/booking-sources/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking-sources"
+                ],
+                "summary": "Get a booking source",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking source ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/bookings": {
             "put": {
                 "security": [
@@ -2810,6 +3045,31 @@
                 }
             }
         },
+        "/users/sales": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Active users with the sales role, by name, with their phone. defaultId is the caller when they are one of them.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List sales users for sales tools",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_user_models.UserSalesListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/status": {
             "put": {
                 "security": [
@@ -3967,6 +4227,199 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceCreateRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "optional",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceCreateResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "label for the source's reference name (\"ชื่อ \u003cshortName\u003e\"); \"\" = none",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceGetResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "label for the source's reference name (\"ชื่อ \u003cshortName\u003e\"); \"\" = none",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceItem": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "label for the source's reference name (\"ชื่อ \u003cshortName\u003e\"); \"\" = none",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceListRequest": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "description": "matches name or short name",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 500 (dropdowns load every source)",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "omitted = all",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_bookingsource_models.BookingSourceItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "label for the source's reference name (\"ชื่อ \u003cshortName\u003e\"); \"\" = none",
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_bookingsource_models.BookingSourceUpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "false = soft delete",
+                    "type": "boolean"
                 }
             }
         },
@@ -6736,6 +7189,10 @@
                 "name": {
                     "type": "string"
                 },
+                "phone": {
+                    "description": "optional; spaces and dashes are removed",
+                    "type": "string"
+                },
                 "roles": {
                     "description": "at least one",
                     "type": "array",
@@ -6772,6 +7229,10 @@
                     "type": "boolean"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "digits only; \"\" = none",
                     "type": "string"
                 },
                 "roles": {
@@ -6813,6 +7274,10 @@
                 "name": {
                     "type": "string"
                 },
+                "phone": {
+                    "description": "digits only; \"\" = none",
+                    "type": "string"
+                },
                 "roles": {
                     "type": "array",
                     "items": {
@@ -6850,6 +7315,10 @@
                     "type": "boolean"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "digits only; \"\" = none",
                     "type": "string"
                 },
                 "roles": {
@@ -6922,6 +7391,37 @@
                 }
             }
         },
+        "backend_pkg_modules_user_models.UserSalesItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "digits only; \"\" = none",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_user_models.UserSalesListResponse": {
+            "type": "object",
+            "properties": {
+                "defaultId": {
+                    "description": "DefaultID is the caller when they are in Items, otherwise \"\".",
+                    "type": "string"
+                },
+                "items": {
+                    "description": "Items are active users with the sales role, by name.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_user_models.UserSalesItem"
+                    }
+                }
+            }
+        },
         "backend_pkg_modules_user_models.UserUpdateRequest": {
             "type": "object",
             "properties": {
@@ -6932,6 +7432,10 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "optional; spaces and dashes are removed",
                     "type": "string"
                 },
                 "roles": {
@@ -6966,6 +7470,10 @@
                     "type": "boolean"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "digits only; \"\" = none",
                     "type": "string"
                 },
                 "roles": {

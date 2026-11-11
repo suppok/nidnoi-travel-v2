@@ -16,6 +16,7 @@ export const ErrorCodes = {
   SlugTaken: 'SLUG_TAKEN',
   RefIdTaken: 'REF_ID_TAKEN',
   CodeTaken: 'CODE_TAKEN',
+  NameTaken: 'NAME_TAKEN',
   MediaTypeNotAllowed: 'MEDIA_TYPE_NOT_ALLOWED',
   MediaTooLarge: 'MEDIA_TOO_LARGE',
   ImageTooSmall: 'IMAGE_TOO_SMALL',

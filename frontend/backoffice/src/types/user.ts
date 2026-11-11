@@ -5,6 +5,7 @@ export type User = {
   id: string;
   email: string;
   name: string;
+  phone: string; // digits only, '' = none
   roles: Role[]; // at least one
   status: boolean; // false = deactivated (soft delete)
   mustChangePassword: boolean;
@@ -25,6 +26,7 @@ export type UserListRequest = Paging & {
 export type UserCreateRequest = {
   email: string;
   name: string;
+  phone: string; // optional ('')
   roles: Role[];
   temporaryPassword: string; // user must change it at first login
 };
@@ -34,6 +36,7 @@ export type UserUpdateRequest = {
   id: string;
   email: string;
   name: string;
+  phone: string;
   roles: Role[];
 };
 
@@ -47,4 +50,11 @@ export type UserStatusRequest = {
 export type UserPasswordResetRequest = {
   id: string;
   temporaryPassword: string;
+};
+
+// GET /users/sales — sales person options for the sales tools.
+export type SalesUser = { id: string; name: string; phone: string };
+export type SalesUserListResponse = {
+  items: SalesUser[]; // active sales users, by name
+  defaultId: string; // the caller when they are one of them, else ''
 };

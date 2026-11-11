@@ -5,6 +5,7 @@ import coremodels "backend/pkg/core/api/models"
 type UserCreateRequest struct {
 	Email             string   `json:"email"`
 	Name              string   `json:"name"`
+	Phone             string   `json:"phone"`             // optional; spaces and dashes are removed
 	Roles             []string `json:"roles"`             // at least one
 	TemporaryPassword string   `json:"temporaryPassword"` // user must change it at first login
 

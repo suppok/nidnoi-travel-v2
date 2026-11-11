@@ -1,5 +1,6 @@
 import type { ListResponse } from '../types/api.ts';
 import type {
+  SalesUserListResponse,
   User,
   UserCreateRequest,
   UserListRequest,
@@ -15,5 +16,6 @@ export const usersApi = {
   create: (body: UserCreateRequest) => request<User>('POST', '/users', body),
   update: (body: UserUpdateRequest) => request<User>('PUT', '/users', body),
   updateStatus: (body: UserStatusRequest) => request<null>('PUT', '/users/status', body),
+  sales: () => request<SalesUserListResponse>('GET', '/users/sales'),
   resetPassword: (body: UserPasswordResetRequest) => request<null>('PUT', '/users/password', body),
 };
