@@ -10,7 +10,7 @@ import { applyFieldErrors, errorMessage } from '../../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../../lib/format.ts';
 import type { LineBooking } from '../../../types/lineBooking.ts';
 import LineContactSection from './LineContactSection.tsx';
-import { lineBookingLines, type Line, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
+import { dueDate, lineBookingLines, type Line, paymentPlan, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
 
 type Props = {
   bookingId: string | null;
@@ -142,6 +142,25 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
                 </a>
                 <Typography.Text copyable={{ text: booking.customerPhone }} className="ml-2" />
               </Descriptions.Item>
+              <Descriptions.Item label="ที่อยู่">
+                {booking.customerAddress ? <span className="whitespace-pre-wrap">{booking.customerAddress}</span> : <span className="text-ink-muted">-</span>}
+              </Descriptions.Item>
+              <Descriptions.Item label="ช่องทางการจอง">
+                {booking.bookingSource ? (
+                  <>
+                    {booking.bookingSource.name}
+                    {booking.refName && (
+                      <span className="text-ink-muted">
+                        {' '}
+                        · {booking.bookingSource.shortName ? `ชื่อ ${booking.bookingSource.shortName}` : 'ชื่อ'}: {booking.refName}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-ink-muted">{booking.refName || '-'}</span>
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="เลข booking">{booking.refBookingNo || <span className="text-ink-muted">-</span>}</Descriptions.Item>
               <Descriptions.Item label="หมายเหตุ">
                 {booking.note ? <span className="whitespace-pre-wrap">{booking.note}</span> : <span className="text-ink-muted">-</span>}
               </Descriptions.Item>
@@ -178,6 +197,9 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
                   {booking.tourName}
                 </Descriptions.Item>
                 <Descriptions.Item label="วันเดินทาง">{tripDates(booking)}</Descriptions.Item>
+                {booking.adultPriceBeforeDiscount !== null && booking.adultPriceBeforeDiscount > booking.adultTwinPrice && (
+                  <Descriptions.Item label="ราคาผู้ใหญ่ก่อนลด">{formatBaht(booking.adultPriceBeforeDiscount)}</Descriptions.Item>
+                )}
               </Descriptions>
               <Table<Line>
                 rowKey="key"
@@ -185,8 +207,8 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
                 pagination={false}
                 dataSource={lineBookingLines(booking)}
                 columns={[
-                  { title: 'ห้องพัก', dataIndex: 'label' },
-                  { title: 'ราคา/ท่าน', dataIndex: 'price', align: 'right', render: (v: number) => formatBaht(v) },
+                  { title: 'รายการ', dataIndex: 'label' },
+                  { title: 'ราคา/หน่วย', dataIndex: 'price', align: 'right', render: (v: number) => formatBaht(v) },
                   { title: 'จำนวน', dataIndex: 'count', align: 'center' },
                   { title: 'รวม', key: 'sum', align: 'right', render: (_, l) => formatBaht(l.price * l.count) },
                 ]}
@@ -207,6 +229,8 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
             </div>
           </section>
 
+          <PaymentDetails booking={booking} />
+
           <section>
             <Typography.Title level={5}>การติดตาม</Typography.Title>
             <Form<FormValues> form={form} layout="vertical" onFinish={save} disabled={!editable}>
@@ -221,5 +245,34 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
         </div>
       )}
     </Drawer>
+  );
+}
+
+function PaymentDetails({ booking }: { booking: LineBooking }) {
+  const plan = paymentPlan(booking);
+  return (
+    <section>
+      <Typography.Title level={5}>การชำระเงิน</Typography.Title>
+      <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
+        <Descriptions.Item label="วิธีชำระ">
+          {booking.paymentMethod === 'credit' ? `บัตรเครดิต (ค่าธรรมเนียม ${booking.creditFeePercent}%)` : 'โอนเงิน'}
+        </Descriptions.Item>
+        {plan ? (
+          <>
+            <Descriptions.Item label="มัดจำ">
+              {formatBaht(plan.depositToPay)} <span className="text-ink-muted">(ท่านละ {formatBaht(booking.depositPerPerson)})</span> ·{' '}
+              {dueDate(booking.depositDueDate, booking.depositDueTime)}
+            </Descriptions.Item>
+            <Descriptions.Item label="ส่วนเหลือ">
+              {formatBaht(plan.remaining)} · {dueDate(booking.remainingDueDate)}
+            </Descriptions.Item>
+          </>
+        ) : (
+          <Descriptions.Item label="ชำระเต็มจำนวน">
+            {formatBaht(booking.totalPrice)} · {dueDate(booking.fullDueDate, booking.fullDueTime)}
+          </Descriptions.Item>
+        )}
+      </Descriptions>
+    </section>
   );
 }

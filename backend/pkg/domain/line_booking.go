@@ -43,7 +43,34 @@ Table: line_booking
 [29] update_by               UUID         null: false
 [30] line_contact_id         UUID         null: true   (FK line_contact.id, the customer's LINE OA chat)
 [31] sales_user_id           UUID         null: true   (FK app_user.id, the sales person who owns the booking)
+[32] booking_source_id       UUID         null: true   (FK booking_source.id)
+[33] ref_name                TEXT         null: false  default: ''  (customer's name on the source)
+[34] ref_booking_no          TEXT         null: false  default: ''  (booking number on the source)
+[35] customer_address        TEXT         null: false  default: ''
+[36] infant_count            INTEGER      null: false  default: 0
+[37] infant_price            INTEGER      null: true
+[38] adult_price_before_discount INTEGER  null: true
+[39] discount_per_person     INTEGER      null: false  default: 0
+[40] charges                 JSONB        null: false  default: '[]'
+[41] payment_method          TEXT         null: false  default: 'transfer'  (transfer | credit)
+[42] credit_fee_bps          INTEGER      null: false  default: 0  (300 = 3%)
+[43] card_fee                INTEGER      null: false  default: 0
+[44] is_deposit              BOOLEAN      null: false  default: false
+[45] deposit_per_person      INTEGER      null: false  default: 0
+[46] deposit_due_date        DATE         null: true
+[47] deposit_due_time        TEXT         null: false  default: ''  (HH:mm)
+[48] remaining_due_date      DATE         null: true
+[49] full_due_date           DATE         null: true
+[50] full_due_time           TEXT         null: false  default: ''  (HH:mm)
 */
+
+// LineBookingCharge is one extra charge line (visa, taxes, options, ...): count x price.
+type LineBookingCharge struct {
+	Kind  string `json:"kind"` // linebookingpayment.Charge*
+	Name  string `json:"name"` // only for kind "option"
+	Count int    `json:"count"`
+	Price int    `json:"price"`
+}
 
 // LineBooking is a booking submitted by sales staff from the LIFF app inside LINE OA.
 type LineBooking struct {
@@ -83,6 +110,33 @@ type LineBooking struct {
 
 	SalesUserID null.String `bun:"sales_user_id"          json:"salesUserId" swaggertype:"string"` // [31] UUID
 
+	BookingSourceID          null.String         `bun:"booking_source_id"            json:"bookingSourceId" swaggertype:"string"`           // [32] UUID
+	RefName                  string              `bun:"ref_name"                     json:"refName"`                                        // [33] TEXT
+	RefBookingNo             string              `bun:"ref_booking_no"               json:"refBookingNo"`                                   // [34] TEXT
+	CustomerAddress          string              `bun:"customer_address"             json:"customerAddress"`                                // [35] TEXT
+	InfantCount              int                 `bun:"infant_count"                 json:"infantCount"`                                    // [36] INTEGER
+	InfantPrice              null.Int            `bun:"infant_price"                 json:"infantPrice" swaggertype:"integer"`              // [37] INTEGER
+	AdultPriceBeforeDiscount null.Int            `bun:"adult_price_before_discount"  json:"adultPriceBeforeDiscount" swaggertype:"integer"` // [38] INTEGER
+	DiscountPerPerson        int                 `bun:"discount_per_person"          json:"discountPerPerson"`                              // [39] INTEGER
+	Charges                  []LineBookingCharge `bun:"charges,type:jsonb"           json:"charges"`                                        // [40] JSONB
+	PaymentMethod            string              `bun:"payment_method"               json:"paymentMethod"`                                  // [41] TEXT
+	CreditFeeBps             int                 `bun:"credit_fee_bps"               json:"creditFeeBps"`                                   // [42] INTEGER
+	CardFee                  int                 `bun:"card_fee"                     json:"cardFee"`                                        // [43] INTEGER
+	IsDeposit                bool                `bun:"is_deposit"                   json:"isDeposit"`                                      // [44] BOOLEAN
+	DepositPerPerson         int                 `bun:"deposit_per_person"           json:"depositPerPerson"`                               // [45] INTEGER
+	DepositDueDate           null.Time           `bun:"deposit_due_date,type:date"   json:"depositDueDate" swaggertype:"string"`            // [46] DATE
+	DepositDueTime           string              `bun:"deposit_due_time"             json:"depositDueTime"`                                 // [47] TEXT
+	RemainingDueDate         null.Time           `bun:"remaining_due_date,type:date" json:"remainingDueDate" swaggertype:"string"`          // [48] DATE
+	FullDueDate              null.Time           `bun:"full_due_date,type:date"      json:"fullDueDate" swaggertype:"string"`               // [49] DATE
+	FullDueTime              string              `bun:"full_due_time"                json:"fullDueTime"`                                    // [50] TEXT
+
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
 	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
+	// BookingSource is where the customer booked (LINE OA, Facebook, ...).
+	BookingSource *BookingSource `bun:"rel:belongs-to,join:booking_source_id=id" json:"bookingSource,omitempty"`
+}
+
+// Travellers counts everyone on the booking, infants included.
+func (b *LineBooking) Travellers() int {
+	return b.AdultTwinCount + b.AdultSingleCount + b.ChildWithBedCount + b.ChildNoBedCount + b.InfantCount
 }

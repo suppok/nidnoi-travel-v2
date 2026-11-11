@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 	"backend/pkg/constants/bookingstate"
 	"backend/pkg/constants/errorcode"
+	"backend/pkg/constants/linebookingpayment"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/constants/tourprogramstate"
 	coremodels "backend/pkg/core/api/models"
@@ -28,6 +30,12 @@ const (
 	maxTravellers            = 50
 	maxNameRunes             = 200
 	maxNoteRunes             = 2000
+	maxAddressRunes          = 500
+	maxRefRunes              = 200
+	maxChargeNameRunes       = 100
+	maxCharges               = 20
+	maxUnitPrice             = 10_000_000
+	maxCreditFeePercent      = 20.0
 	minPhoneDigits           = 9
 	maxPhoneDigits           = 15
 	maxNoAttempts            = 3
@@ -37,6 +45,7 @@ const (
 var (
 	publicCodePattern = regexp.MustCompile(`^[A-Za-z0-9]{1,32}$`)
 	phonePattern      = regexp.MustCompile(`^\+?[0-9][0-9 -]*[0-9]$`)
+	timePattern       = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
 )
 
 var isLineBookingNoTaken = func(err error) bool {
@@ -60,21 +69,43 @@ func phoneRule(value any) error {
 	return nil
 }
 
+func trimNull(v null.String) null.String {
+	s := strings.TrimSpace(v.String)
+	return null.NewString(s, v.Valid && s != "")
+}
+
 func normalizeCreate(r *models.LineBookingCreateRequest) {
 	r.SalesUserID = strings.TrimSpace(r.SalesUserID)
 	r.TourCode = strings.TrimSpace(r.TourCode)
 	r.CustomerName = strings.TrimSpace(r.CustomerName)
 	r.CustomerPhone = strings.TrimSpace(r.CustomerPhone)
+	r.CustomerAddress = strings.TrimSpace(r.CustomerAddress)
 	r.SlipImage = strings.TrimSpace(r.SlipImage)
 	r.Note = strings.TrimSpace(r.Note)
-	if r.LineContactID.Valid {
-		id := strings.TrimSpace(r.LineContactID.String)
-		r.LineContactID = null.NewString(id, id != "")
+	r.RefName = strings.TrimSpace(r.RefName)
+	r.RefBookingNo = strings.TrimSpace(r.RefBookingNo)
+	r.LineContactID = trimNull(r.LineContactID)
+	r.BookingSourceID = trimNull(r.BookingSourceID)
+	r.DepositDueDate = trimNull(r.DepositDueDate)
+	r.RemainingDueDate = trimNull(r.RemainingDueDate)
+	r.FullDueDate = trimNull(r.FullDueDate)
+	r.DepositDueTime = strings.TrimSpace(r.DepositDueTime)
+	r.FullDueTime = strings.TrimSpace(r.FullDueTime)
+	if r.PaymentMethod == "" {
+		r.PaymentMethod = linebookingpayment.Transfer
+	}
+	for i := range r.Charges {
+		c := &r.Charges[i]
+		c.Name = strings.TrimSpace(c.Name)
+		if c.Kind != linebookingpayment.ChargeOption {
+			c.Name = ""
+		}
 	}
 }
 
 func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateRequest) error {
 	count := []validation.Rule{validation.Min(0), validation.Max(maxTravellers)}
+	price := []validation.Rule{validation.Min(0), validation.Max(maxUnitPrice)}
 	err := validation.ValidateStruct(request,
 		validation.Field(&request.SalesUserID, validation.Required, validation.UUID),
 		validation.Field(&request.TourCode, validation.Required),
@@ -83,20 +114,71 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 		validation.Field(&request.AdultSingle, count...),
 		validation.Field(&request.ChildWithBed, count...),
 		validation.Field(&request.ChildNoBed, count...),
+		validation.Field(&request.Infant, count...),
+		validation.Field(&request.AdultPrice, price...),
+		validation.Field(&request.SingleSupplement, price...),
+		validation.Field(&request.ChildWithBedPrice, price...),
+		validation.Field(&request.ChildNoBedPrice, price...),
+		validation.Field(&request.InfantPrice, price...),
+		validation.Field(&request.AdultPriceBeforeDiscount, price...),
+		validation.Field(&request.DiscountPerPerson, price...),
+		validation.Field(&request.DepositPerPerson, price...),
+		validation.Field(&request.Charges, validation.Length(0, maxCharges)),
+		validation.Field(&request.PaymentMethod, validation.In(linebookingpayment.Methods...)),
+		validation.Field(&request.CreditFeePercent, validation.Min(0.0), validation.Max(maxCreditFeePercent)),
+		validation.Field(&request.DepositDueTime, validation.Match(timePattern)),
+		validation.Field(&request.FullDueTime, validation.Match(timePattern)),
 		validation.Field(&request.CustomerName, validation.Required, validation.RuneLength(1, maxNameRunes)),
 		validation.Field(&request.CustomerPhone, validation.Required, validation.By(phoneRule)),
+		validation.Field(&request.CustomerAddress, validation.RuneLength(0, maxAddressRunes)),
+		validation.Field(&request.RefName, validation.RuneLength(0, maxRefRunes)),
+		validation.Field(&request.RefBookingNo, validation.RuneLength(0, maxRefRunes)),
 		validation.Field(&request.SlipImage, validation.Required),
 		validation.Field(&request.Note, validation.RuneLength(0, maxNoteRunes)),
 	)
 	if err != nil {
 		return err
 	}
-	if request.LineContactID.Valid {
-		if err := validation.Validate(request.LineContactID.String, validation.UUID); err != nil {
-			return validation.Errors{"lineContactId": err}
+	for field, v := range map[string]null.String{"lineContactId": request.LineContactID, "bookingSourceId": request.BookingSourceID} {
+		if v.Valid {
+			if err := validation.Validate(v.String, validation.UUID); err != nil {
+				return validation.Errors{field: err}
+			}
 		}
 	}
-	switch adults, total := request.AdultTwin+request.AdultSingle, request.AdultTwin+request.AdultSingle+request.ChildWithBed+request.ChildNoBed; {
+	for field, v := range map[string]null.String{
+		"depositDueDate":   request.DepositDueDate,
+		"remainingDueDate": request.RemainingDueDate,
+		"fullDueDate":      request.FullDueDate,
+	} {
+		if v.Valid {
+			if err := validation.Validate(v.String, validation.Date(models.DateLayout)); err != nil {
+				return validation.Errors{field: err}
+			}
+		}
+	}
+	for i := range request.Charges {
+		c := &request.Charges[i]
+		nameRules := []validation.Rule{validation.RuneLength(0, maxChargeNameRunes)}
+		if c.Kind == linebookingpayment.ChargeOption {
+			nameRules = append(nameRules, validation.Required)
+		}
+		if err := validation.ValidateStruct(c,
+			validation.Field(&c.Kind, validation.Required, validation.In(linebookingpayment.ChargeKinds...)),
+			validation.Field(&c.Name, nameRules...),
+			validation.Field(&c.Count, count...),
+			validation.Field(&c.Price, price...),
+		); err != nil {
+			return validation.Errors{fmt.Sprintf("charges.%d", i): err}
+		}
+	}
+	if request.Infant > 0 && !request.InfantPrice.Valid {
+		return validation.Errors{"infantPrice": errors.New("required when there are infants")}
+	}
+	if request.IsDeposit && request.DepositPerPerson <= 0 {
+		return validation.Errors{"depositPerPerson": errors.New("required for a deposit")}
+	}
+	switch adults, total := request.AdultTwin+request.AdultSingle, request.AdultTwin+request.AdultSingle+request.ChildWithBed+request.ChildNoBed+request.Infant; {
 	case adults < 1:
 		return validation.Errors{"adultTwin": errors.New("at least one adult is required")}
 	case total > maxTravellers:
@@ -105,44 +187,112 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 	return nil
 }
 
-// quoteLine prices the request from the period (same logic as customer booking).
+// quoteLine prices the request like the backoffice summary tool (summary.ts computeTotals). Unit
+// prices default to the period's; total = price rows - discount per traveller + charges + card fee,
+// where the card fee is on the deposit when there is one, otherwise on the whole amount.
 func quoteLine(p *domain.TourProgramPeriod, r *models.LineBookingCreateRequest) (*domain.LineBooking, error) {
-	single := null.Int{}
-	if p.SingleSupplement.Valid {
-		single = null.IntFrom(int64(p.Price) + p.SingleSupplement.Int64)
+	or := func(v, fallback null.Int) null.Int {
+		if v.Valid {
+			return v
+		}
+		return fallback
 	}
+	adult := int(or(r.AdultPrice, null.IntFrom(int64(p.Price))).Int64)
+	supplement := or(r.SingleSupplement, p.SingleSupplement)
+	single := null.Int{}
+	if supplement.Valid {
+		single = null.IntFrom(int64(adult) + supplement.Int64)
+	}
+	childWithBed := or(r.ChildWithBedPrice, p.ChildWithBedPrice)
+	childNoBed := or(r.ChildNoBedPrice, p.ChildNoBedPrice)
+	infant := null.Int{}
+	if r.Infant > 0 {
+		infant = r.InfantPrice
+	}
+
 	fields := validation.Errors{}
 	for name, row := range map[string]struct {
 		count int
 		price null.Int
 	}{
 		"adultSingle":  {r.AdultSingle, single},
-		"childWithBed": {r.ChildWithBed, p.ChildWithBedPrice},
-		"childNoBed":   {r.ChildNoBed, p.ChildNoBedPrice},
+		"childWithBed": {r.ChildWithBed, childWithBed},
+		"childNoBed":   {r.ChildNoBed, childNoBed},
 	} {
 		if row.count > 0 && !row.price.Valid {
-			fields[name] = errors.New("this period has no such price")
+			fields[name] = errors.New("this period has no such price; enter one")
 		}
 	}
 	if len(fields) > 0 {
 		return nil, fields
 	}
 
-	total := r.AdultTwin*p.Price +
+	b := &domain.LineBooking{
+		AdultTwinCount:           r.AdultTwin,
+		AdultTwinPrice:           adult,
+		AdultSingleCount:         r.AdultSingle,
+		AdultSinglePrice:         single,
+		ChildWithBedCount:        r.ChildWithBed,
+		ChildWithBedPrice:        childWithBed,
+		ChildNoBedCount:          r.ChildNoBed,
+		ChildNoBedPrice:          childNoBed,
+		InfantCount:              r.Infant,
+		InfantPrice:              infant,
+		AdultPriceBeforeDiscount: r.AdultPriceBeforeDiscount,
+		DiscountPerPerson:        r.DiscountPerPerson,
+		Charges:                  make([]domain.LineBookingCharge, 0, len(r.Charges)),
+		PaymentMethod:            r.PaymentMethod,
+		IsDeposit:                r.IsDeposit,
+	}
+	travellers := b.Travellers()
+	subtotal := r.AdultTwin*adult +
 		r.AdultSingle*int(single.Int64) +
-		r.ChildWithBed*int(p.ChildWithBedPrice.Int64) +
-		r.ChildNoBed*int(p.ChildNoBedPrice.Int64)
-	return &domain.LineBooking{
-		AdultTwinCount:    r.AdultTwin,
-		AdultTwinPrice:    p.Price,
-		AdultSingleCount:  r.AdultSingle,
-		AdultSinglePrice:  single,
-		ChildWithBedCount: r.ChildWithBed,
-		ChildWithBedPrice: p.ChildWithBedPrice,
-		ChildNoBedCount:   r.ChildNoBed,
-		ChildNoBedPrice:   p.ChildNoBedPrice,
-		TotalPrice:        total,
-	}, nil
+		r.ChildWithBed*int(childWithBed.Int64) +
+		r.ChildNoBed*int(childNoBed.Int64) +
+		r.Infant*int(infant.Int64) -
+		r.DiscountPerPerson*travellers
+	for _, c := range r.Charges {
+		if c.Count == 0 || c.Price == 0 {
+			continue // an unused line; the summary text leaves it out too
+		}
+		b.Charges = append(b.Charges, domain.LineBookingCharge{Kind: c.Kind, Name: c.Name, Count: c.Count, Price: c.Price})
+		subtotal += c.Count * c.Price
+	}
+	if subtotal < 0 {
+		return nil, validation.Errors{"discountPerPerson": errors.New("the discount is more than the price")}
+	}
+
+	deposit := 0
+	if r.IsDeposit {
+		b.DepositPerPerson = r.DepositPerPerson
+		deposit = r.DepositPerPerson * travellers
+		if deposit > subtotal {
+			return nil, validation.Errors{"depositPerPerson": errors.New("the deposit is more than the total")}
+		}
+	}
+	if r.PaymentMethod == linebookingpayment.Credit {
+		b.CreditFeeBps = int(math.Round(r.CreditFeePercent * 100))
+		base := subtotal
+		if r.IsDeposit {
+			base = deposit
+		}
+		b.CardFee = cardFee(base, b.CreditFeeBps)
+	}
+	b.TotalPrice = subtotal + b.CardFee
+	return b, nil
+}
+
+// cardFee is amount x bps / 10000, rounded up to the next baht (same as the summary tool).
+func cardFee(amount, bps int) int {
+	return (amount*bps + 9999) / 10000
+}
+
+func parseDate(v null.String) null.Time {
+	if !v.Valid {
+		return null.Time{}
+	}
+	t, err := time.Parse(models.DateLayout, v.String)
+	return null.NewTime(t, err == nil)
 }
 
 // bookable checks the period is still open for booking.
@@ -243,6 +393,16 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 			}
 			b.LineContactID = request.LineContactID
 		}
+		if request.BookingSourceID.Valid {
+			source, err := u.repositoryRegistry.BookingSourceRepository.WithTx(appDB).FindByID(ctx, request.BookingSourceID.String)
+			if err != nil {
+				return err
+			}
+			if source == nil || !source.Status {
+				return cerrors.FieldError("bookingSourceId", "no such booking source")
+			}
+			b.BookingSourceID = request.BookingSourceID
+		}
 
 		now := time.Now()
 		b.ID = utils.NewID()
@@ -257,6 +417,17 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		b.EndDate = period.EndDate
 		b.CustomerName = request.CustomerName
 		b.CustomerPhone = request.CustomerPhone
+		b.CustomerAddress = request.CustomerAddress
+		b.RefName = request.RefName
+		b.RefBookingNo = request.RefBookingNo
+		if b.IsDeposit {
+			b.DepositDueDate = parseDate(request.DepositDueDate)
+			b.DepositDueTime = request.DepositDueTime
+			b.RemainingDueDate = parseDate(request.RemainingDueDate)
+		} else {
+			b.FullDueDate = parseDate(request.FullDueDate)
+			b.FullDueTime = request.FullDueTime
+		}
 		b.SlipImage = request.SlipImage
 		b.Note = request.Note
 		b.State = linebookingstate.New

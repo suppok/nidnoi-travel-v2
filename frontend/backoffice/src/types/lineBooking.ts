@@ -33,11 +33,37 @@ export type LineBooking = {
   status: boolean;
   createDate: string;
   updateDate: string;
+  // Deal details from the "สรุปยอดโอน" summary; defaults (0, [], 'transfer', null) on older bookings.
+  // Unit prices above are the agreed ones; totalPrice = rows - discount + charges + cardFee.
+  infantCount: number;
+  infantPrice: number | null;
+  adultPriceBeforeDiscount: number | null;
+  discountPerPerson: number; // per traveller, infants included
+  charges: LineBookingCharge[];
+  paymentMethod: LineBookingPaymentMethod;
+  creditFeePercent: number;
+  cardFee: number;
+  isDeposit: boolean;
+  depositPerPerson: number;
+  depositDueDate: string | null; // YYYY-MM-DD
+  depositDueTime: string; // HH:mm or ''
+  remainingDueDate: string | null;
+  fullDueDate: string | null;
+  fullDueTime: string;
+  customerAddress: string;
+  bookingSource: { id: string; name: string; shortName: string } | null;
+  refName: string; // the customer's name on the booking source
+  refBookingNo: string;
   // The sales person who owns the booking; null on bookings made before it was recorded.
   salesUser: { id: string; name: string } | null;
   // The customer's LINE OA chat; null until staff link it.
   lineContact: LineBookingContact | null;
 };
+
+// MUST match backend pkg/constants/linebookingpayment.
+export type LineBookingPaymentMethod = 'transfer' | 'credit';
+export type LineBookingChargeKind = 'visa' | 'foreignPassport' | 'joinLand' | 'fuelTax' | 'airportTax' | 'option';
+export type LineBookingCharge = { kind: LineBookingChargeKind; name: string; count: number; price: number };
 
 export type LineBookingContact = {
   id: string;

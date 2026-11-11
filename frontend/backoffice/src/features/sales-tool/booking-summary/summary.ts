@@ -2,6 +2,8 @@ import dayjs from 'dayjs';
 import { formatPhone } from '../../../lib/format.ts';
 
 // Pure logic of the booking summary tool: totals and the text sales paste into LINE OA / Facebook.
+// The LIFF app parses this text back (frontend/liff/src/lib/parseSummary.ts): keep the
+// "• <label> : <value>" lines and their labels stable, or update the parser too.
 
 export type PaymentMethod = 'transfer' | 'credit';
 
@@ -15,7 +17,7 @@ export type SummaryInput = {
   refName: string; // the customer's name on the source (e.g. their LINE name)
   refBookingNo: string;
 
-  tour: { name: string; days: number; nights: number; pdfFile: string | null; airlineName: string | null; wholesaleName: string } | null;
+  tour: { code: string; name: string; days: number; nights: number; pdfFile: string | null; airlineName: string | null; wholesaleName: string } | null;
   period: { startDate: string; endDate: string } | null; // YYYY-MM-DD
 
   adult: PriceLine;
@@ -64,9 +66,10 @@ export function resolvedCount(line: PerTravellerLine, travellers: number): numbe
   return line.count === null ? travellers : n(line.count);
 }
 
-// Card fee on an amount, rounded up to the next baht.
+// Card fee on an amount, rounded up to the next baht. Computed in basis points so float error never
+// adds a baht (15,000 x 2.6% = 390); the backend's LINE booking quote does the same.
 function cardFee(amount: number, percent: number): number {
-  return Math.ceil((amount * percent) / 100);
+  return Math.ceil((amount * Math.round(percent * 100)) / 10000);
 }
 
 export function computeTotals(input: SummaryInput): SummaryTotals {
@@ -150,6 +153,7 @@ export function buildSummaryText(input: SummaryInput, totals: SummaryTotals = co
   push(`• ${refNameLabel(input.source)} : ${orDash(input.refName)}`);
   push(`• เลข booking : ${orDash(input.refBookingNo)}`);
   push(`• ชื่อโปรแกรม : ${tour ? `${tour.name} (${tour.days} วัน ${tour.nights} คืน)` : '-'}`);
+  push(`• รหัสทัวร์ : ${orDash(tour?.code)}`);
   push(`• โปรแกรมทัวร์ : ${orDash(tour?.pdfFile)}`);
   push(`• สายการบิน : ${orDash(tour?.airlineName)}`);
   push(`• Wholesale : ${orDash(tour?.wholesaleName)}`);

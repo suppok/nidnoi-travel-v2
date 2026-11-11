@@ -363,7 +363,7 @@ Booking requests sent from the customer site (leads — no seats reserved, no pa
 
 - **Own LINE account:** user menu → "เชื่อมบัญชี LINE" (`features/line-link/LineLinkModal.tsx`). `POST /auth/line-link` returns a one-time LIFF URL (10 min) shown with antd `QRCode` (plus a copyable link for LINE on PC); the modal polls `/auth/me` every 3 s until `line` changes, then refreshes the user. "ยกเลิกการเชื่อม" calls `POST /auth/line-unlink`. Only linked sales/admin users can use the LIFF booking app. The users list shows each user's linked LINE name. The mock answers `LINE_NOT_CONFIGURED`.
 
-- `/line-bookings` — bookings sales submit from the LIFF app; `LineBookingDrawer` shows the slip, travellers, state and staff note.
+- `/line-bookings` — bookings sales submit from the LIFF app; `LineBookingDrawer` shows the slip, booking source and address, the priced lines (rooms, infants, charges, discount, card fee — `lineBookingLines`), the payment plan (transfer/card, full or deposit with due dates — `paymentPlan`), state and staff note. Older bookings have no deal details (defaults).
 - **แชท LINE ของลูกค้า** (`LineContactSection`): links the booking to the customer's LINE OA chat so a receipt can be pushed later. A searchable `Select` over `POST /line-contacts/list` (debounced, most recent chat first) saves at once through `PUT /line-bookings/line-contact`; "ยกเลิกการเชื่อม" unlinks. Needs `line-booking:update` and `line-contact:list`. A contact with `following: false` (blocked the OA) is flagged — a push would not reach them. Customers appear only after they message or follow the OA.
 
 ## Sales Tools
@@ -382,6 +382,7 @@ Day-to-day helpers for sales staff. Each tool is its own item in the sidebar gro
 - Picking a period fills adult price, child price (`childWithBedPrice`, else adult), single supplement and deposit/person; turns the deposit on when departure is more than 30 days away and the period has a deposit; sets the balance due date to 30 days before departure. Everything stays editable.
 - Totals and text are pure functions in `summary.ts` (`computeTotals`, `buildSummaryText`): discount/person comes off adult, child and infant prices; fuel/airport tax counts left empty follow the traveller count; card fee (default 2.6%) is rounded up and charged on the deposit only when paying a deposit, else on the full amount.
 - Logic follows the legacy booking page (`ex/Booking.jsx`, gitignored).
+- The LIFF app parses this text to prefill its booking form (`frontend/liff/src/lib/parseSummary.ts`), every line including `รหัสทัวร์`, the payment sentences and the address. Keep the `• <label> : <value>` labels and payment sentences stable or update the parser in the same change. The totals math is mirrored in LIFF `lib/deal.ts` and the backend `quoteLine` (card fee rounded up in basis points).
 
 ## Booking Sources
 

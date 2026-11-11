@@ -1,5 +1,6 @@
 import { env } from '../config/env.ts'
 import type {
+  BookingSource,
   LIFFMe,
   LineContact,
   SalesUserList,
@@ -32,6 +33,11 @@ export function setLiffToken(token: string) {
 }
 
 async function send(method: string, path: string, body: unknown): Promise<Response> {
+  if (env.MOCK) {
+    const { mockSend } = await import('./mock.ts')
+    const mocked = await mockSend(method, path, body)
+    if (mocked) return mocked
+  }
   const isForm = body instanceof FormData
   try {
     return await fetch(`${env.API_BASE_URL}${path}`, {
@@ -92,6 +98,10 @@ export async function searchLineContacts(keyword: string): Promise<LineContact[]
 
 export async function getSalesUsers(): Promise<SalesUserList> {
   return parse<SalesUserList>(await send('GET', '/liff/sales-users', undefined))
+}
+
+export async function getBookingSources(): Promise<BookingSource[]> {
+  return (await parse<{ items: BookingSource[] }>(await send('GET', '/liff/booking-sources', undefined))).items
 }
 
 export async function uploadSlip(file: File): Promise<string> {
