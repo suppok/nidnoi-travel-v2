@@ -287,12 +287,15 @@ func cardFee(amount, bps int) int {
 	return (amount*bps + 9999) / 10000
 }
 
-func parseDate(v null.String) null.Time {
+func parseDate(v null.String) *time.Time {
 	if !v.Valid {
-		return null.Time{}
+		return nil
 	}
 	t, err := time.Parse(models.DateLayout, v.String)
-	return null.NewTime(t, err == nil)
+	if err != nil {
+		return nil
+	}
+	return &t
 }
 
 // bookable checks the period is still open for booking.

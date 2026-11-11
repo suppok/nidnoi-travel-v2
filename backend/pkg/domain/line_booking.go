@@ -124,10 +124,10 @@ type LineBooking struct {
 	CardFee                  int                 `bun:"card_fee"                     json:"cardFee"`                                        // [43] INTEGER
 	IsDeposit                bool                `bun:"is_deposit"                   json:"isDeposit"`                                      // [44] BOOLEAN
 	DepositPerPerson         int                 `bun:"deposit_per_person"           json:"depositPerPerson"`                               // [45] INTEGER
-	DepositDueDate           null.Time           `bun:"deposit_due_date,type:date"   json:"depositDueDate" swaggertype:"string"`            // [46] DATE
+	DepositDueDate           *time.Time          `bun:"deposit_due_date,type:date"   json:"depositDueDate" swaggertype:"string"`            // [46] DATE
 	DepositDueTime           string              `bun:"deposit_due_time"             json:"depositDueTime"`                                 // [47] TEXT
-	RemainingDueDate         null.Time           `bun:"remaining_due_date,type:date" json:"remainingDueDate" swaggertype:"string"`          // [48] DATE
-	FullDueDate              null.Time           `bun:"full_due_date,type:date"      json:"fullDueDate" swaggertype:"string"`               // [49] DATE
+	RemainingDueDate         *time.Time          `bun:"remaining_due_date,type:date" json:"remainingDueDate" swaggertype:"string"`          // [48] DATE
+	FullDueDate              *time.Time          `bun:"full_due_date,type:date"      json:"fullDueDate" swaggertype:"string"`               // [49] DATE
 	FullDueTime              string              `bun:"full_due_time"                json:"fullDueTime"`                                    // [50] TEXT
 
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`

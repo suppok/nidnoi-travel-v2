@@ -147,9 +147,11 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 	return item
 }
 
-func formatDate(t null.Time) null.String {
-	if !t.Valid {
+// formatDate writes a DATE column. Nullable DATE columns are *time.Time, not null.Time:
+// null.Time scans through database/sql, which can't read the driver's text DATE value.
+func formatDate(t *time.Time) null.String {
+	if t == nil {
 		return null.String{}
 	}
-	return null.StringFrom(t.Time.Format(DateLayout))
+	return null.StringFrom(t.Format(DateLayout))
 }
