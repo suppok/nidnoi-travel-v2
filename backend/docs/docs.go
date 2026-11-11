@@ -1703,6 +1703,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "The state changes only through PUT /line-bookings/confirm and /cancel.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1712,10 +1713,10 @@ const docTemplate = `{
                 "tags": [
                     "line-bookings"
                 ],
-                "summary": "Update a LINE booking's state and staff note",
+                "summary": "Update a LINE booking's staff note",
                 "parameters": [
                     {
-                        "description": "State and note",
+                        "description": "Note",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1814,6 +1815,340 @@ const docTemplate = `{
                     },
                     "503": {
                         "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/cancel": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Cancel a new LINE booking",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingCancelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingCancelResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not the sales owner)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_NOT_NEW",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/confirm": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The sales owner (or an admin) checked the payment. The state becomes 20 (deposit paid) or\n25 (paid in full) by the payment plan; financeUserId must be one of\nGET /line-bookings/{id}/finance-users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Confirm a new LINE booking and send it to a finance user",
+                "parameters": [
+                    {
+                        "description": "Booking and finance user",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not the sales owner)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_NOT_NEW",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/documents": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Its finance user (or an admin). A deposit booking needs aiFile (ใบรับเงินมัดจำ) + ivFile\n(ใบแจ้งหนี้); a full payment needs reFile (ใบเสร็จรับเงิน). The first send sets documentsAt,\nwhich alerts the sales owner; later sends replace the files.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Send the finance documents of a confirmed LINE booking",
+                "parameters": [
+                    {
+                        "description": "Documents",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not its finance user)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/documents/approve": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The sales owner (or an admin). When the booking is linked to a LINE chat whose customer\nfollows the OA, a Flex card with a button per PDF is pushed there first (one message of\nthe OA quota); otherwise the documents are only approved.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Approve the finance documents and send them to the customer",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not the sales owner)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_DOCUMENTS_NOT_READY",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "429": {
+                        "description": "LINE_QUOTA_EXCEEDED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "502": {
+                        "description": "LINE_PUSH_FAILED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/documents/reject": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The sales owner (or an admin). The booking waits for its finance user again.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Send the finance documents back to finance with a note",
+                "parameters": [
+                    {
+                        "description": "Booking and note",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not the sales owner)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_DOCUMENTS_NOT_READY",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1994,6 +2329,47 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/{id}/finance-users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The sales owner's active finance users and their default (every active finance user\nwhen the booking has no owner).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Finance users a LINE booking can be sent to on confirm",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "LINE booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse"
                         }
                     },
                     "404": {
@@ -2228,6 +2604,133 @@ const docTemplate = `{
                     },
                     "503": {
                         "description": "STORAGE_UNAVAILABLE, LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/media/upload/line-booking": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "multipart/form-data with \"file\" (PDF). Stored under bookings/documents/; send the URL with\nPUT /line-bookings/documents.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Upload a finance document PDF of a LINE booking",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "PDF (max media.maxUploadMB)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_media_models.MediaUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION, MEDIA_TYPE_NOT_ALLOWED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "413": {
+                        "description": "MEDIA_TOO_LARGE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "STORAGE_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/sales-finances": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The finance users you can send a confirmed LINE booking to, your default, and every\nactive finance user as options.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sales-finances"
+                ],
+                "summary": "Your finance users for confirmed LINE bookings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceGetResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces your list. defaultFinanceUserId must be in financeUserIds (\"\" = the only one\nwhen there is one).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sales-finances"
+                ],
+                "summary": "Choose your finance users for confirmed LINE bookings",
+                "parameters": [
+                    {
+                        "description": "Finance users",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -5161,6 +5664,239 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingCancelRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingCancelResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingChargeReq": {
             "type": "object",
             "properties": {
@@ -5184,6 +5920,243 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingConfirmRequest": {
+            "type": "object",
+            "properties": {
+                "financeUserId": {
+                    "description": "FinanceUserID is one of GET /line-bookings/:id/finance-users. The state becomes 20 (deposit\npaid) or 25 (paid in full) by the booking's payment plan.",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingConfirmResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
                 }
             }
         },
@@ -5346,7 +6319,15 @@ const docTemplate = `{
                 }
             }
         },
-        "backend_pkg_modules_linebooking_models.LineBookingGetResponse": {
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveResponse": {
             "type": "object",
             "properties": {
                 "adultPriceBeforeDiscount": {
@@ -5363,6 +6344,10 @@ const docTemplate = `{
                 },
                 "adultTwinPrice": {
                     "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
                 },
                 "bookingNo": {
                     "type": "string",
@@ -5398,6 +6383,9 @@ const docTemplate = `{
                 "childWithBedPrice": {
                     "type": "integer"
                 },
+                "confirmedAt": {
+                    "type": "string"
+                },
                 "createDate": {
                     "type": "string"
                 },
@@ -5411,6 +6399,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
                     "type": "string"
                 },
                 "depositDueDate": {
@@ -5427,9 +6418,32 @@ const docTemplate = `{
                 "discountPerPerson": {
                     "type": "integer"
                 },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
                 },
                 "fullDueDate": {
                     "type": "string"
@@ -5448,6 +6462,9 @@ const docTemplate = `{
                 },
                 "isDeposit": {
                     "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5472,6 +6489,9 @@ const docTemplate = `{
                         "transfer",
                         "credit"
                     ]
+                },
+                "reFile": {
+                    "type": "string"
                 },
                 "refBookingNo": {
                     "type": "string"
@@ -5505,6 +6525,727 @@ const docTemplate = `{
                     "enum": [
                         10,
                         20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "required, max 1000",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsRejectResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsRequest": {
+            "type": "object",
+            "properties": {
+                "aiFile": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "reFile": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingDocumentsResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse": {
+            "type": "object",
+            "properties": {
+                "defaultId": {
+                    "description": "DefaultID is the sales owner's default finance user, \"\" when none.",
+                    "type": "string"
+                },
+                "items": {
+                    "description": "Items are the sales owner's finance users (active ones); every active finance user when the\nbooking has no owner.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingGetResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
                         30
                     ]
                 },
@@ -5549,6 +7290,10 @@ const docTemplate = `{
                 "adultTwinPrice": {
                     "type": "integer"
                 },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
                 "bookingNo": {
                     "type": "string",
                     "example": "26X8K9AQ"
@@ -5583,6 +7328,9 @@ const docTemplate = `{
                 "childWithBedPrice": {
                     "type": "integer"
                 },
+                "confirmedAt": {
+                    "type": "string"
+                },
                 "createDate": {
                     "type": "string"
                 },
@@ -5596,6 +7344,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
                     "type": "string"
                 },
                 "depositDueDate": {
@@ -5612,9 +7363,32 @@ const docTemplate = `{
                 "discountPerPerson": {
                     "type": "integer"
                 },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
                 },
                 "fullDueDate": {
                     "type": "string"
@@ -5633,6 +7407,9 @@ const docTemplate = `{
                 },
                 "isDeposit": {
                     "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5657,6 +7434,9 @@ const docTemplate = `{
                         "transfer",
                         "credit"
                     ]
+                },
+                "reFile": {
+                    "type": "string"
                 },
                 "refBookingNo": {
                     "type": "string"
@@ -5690,6 +7470,7 @@ const docTemplate = `{
                     "enum": [
                         10,
                         20,
+                        25,
                         30
                     ]
                 },
@@ -5719,9 +7500,25 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingListRequest": {
             "type": "object",
             "properties": {
+                "assignedToMe": {
+                    "description": "AssignedToMe lists only bookings sent to the caller as finance (the finance alert).",
+                    "type": "boolean"
+                },
+                "documentsApproved": {
+                    "description": "DocumentsApproved: true = the sales owner approved the documents, false = not yet, omitted = any.",
+                    "type": "boolean"
+                },
+                "documentsDone": {
+                    "description": "DocumentsDone: true = finance sent the documents (newest first), false = waiting for finance, omitted = any.",
+                    "type": "boolean"
+                },
                 "keyword": {
                     "description": "booking no, customer name, phone, tour code or LINE display name",
                     "type": "string"
+                },
+                "ownedByMe": {
+                    "description": "OwnedByMe lists only bookings the caller owns as sales (the documents-ready alert).",
+                    "type": "boolean"
                 },
                 "page": {
                     "description": "default 1",
@@ -5730,6 +7527,10 @@ const docTemplate = `{
                 "pageSize": {
                     "description": "default 20, max 100",
                     "type": "integer"
+                },
+                "paid": {
+                    "description": "Paid lists confirmed bookings only (states 20 and 25), newest confirmation first.",
+                    "type": "boolean"
                 },
                 "state": {
                     "description": "0 = all",
@@ -5834,6 +7635,10 @@ const docTemplate = `{
                 "adultTwinPrice": {
                     "type": "integer"
                 },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
+                },
                 "bookingNo": {
                     "type": "string",
                     "example": "26X8K9AQ"
@@ -5868,6 +7673,9 @@ const docTemplate = `{
                 "childWithBedPrice": {
                     "type": "integer"
                 },
+                "confirmedAt": {
+                    "type": "string"
+                },
                 "createDate": {
                     "type": "string"
                 },
@@ -5881,6 +7689,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
                     "type": "string"
                 },
                 "depositDueDate": {
@@ -5897,9 +7708,32 @@ const docTemplate = `{
                 "discountPerPerson": {
                     "type": "integer"
                 },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
                 },
                 "fullDueDate": {
                     "type": "string"
@@ -5918,6 +7752,9 @@ const docTemplate = `{
                 },
                 "isDeposit": {
                     "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5942,6 +7779,9 @@ const docTemplate = `{
                         "transfer",
                         "credit"
                     ]
+                },
+                "reFile": {
+                    "type": "string"
                 },
                 "refBookingNo": {
                     "type": "string"
@@ -5975,6 +7815,7 @@ const docTemplate = `{
                     "enum": [
                         10,
                         20,
+                        25,
                         30
                     ]
                 },
@@ -6009,10 +7850,6 @@ const docTemplate = `{
                 },
                 "staffNote": {
                     "type": "string"
-                },
-                "state": {
-                    "description": "10 new, 20 confirmed, 30 cancelled",
-                    "type": "integer"
                 }
             }
         },
@@ -6033,6 +7870,10 @@ const docTemplate = `{
                 },
                 "adultTwinPrice": {
                     "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "type": "string"
                 },
                 "bookingNo": {
                     "type": "string",
@@ -6068,6 +7909,9 @@ const docTemplate = `{
                 "childWithBedPrice": {
                     "type": "integer"
                 },
+                "confirmedAt": {
+                    "type": "string"
+                },
                 "createDate": {
                     "type": "string"
                 },
@@ -6081,6 +7925,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
                     "type": "string"
                 },
                 "depositDueDate": {
@@ -6097,9 +7944,32 @@ const docTemplate = `{
                 "discountPerPerson": {
                     "type": "integer"
                 },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
                 },
                 "fullDueDate": {
                     "type": "string"
@@ -6118,6 +7988,9 @@ const docTemplate = `{
                 },
                 "isDeposit": {
                     "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -6142,6 +8015,9 @@ const docTemplate = `{
                         "transfer",
                         "credit"
                     ]
+                },
+                "reFile": {
+                    "type": "string"
                 },
                 "refBookingNo": {
                     "type": "string"
@@ -6175,6 +8051,7 @@ const docTemplate = `{
                     "enum": [
                         10,
                         20,
+                        25,
                         30
                     ]
                 },
@@ -6317,6 +8194,79 @@ const docTemplate = `{
                 "width": {
                     "description": "0 for documents",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_salesfinance_models.SalesFinanceGetResponse": {
+            "type": "object",
+            "properties": {
+                "defaultFinanceUserId": {
+                    "description": "DefaultFinanceUserID is preselected in the confirm dialog; \"\" when none.",
+                    "type": "string"
+                },
+                "financeUserIds": {
+                    "description": "FinanceUserIDs are the caller's finance users (active ones), by name.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "options": {
+                    "description": "Options are every active finance user (except the caller), by name.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUser"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_salesfinance_models.SalesFinanceUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "defaultFinanceUserId": {
+                    "description": "DefaultFinanceUserID must be in FinanceUserIDs; \"\" = the only one when there is one, else none.",
+                    "type": "string"
+                },
+                "financeUserIds": {
+                    "description": "active finance users, max 20",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_salesfinance_models.SalesFinanceUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "defaultFinanceUserId": {
+                    "description": "DefaultFinanceUserID is preselected in the confirm dialog; \"\" when none.",
+                    "type": "string"
+                },
+                "financeUserIds": {
+                    "description": "FinanceUserIDs are the caller's finance users (active ones), by name.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "options": {
+                    "description": "Options are every active finance user (except the caller), by name.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_salesfinance_models.SalesFinanceUser"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_salesfinance_models.SalesFinanceUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

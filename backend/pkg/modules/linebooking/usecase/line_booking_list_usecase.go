@@ -18,6 +18,22 @@ func stateValues() []any {
 	return values
 }
 
+// assignedTo is the caller's id when they asked for the bookings sent to them (finance alerts).
+func assignedTo(request *models.LineBookingListRequest) string {
+	if request.AssignedToMe && request.UserRequestInfo != nil {
+		return request.UserRequestInfo.UserID
+	}
+	return ""
+}
+
+// ownedBy is the caller's id when they asked for the bookings they own (sales alerts).
+func ownedBy(request *models.LineBookingListRequest) string {
+	if request.OwnedByMe && request.UserRequestInfo != nil {
+		return request.UserRequestInfo.UserID
+	}
+	return ""
+}
+
 func (u *lineBookingUseCase) ListValidate(request *models.LineBookingListRequest) error {
 	return validation.ValidateStruct(request,
 		validation.Field(&request.Keyword, validation.RuneLength(0, 100)),
@@ -40,11 +56,16 @@ func (u *lineBookingUseCase) List(ctx context.Context, request *models.LineBooki
 	items, total, err := u.repositoryRegistry.LineBookingRepository.List(ctx, repomodels.LineBookingListCriteria{
 		Keyword: request.Keyword,
 		State:   request.State,
+		Paid:    request.Paid,
 		Status:  request.Status,
-		// Sales see only the bookings they own.
-		SalesUserID: ownerScope(request.UserRequestInfo),
-		Page:        request.Page,
-		PageSize:    request.PageSize,
+		// Sales see the bookings they own, finance the bookings sent to them.
+		Scope:             ownerScope(request.UserRequestInfo),
+		FinanceUserID:     assignedTo(request),
+		SalesUserID:       ownedBy(request),
+		DocumentsDone:     request.DocumentsDone,
+		DocumentsApproved: request.DocumentsApproved,
+		Page:              request.Page,
+		PageSize:          request.PageSize,
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "list line bookings")

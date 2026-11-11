@@ -5,6 +5,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
 import AuthProvider from './auth/AuthProvider.tsx';
 import RequireAuth, { CHANGE_PASSWORD_PATH } from './auth/RequireAuth.tsx';
 import RequirePermission from './auth/RequirePermission.tsx';
+import { FINANCE_LINE_BOOKINGS_PATH } from './constants/lineBookingStates.ts';
 import { Permissions } from './constants/permissions.ts';
 import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
@@ -18,6 +19,7 @@ import LoginPage from './routes/login/LoginPage.tsx';
 import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
 import { SALES_TOOLS } from './features/sales-tool/tools.tsx';
 import SalesToolComingSoon from './routes/sales-tools/SalesToolComingSoon.tsx';
+import MyFinancePage from './routes/settings/MyFinancePage.tsx';
 import SiteBuildListPage from './routes/site-builds/SiteBuildListPage.tsx';
 import CityListPage from './routes/taxonomy/cities/CityListPage.tsx';
 import CountryDetailPage from './routes/taxonomy/countries/CountryDetailPage.tsx';
@@ -52,7 +54,10 @@ const router = createBrowserRouter([
           },
           {
             element: <RequirePermission code={Permissions.LineBookingList} />,
-            children: [{ path: '/line-bookings', element: <LineBookingListPage /> }],
+            children: [
+              { path: '/line-bookings', element: <LineBookingListPage /> },
+              { path: FINANCE_LINE_BOOKINGS_PATH, element: <LineBookingListPage finance /> },
+            ],
           },
           {
             element: <RequirePermission code={Permissions.TourProgramList} />,
@@ -101,6 +106,10 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.SiteBuildList} />,
             children: [{ path: '/site-builds', element: <SiteBuildListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.SalesFinanceGet} />,
+            children: [{ path: '/settings/finance', element: <MyFinancePage /> }],
           },
         ],
       },

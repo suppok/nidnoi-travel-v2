@@ -29,6 +29,8 @@ var purposeRules = map[string]purposeRule{
 	models.PurposeAirlineLogo: {mimes: imageMimes, minWidth: 120, minHeight: 40, keyPrefix: "airlines/logos/"},
 	// Payment slips from LIFF; phone screenshots are at least 200×200.
 	models.PurposeBookingSlip: {mimes: imageMimes, minWidth: 200, minHeight: 200, keyPrefix: "bookings/slips/"},
+	// Finance documents of a LINE booking; the linebooking usecase checks this prefix.
+	models.PurposeBookingDocument: {mimes: []string{commons.MimePDF}, keyPrefix: "bookings/documents/"},
 }
 
 func (r purposeRule) isImage() bool { return r.minWidth > 0 }

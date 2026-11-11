@@ -35,7 +35,7 @@ type LineBookingItem struct {
 	CustomerPhone            string    `json:"customerPhone"`
 	SlipImage                string    `json:"slipImage"`
 	Note                     string    `json:"note"`
-	State                    int       `json:"state" enums:"10,20,30"`
+	State                    int       `json:"state" enums:"10,20,25,30"`
 	StaffNote                string    `json:"staffNote"`
 	Status                   bool      `json:"status"`
 	CreateDate               time.Time `json:"createDate"`
@@ -63,6 +63,22 @@ type LineBookingItem struct {
 	BookingSource *LineBookingSource `json:"bookingSource"`
 	// SalesUser owns the booking; null on bookings made before it was recorded.
 	SalesUser *LineBookingUser `json:"salesUser"`
+	// FinanceUser issues the receipt; set when the sales owner confirms (null before).
+	FinanceUser *LineBookingUser `json:"financeUser"`
+	ConfirmedAt null.Time        `json:"confirmedAt" swaggertype:"string"`
+	// Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment → reFile.
+	AIFile string `json:"aiFile"`
+	IVFile string `json:"ivFile"`
+	REFile string `json:"reFile"`
+	// DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.
+	DocumentsAt null.Time `json:"documentsAt" swaggertype:"string"`
+	// DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+	// customer's LINE chat (null = approved without sending).
+	DocumentsApprovedAt null.Time `json:"documentsApprovedAt" swaggertype:"string"`
+	CustomerSentAt      null.Time `json:"customerSentAt" swaggertype:"string"`
+	// FixNote is the latest fix request from sales to finance ("" = none).
+	FixNote        string    `json:"fixNote"`
+	FixRequestedAt null.Time `json:"fixRequestedAt" swaggertype:"string"`
 	// LineContact is the customer's LINE OA chat picked by staff; null until linked.
 	LineContact *LineBookingContact `json:"lineContact"`
 }
@@ -137,6 +153,13 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 	}
 	if s := b.BookingSource; s != nil {
 		item.BookingSource = &LineBookingSource{ID: s.ID, Name: s.Name, ShortName: s.ShortName}
+	}
+	item.ConfirmedAt = b.ConfirmedAt
+	item.AIFile, item.IVFile, item.REFile, item.DocumentsAt = b.AIFile, b.IVFile, b.REFile, b.DocumentsAt
+	item.DocumentsApprovedAt, item.CustomerSentAt = b.DocumentsApprovedAt, b.CustomerSentAt
+	item.FixNote, item.FixRequestedAt = b.FixNote, b.FixRequestedAt
+	if f := b.FinanceUser; f != nil {
+		item.FinanceUser = &LineBookingUser{ID: f.ID, Name: f.Name}
 	}
 	if s := b.SalesUser; s != nil {
 		item.SalesUser = &LineBookingUser{ID: s.ID, Name: s.Name}

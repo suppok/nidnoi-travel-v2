@@ -1,4 +1,4 @@
-import type { LineBooking, LineBookingChargeKind } from '../../../types/lineBooking.ts';
+import type { LineBooking, LineBookingChargeKind, LineBookingDocumentKey } from '../../../types/lineBooking.ts';
 
 // One priced line of a booking; a negative price is a discount.
 export type Line = { key: string; label: string; count: number; price: number };
@@ -60,6 +60,18 @@ export function dueDate(date: string | null, time = ''): string {
 export type PaymentPlan = { deposit: number; depositToPay: number; remaining: number };
 
 // The deposit split, as told to the customer: the card fee is on the deposit only.
+export type RequiredDocument = { key: LineBookingDocumentKey; code: string; label: string };
+
+// The finance documents a confirmed booking needs: deposit → AI + IV, full payment → RE.
+export function requiredDocuments(b: Pick<LineBooking, 'isDeposit'>): RequiredDocument[] {
+  return b.isDeposit
+    ? [
+        { key: 'aiFile', code: 'AI', label: 'ใบรับเงินมัดจำ' },
+        { key: 'ivFile', code: 'IV', label: 'ใบแจ้งหนี้' },
+      ]
+    : [{ key: 'reFile', code: 'RE', label: 'ใบเสร็จรับเงิน' }];
+}
+
 export function paymentPlan(b: LineBooking): PaymentPlan | null {
   if (!b.isDeposit) return null;
   const deposit = b.depositPerPerson * travellerCount(b);

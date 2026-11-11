@@ -24,6 +24,10 @@ export const ErrorCodes = {
   SiteRebuildUnavailable: 'SITE_REBUILD_UNAVAILABLE',
   SiteRebuildFailed: 'SITE_REBUILD_FAILED',
   LineNotConfigured: 'LINE_NOT_CONFIGURED',
+  LinePushFailed: 'LINE_PUSH_FAILED',
+  LineQuotaExceeded: 'LINE_QUOTA_EXCEEDED',
+  LineBookingNotNew: 'LINE_BOOKING_NOT_NEW',
+  LineBookingDocumentsNotReady: 'LINE_BOOKING_DOCUMENTS_NOT_READY',
   PeriodUnavailable: 'PERIOD_UNAVAILABLE', // customer site only (POST /bookings/public)
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',

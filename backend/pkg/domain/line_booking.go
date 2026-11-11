@@ -62,6 +62,19 @@ Table: line_booking
 [48] remaining_due_date      DATE         null: true
 [49] full_due_date           DATE         null: true
 [50] full_due_time           TEXT         null: false  default: ''  (HH:mm)
+[51] finance_user_id         UUID         null: true   (FK app_user.id, the finance user who issues the receipt; set on confirm)
+[52] confirmed_at            TIMESTAMPTZ  null: true   (when the sales owner confirmed the payment)
+[53] ai_file                 TEXT         null: false  default: ''  (PDF URL, AI ใบรับเงินมัดจำ; deposit)
+[54] iv_file                 TEXT         null: false  default: ''  (PDF URL, IV ใบแจ้งหนี้; deposit)
+[55] re_file                 TEXT         null: false  default: ''  (PDF URL, RE ใบเสร็จรับเงิน; full payment)
+[56] documents_at            TIMESTAMPTZ  null: true   (when finance first sent the documents; null = waiting for finance)
+[57] documents_by            UUID         null: true   (FK app_user.id, the finance user who sent them)
+[58] documents_approved_at   TIMESTAMPTZ  null: true   (the sales owner approved the documents)
+[59] documents_approved_by   UUID         null: true   (FK app_user.id)
+[60] customer_sent_at        TIMESTAMPTZ  null: true   (documents card pushed to the customer's LINE chat; null = not pushed)
+[61] customer_sent_contact_id UUID        null: true   (FK line_contact.id, the chat it was pushed to)
+[62] fix_note                TEXT         null: false  default: ''  (latest fix request from sales to finance)
+[63] fix_requested_at        TIMESTAMPTZ  null: true
 */
 
 // LineBookingCharge is one extra charge line (visa, taxes, options, ...): count x price.
@@ -129,9 +142,23 @@ type LineBooking struct {
 	RemainingDueDate         *time.Time          `bun:"remaining_due_date,type:date" json:"remainingDueDate" swaggertype:"string"`          // [48] DATE
 	FullDueDate              *time.Time          `bun:"full_due_date,type:date"      json:"fullDueDate" swaggertype:"string"`               // [49] DATE
 	FullDueTime              string              `bun:"full_due_time"                json:"fullDueTime"`                                    // [50] TEXT
+	FinanceUserID            null.String         `bun:"finance_user_id"              json:"financeUserId" swaggertype:"string"`             // [51] UUID
+	ConfirmedAt              null.Time           `bun:"confirmed_at"                 json:"confirmedAt" swaggertype:"string"`               // [52] TIMESTAMPTZ
+	AIFile                   string              `bun:"ai_file"                      json:"aiFile"`                                         // [53] TEXT
+	IVFile                   string              `bun:"iv_file"                      json:"ivFile"`                                         // [54] TEXT
+	REFile                   string              `bun:"re_file"                      json:"reFile"`                                         // [55] TEXT
+	DocumentsAt              null.Time           `bun:"documents_at"                 json:"documentsAt" swaggertype:"string"`               // [56] TIMESTAMPTZ
+	DocumentsBy              null.String         `bun:"documents_by"                 json:"documentsBy" swaggertype:"string"`               // [57] UUID
+	DocumentsApprovedAt      null.Time           `bun:"documents_approved_at"        json:"documentsApprovedAt" swaggertype:"string"`       // [58] TIMESTAMPTZ
+	DocumentsApprovedBy      null.String         `bun:"documents_approved_by"        json:"documentsApprovedBy" swaggertype:"string"`       // [59] UUID
+	CustomerSentAt           null.Time           `bun:"customer_sent_at"             json:"customerSentAt" swaggertype:"string"`            // [60] TIMESTAMPTZ
+	CustomerSentContactID    null.String         `bun:"customer_sent_contact_id"     json:"customerSentContactId" swaggertype:"string"`     // [61] UUID
+	FixNote                  string              `bun:"fix_note"                     json:"fixNote"`                                        // [62] TEXT
+	FixRequestedAt           null.Time           `bun:"fix_requested_at"             json:"fixRequestedAt" swaggertype:"string"`            // [63] TIMESTAMPTZ
 
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
 	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
+	FinanceUser *AppUser     `bun:"rel:belongs-to,join:finance_user_id=id" json:"financeUser,omitempty"`
 	// BookingSource is where the customer booked (LINE OA, Facebook, ...).
 	BookingSource *BookingSource `bun:"rel:belongs-to,join:booking_source_id=id" json:"bookingSource,omitempty"`
 }

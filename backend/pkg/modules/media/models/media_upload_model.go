@@ -13,6 +13,8 @@ const (
 	PurposeCityHero    = "city-hero"
 	PurposeAirlineLogo = "airline-logo"
 	PurposeBookingSlip = "booking-slip"
+	// PurposeBookingDocument: finance PDFs (AI/IV/RE) of a LINE booking, via POST /media/upload/line-booking.
+	PurposeBookingDocument = "booking-document"
 )
 
 // MediaUploadRequest is built by the handler from multipart/form-data (fields "file", "purpose").

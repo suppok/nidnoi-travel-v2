@@ -10,6 +10,12 @@ export const Roles = {
 
 export type Role = (typeof Roles)[keyof typeof Roles];
 
+// worksAs: the user holds one of roles, or is an admin (admins see every area). Decides which menu
+// groups and alerts show — UX only; permissions still guard every page and request.
+export function worksAs(userRoles: readonly Role[] | undefined, ...roles: Role[]): boolean {
+  return (userRoles ?? []).some((r) => r === Roles.Admin || r === Roles.SuperAdmin || roles.includes(r));
+}
+
 type RoleInfo = {
   value: Role;
   label: string;

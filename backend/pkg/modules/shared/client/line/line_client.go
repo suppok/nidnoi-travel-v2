@@ -1,4 +1,5 @@
-// Package line verifies LIFF access tokens and Messaging API webhooks, and reads OA friends' profiles.
+// Package line verifies LIFF access tokens and Messaging API webhooks, reads OA friends' profiles
+// and pushes messages to them.
 package line
 
 import (
@@ -58,6 +59,9 @@ type Client interface {
 	GetProfile(ctx context.Context, userID string) (*Profile, error)
 	// WebhookConfigured reports whether the Messaging API channel secret is set.
 	WebhookConfigured() bool
+	// PushMessage sends Messaging API messages to one OA friend (uses the OA's message quota).
+	// ErrNotConfigured without the channel access token, ErrPushQuota when the quota is used up.
+	PushMessage(ctx context.Context, to string, messages []any, retryKey string) error
 }
 
 type client struct {

@@ -1,4 +1,4 @@
-import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -7,7 +7,7 @@ import BrandMark from '../components/BrandMark.tsx';
 import { env } from '../config/env.ts';
 import { type Permission, Permissions } from '../constants/permissions.ts';
 import { BookingStates } from '../constants/bookingStates.ts';
-import { roleInfo } from '../constants/roles.ts';
+import { type Role, Roles, roleInfo, worksAs } from '../constants/roles.ts';
 import BookingAlertsProvider from '../features/booking/components/BookingAlertsProvider.tsx';
 import { useBookingAlerts } from '../features/booking/hooks/useBookingAlerts.ts';
 import LineBookingAlertsProvider from '../features/line-booking/components/LineBookingAlertsProvider.tsx';
@@ -15,10 +15,12 @@ import { useLineBookingAlerts } from '../features/line-booking/hooks/useLineBook
 import LineLinkModal from '../features/line-link/LineLinkModal.tsx';
 import { SALES_TOOLS } from '../features/sales-tool/tools.tsx';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
+import { FINANCE_LINE_BOOKINGS_PATH } from '../constants/lineBookingStates.ts';
 import { initials } from '../lib/format.ts';
 
 type NavItem = { path: string; label: string; icon: ReactNode; permission?: Permission };
-type NavGroup = { key: string; label: string; items: NavItem[] };
+// roles: the group shows only to users working as one of them (admins see every group).
+type NavGroup = { key: string; label: string; items: NavItem[]; roles?: Role[] };
 
 // Add an entry when its page exists. Items the user can't access are hidden (UX only).
 const NAV: NavGroup[] = [
@@ -26,6 +28,7 @@ const NAV: NavGroup[] = [
   {
     key: 'sales',
     label: 'ฝ่ายขาย',
+    roles: [Roles.Sales],
     items: [
       { path: '/bookings', label: 'ใบจอง', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
       { path: '/line-bookings', label: 'ใบจอง LINE', icon: <MessageOutlined />, permission: Permissions.LineBookingList },
@@ -40,7 +43,14 @@ const NAV: NavGroup[] = [
   {
     key: 'sales-tools',
     label: 'เครื่องมือฝ่ายขาย',
+    roles: [Roles.Sales],
     items: SALES_TOOLS.map(({ path, label, icon, permission }) => ({ path, label, icon, permission })),
+  },
+  {
+    key: 'finance',
+    label: 'ฝ่ายการเงิน',
+    roles: [Roles.Finance],
+    items: [{ path: FINANCE_LINE_BOOKINGS_PATH, label: 'ใบจองรอออกเอกสาร', icon: <AccountBookOutlined />, permission: Permissions.LineBookingList }],
   },
   {
     key: 'system',
@@ -79,12 +89,12 @@ function NewBookingsBell() {
 function Shell() {
   const { user, can, logout } = useAuth();
   const { newCount } = useBookingAlerts();
-  const { newCount: lineNewCount } = useLineBookingAlerts();
+  const { newCount: lineNewCount, waitingDocumentsCount } = useLineBookingAlerts();
   const location = useLocation();
   const navigate = useNavigate();
   const [lineLinkOpen, setLineLinkOpen] = useState(false);
 
-  const menuItems: MenuProps['items'] = NAV.map((group) => ({
+  const menuItems: MenuProps['items'] = NAV.filter((group) => !group.roles || worksAs(user?.roles, ...group.roles)).map((group) => ({
     type: 'group' as const,
     key: group.key,
     label: group.label,
@@ -98,6 +108,7 @@ function Shell() {
             {item.label}
             {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
             {item.path === '/line-bookings' && !!lineNewCount && <Badge count={lineNewCount} size="small" />}
+            {item.path === FINANCE_LINE_BOOKINGS_PATH && !!waitingDocumentsCount && <Badge count={waitingDocumentsCount} size="small" />}
           </Link>
         ),
       })),
@@ -109,6 +120,9 @@ function Shell() {
 
   const userMenu: MenuProps['items'] = [
     { key: 'line', icon: <LinkOutlined />, label: user?.line ? 'บัญชี LINE (เชื่อมแล้ว)' : 'เชื่อมบัญชี LINE', onClick: () => setLineLinkOpen(true) },
+    ...(can(Permissions.SalesFinanceGet)
+      ? [{ key: 'finance', icon: <AccountBookOutlined />, label: 'ฝ่ายการเงินของฉัน', onClick: () => navigate('/settings/finance') }]
+      : []),
     { key: 'password', icon: <KeyOutlined />, label: 'เปลี่ยนรหัสผ่าน', onClick: () => navigate('/change-password') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'ออกจากระบบ', danger: true, onClick: () => void logout() },
