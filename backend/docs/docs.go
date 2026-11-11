@@ -1498,6 +1498,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/liff/booking-sources": {
+            "get": {
+                "description": "Active booking sources in their sort order.\nAuthorization: Bearer \u003cLIFF access token\u003e of a linked staff user with line-booking:create.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "liff"
+                ],
+                "summary": "Booking source options for the LIFF booking form",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSourceListResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/liff/line-contacts/list": {
             "post": {
                 "description": "Same as POST /line-contacts/list. Authorization: Bearer \u003cLIFF access token\u003e of a linked\nstaff user with line-contact:list.",
@@ -1721,7 +1748,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted\nfrom the period. Authorization: Bearer \u003cLIFF access token\u003e of a LINE account linked\nto a staff user with line-booking:create.",
+                "description": "Sales staff submit a booking with payment slip from the LIFF app, with the deal from the\n\"สรุปยอดโอน\" summary. Unit prices default to the period's; the total includes discount,\ncharges and card fee. Authorization: Bearer \u003cLIFF access token\u003e of a LINE account linked\nto a staff user with line-booking:create.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3409,6 +3436,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "backend_pkg_domain.LineBookingCharge": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "linebookingpayment.Charge*",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "only for kind \"option\"",
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                }
+            }
+        },
         "backend_pkg_modules_airline_models.AirlineCreateRequest": {
             "type": "object",
             "properties": {
@@ -5115,6 +5161,32 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingChargeReq": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "visa",
+                        "foreignPassport",
+                        "joinLand",
+                        "fuelTax",
+                        "airportTax",
+                        "option"
+                    ]
+                },
+                "name": {
+                    "description": "required for \"option\", ignored otherwise",
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingContact": {
             "type": "object",
             "properties": {
@@ -5136,23 +5208,85 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingCreateRequest": {
             "type": "object",
             "properties": {
+                "adultPrice": {
+                    "description": "Unit prices agreed with the customer (whole baht). Null = the period's price. AdultPrice is per\nadult; an adult in a single room pays AdultPrice + SingleSupplement.",
+                    "type": "integer"
+                },
+                "adultPriceBeforeDiscount": {
+                    "description": "AdultPriceBeforeDiscount is shown as \"(จาก …)\"; display only.",
+                    "type": "integer"
+                },
                 "adultSingle": {
                     "type": "integer"
                 },
                 "adultTwin": {
                     "type": "integer"
                 },
+                "bookingSourceId": {
+                    "description": "BookingSourceID is where the customer booked (GET /liff/booking-sources); optional.",
+                    "type": "string"
+                },
+                "charges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq"
+                    }
+                },
                 "childNoBed": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
                     "type": "integer"
                 },
                 "childWithBed": {
                     "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "creditFeePercent": {
+                    "description": "credit only, up to 2 decimals",
+                    "type": "number",
+                    "example": 3
+                },
+                "customerAddress": {
+                    "type": "string"
                 },
                 "customerName": {
                     "type": "string"
                 },
                 "customerPhone": {
                     "type": "string"
+                },
+                "depositDueDate": {
+                    "description": "Dates are YYYY-MM-DD, times HH:mm; all optional.",
+                    "type": "string"
+                },
+                "depositDueTime": {
+                    "type": "string"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "description": "DiscountPerPerson comes off every traveller's price, infants included.",
+                    "type": "integer"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "infant": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "description": "required when Infant \u003e 0",
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
                 },
                 "lineContactId": {
                     "description": "LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.",
@@ -5161,12 +5295,34 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "paymentMethod": {
+                    "description": "\"\" = transfer",
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
                 "periodId": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "description": "the booking number on that source",
+                    "type": "string"
+                },
+                "refName": {
+                    "description": "the customer's name on that source",
+                    "type": "string"
+                },
+                "remainingDueDate": {
                     "type": "string"
                 },
                 "salesUserId": {
                     "description": "SalesUserID is the sales person who owns the booking (GET /liff/sales-users).",
                     "type": "string"
+                },
+                "singleSupplement": {
+                    "type": "integer"
                 },
                 "slipImage": {
                     "description": "R2 URL from /media/upload/liff",
@@ -5185,6 +5341,7 @@ const docTemplate = `{
                     "example": "26X8K9AQ"
                 },
                 "totalPrice": {
+                    "description": "TotalPrice is the grand total, card fee included.",
                     "type": "integer"
                 }
             }
@@ -5192,6 +5349,9 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingGetResponse": {
             "type": "object",
             "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
                 "adultSingleCount": {
                     "type": "integer"
                 },
@@ -5208,6 +5368,24 @@ const docTemplate = `{
                     "type": "string",
                     "example": "26X8K9AQ"
                 },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
                 "childNoBedCount": {
                     "type": "integer"
                 },
@@ -5223,18 +5401,53 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
                 "customerName": {
                     "type": "string"
                 },
                 "customerPhone": {
                     "type": "string"
                 },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5251,6 +5464,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
                     "type": "string"
                 },
                 "salesUser": {
@@ -5305,6 +5534,9 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingItem": {
             "type": "object",
             "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
                 "adultSingleCount": {
                     "type": "integer"
                 },
@@ -5321,6 +5553,24 @@ const docTemplate = `{
                     "type": "string",
                     "example": "26X8K9AQ"
                 },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
                 "childNoBedCount": {
                     "type": "integer"
                 },
@@ -5336,18 +5586,53 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
                 "customerName": {
                     "type": "string"
                 },
                 "customerPhone": {
                     "type": "string"
                 },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5364,6 +5649,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
                     "type": "string"
                 },
                 "salesUser": {
@@ -5476,6 +5777,33 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingSource": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "description": "label of the reference name (\"ชื่อ \u003cshortName\u003e\"); \"\" = none",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingSourceListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items are the active booking sources, in their sort order.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                    }
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest": {
             "type": "object",
             "properties": {
@@ -5491,6 +5819,9 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactResponse": {
             "type": "object",
             "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
                 "adultSingleCount": {
                     "type": "integer"
                 },
@@ -5507,6 +5838,24 @@ const docTemplate = `{
                     "type": "string",
                     "example": "26X8K9AQ"
                 },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
                 "childNoBedCount": {
                     "type": "integer"
                 },
@@ -5522,18 +5871,53 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
                 "customerName": {
                     "type": "string"
                 },
                 "customerPhone": {
                     "type": "string"
                 },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5550,6 +5934,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
                     "type": "string"
                 },
                 "salesUser": {
@@ -5619,6 +6019,9 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingUpdateResponse": {
             "type": "object",
             "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
                 "adultSingleCount": {
                     "type": "integer"
                 },
@@ -5635,6 +6038,24 @@ const docTemplate = `{
                     "type": "string",
                     "example": "26X8K9AQ"
                 },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
                 "childNoBedCount": {
                     "type": "integer"
                 },
@@ -5650,18 +6071,53 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
                 "customerName": {
                     "type": "string"
                 },
                 "customerPhone": {
                     "type": "string"
                 },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
                 },
                 "lineContact": {
                     "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
@@ -5678,6 +6134,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
                     "type": "string"
                 },
                 "salesUser": {

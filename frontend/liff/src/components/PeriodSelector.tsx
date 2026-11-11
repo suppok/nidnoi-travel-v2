@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getTourPeriods } from '../api/client.ts'
 import type { TourPeriodItem } from '../types/index.ts'
 
@@ -6,6 +6,9 @@ type Props = {
   tourCode: string | null
   onSelect: (period: TourPeriodItem | null) => void
   selected: TourPeriodItem | null
+  // Dates to select once the periods load (from a pasted summary); onAutoSelect reports the match.
+  autoSelect?: { startDate: string; endDate: string } | null
+  onAutoSelect?: (found: boolean) => void
 }
 
 function formatDate(iso: string): string {
@@ -17,9 +20,14 @@ function formatPrice(n: number): string {
   return n.toLocaleString('th-TH')
 }
 
-export function PeriodSelector({ tourCode, onSelect, selected }: Props) {
+export function PeriodSelector({ tourCode, onSelect, selected, autoSelect, onAutoSelect }: Props) {
   const [periods, setPeriods] = useState<TourPeriodItem[]>([])
   const [loading, setLoading] = useState(false)
+  // Read when the periods arrive, so the load effect still depends on tourCode only.
+  const autoRef = useRef({ autoSelect, onAutoSelect, onSelect })
+  useEffect(() => {
+    autoRef.current = { autoSelect, onAutoSelect, onSelect }
+  })
 
   useEffect(() => {
     if (!tourCode) {
@@ -35,10 +43,20 @@ export function PeriodSelector({ tourCode, onSelect, selected }: Props) {
       .then((items) => {
         if (cancelled) return
         // Show only active periods with seats
-        setPeriods(items.filter((p) => !p.soldOut && p.seatsAvailable > 0))
+        const open = items.filter((p) => !p.soldOut && p.seatsAvailable > 0)
+        setPeriods(open)
+        const auto = autoRef.current
+        if (auto.autoSelect) {
+          const want = auto.autoSelect
+          const match = open.find((p) => p.startDate.slice(0, 10) === want.startDate && p.endDate.slice(0, 10) === want.endDate)
+          if (match) auto.onSelect(match)
+          auto.onAutoSelect?.(!!match)
+        }
       })
       .catch(() => {
-        if (!cancelled) setPeriods([])
+        if (cancelled) return
+        setPeriods([])
+        if (autoRef.current.autoSelect) autoRef.current.onAutoSelect?.(false)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)

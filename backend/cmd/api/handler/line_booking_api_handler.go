@@ -51,6 +51,7 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Post("/line-bookings", append(liff, h.LineBookingCreate)...)
 	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
 	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
+	r.Get("/liff/booking-sources", append(liff, h.LIFFBookingSourceList)...)
 
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Put("/line-bookings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdate)
@@ -62,8 +63,9 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 
 // LineBookingCreate godoc
 // @Summary     Create a LINE booking from LIFF
-// @Description Sales staff submit a booking with payment slip from the LIFF app. Prices are quoted
-// @Description from the period. Authorization: Bearer <LIFF access token> of a LINE account linked
+// @Description Sales staff submit a booking with payment slip from the LIFF app, with the deal from the
+// @Description "สรุปยอดโอน" summary. Unit prices default to the period's; the total includes discount,
+// @Description charges and card fee. Authorization: Bearer <LIFF access token> of a LINE account linked
 // @Description to a staff user with line-booking:create.
 // @Tags        line-bookings
 // @Accept      json
@@ -235,5 +237,22 @@ func (h *LineBookingAPIHandler) LineBookingUpdateStatus(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.UpdateStatus(ctx, request)
+	})
+}
+
+// LIFFBookingSourceList godoc
+// @Summary     Booking source options for the LIFF booking form
+// @Description Active booking sources in their sort order.
+// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
+// @Tags        liff
+// @Produce     json
+// @Success     200 {object} models.LineBookingSourceListResponse
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Router      /liff/booking-sources [get]
+func (h *LineBookingAPIHandler) LIFFBookingSourceList(c *fiber.Ctx) error {
+	request := &models.LineBookingSourceListRequest{}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.SourceList(ctx, request)
 	})
 }

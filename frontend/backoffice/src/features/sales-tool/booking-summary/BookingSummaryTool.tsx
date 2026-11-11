@@ -224,6 +224,7 @@ export default function BookingSummaryTool() {
       refName: values.refName ?? '',
       refBookingNo: values.refBookingNo ?? '',
       tour: tour && {
+        code: tour.code,
         name: tour.name,
         days: tour.days,
         nights: tour.nights,

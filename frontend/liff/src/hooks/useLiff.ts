@@ -15,6 +15,11 @@ export function useLiff(): LiffState {
     let cancelled = false
 
     async function init() {
+      if (env.MOCK) {
+        setLiffToken('mock')
+        setState({ status: 'ready', userId: 'Umock', displayName: 'Somjai (mock)', accessToken: 'mock' })
+        return
+      }
       try {
         await liff.init({ liffId: env.LIFF_ID })
 
