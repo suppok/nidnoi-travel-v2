@@ -28,6 +28,7 @@ Table: app_user
 [14] line_linked_at            TIMESTAMPTZ  null: true
 [15] line_link_code_hash       TEXT         null: true  unique  (SHA-256 of the pending link code)
 [16] line_link_code_expires_at TIMESTAMPTZ  null: true
+[17] phone                     TEXT         null: false  default: ''  (digits only, optional leading +)
 */
 
 // AppUser is a row of the app_user table (backoffice staff).
@@ -51,4 +52,5 @@ type AppUser struct {
 	LineLinkedAt          null.Time   `bun:"line_linked_at"            json:"lineLinkedAt" swaggertype:"string"`    // [14] TIMESTAMPTZ
 	LineLinkCodeHash      null.String `bun:"line_link_code_hash"       json:"-"`                                    // [15] TEXT
 	LineLinkCodeExpiresAt null.Time   `bun:"line_link_code_expires_at" json:"-"`                                    // [16] TIMESTAMPTZ
+	Phone                 string      `bun:"phone"                     json:"phone"`                                // [17] TEXT
 }

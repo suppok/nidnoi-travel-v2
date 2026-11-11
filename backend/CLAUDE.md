@@ -421,6 +421,13 @@ Airline master (`pkg/modules/airline`, table `airline`). Seeded (`migrations/*_s
 - Endpoints follow the route conventions (`/airlines`, `/list` with keyword/status, max `pageSize` 500 for dropdowns). Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `airline:create|update|list|get|status`; `sales` has list/get.
 - Tours link to an airline through `tour_program.airline_id` (optional); tour responses embed `airline: {id, code, name, logo, status} | null`.
 
+## Booking sources
+
+Channels a booking comes through — LINE OA, Facebook, agents, … (`pkg/modules/bookingsource`, table `booking_source`). Picked in the backoffice booking summary tool; no other table references them yet.
+
+- Fields: `name` (unique, case-insensitive — index `booking_source_name_key` on `lower(name)`), `short_name` (optional label for the source's own reference name, shown as "ชื่อ <short_name>"), `sort_order` (0–9999, list order), plus the standard columns. Not seeded.
+- Endpoints follow the route conventions (`/booking-sources`, `/list` with keyword/status, max `pageSize` 500, ordered by `sort_order`, then name). Error: `NAME_TAKEN` (409). Permissions `booking-source:create|update|list|get|status`; `sales` has list/get.
+
 ## Tour programs
 
 `pkg/modules/tourprogram`, tables `tour_program` + `tour_program_country` / `tour_program_city` (ordered links, first country = main country) + `tour_program_image` (gallery).
@@ -564,7 +571,10 @@ Visibility rules (repository: `wherePublic`, `ListPublic…`; DTOs: `pkg/modules
 
 ### User endpoints
 
-`POST /users/list`, `GET /users/:id`, `POST /users` (`temporaryPassword` required, sets `mustChangePassword`), `PUT /users` (`id, email, name, roles`), `PUT /users/status`, `PUT /users/password` (admin reset: new temporary password, sets `mustChangePassword`). Permissions `user:create|update|list|get|status|password-reset`.
+`POST /users/list`, `GET /users/:id`, `POST /users` (`temporaryPassword` required, sets `mustChangePassword`), `PUT /users` (`id, email, name, phone, roles`), `PUT /users/status`, `PUT /users/password` (admin reset: new temporary password, sets `mustChangePassword`). Permissions `user:create|update|list|get|status|password-reset`.
+
+- `phone` is optional (`app_user.phone`, `''` = none). Spaces, dashes, dots and parentheses are stripped; the rest must be 9–15 digits with an optional leading `+`. It is shown to customers in sales tool texts.
+- `GET /users/sales` (`sales-user:list`, held by `sales`): active sales users `{id, name, phone}` by name plus `defaultId` (the caller when they are one). For the backoffice sales tools, so sales staff don't need `user:list`. Registered before `/users/:id`.
 
 - Deactivating a user or resetting their password **revokes all their refresh tokens**. Their access token stops working on the next request because the middleware reloads the user. Role changes need no revocation for the same reason.
 - `CANNOT_MODIFY_SELF`: staff can't change their own roles or status, or reset their own password through `/users/password` (they use `/auth/password`).

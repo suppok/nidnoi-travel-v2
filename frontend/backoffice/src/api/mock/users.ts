@@ -3,7 +3,7 @@ import { Permissions } from '../../constants/permissions.ts';
 import { canGrantRole, isSuperAdmin, type Role, ROLE_INFO } from '../../constants/roles.ts';
 import { passwordProblem } from '../../lib/password.ts';
 import type { ListResponse } from '../../types/api.ts';
-import type { User } from '../../types/user.ts';
+import type { SalesUserListResponse, User } from '../../types/user.ts';
 import { type MockUser, save, toUser, users } from './db.ts';
 import { asRecord, authorize, EMAIL_RE, type MockHandler, MockFail, ok, str, validation } from './http.ts';
 
@@ -18,12 +18,15 @@ function findUser(id: unknown): MockUser {
 function parseProfile(body: Record<string, unknown>, selfId: string | null) {
   const email = str(body.email).toLowerCase();
   const name = str(body.name);
+  // Same normalization and rule as the backend: strip separators, then 9-15 digits with an optional +.
+  const phone = str(body.phone).replace(/[\s\-.()]/g, '');
   const roles = Array.isArray(body.roles) ? [...new Set(body.roles)] : [];
   const fields: Record<string, string> = {};
 
   if (!EMAIL_RE.test(email)) fields.email = 'อีเมลไม่ถูกต้อง';
   if (!name) fields.name = 'กรุณากรอกชื่อ';
   else if (name.length > 100) fields.name = 'ชื่อยาวได้ไม่เกิน 100 ตัวอักษร';
+  if (phone && !/^\+?[0-9]{9,15}$/.test(phone)) fields.phone = 'เบอร์โทรต้องเป็นตัวเลข 9–15 หลัก';
   if (roles.length === 0) fields.roles = 'ต้องมีอย่างน้อย 1 บทบาท';
   else if (roles.some((r) => typeof r !== 'string' || !ROLE_VALUES.has(r))) fields.roles = 'บทบาทไม่ถูกต้อง';
   if (Object.keys(fields).length) throw validation(fields);
@@ -31,7 +34,7 @@ function parseProfile(body: Record<string, unknown>, selfId: string | null) {
   if (users.some((u) => u.email === email && u.id !== selfId)) {
     throw new MockFail(409, ErrorCodes.EmailTaken, 'Email is already in use');
   }
-  return { email, name, roles: roles as Role[] };
+  return { email, name, phone, roles: roles as Role[] };
 }
 
 // Only the super admin may grant the admin role.
@@ -165,8 +168,18 @@ const resetPassword: MockHandler = (req) => {
   return ok(null);
 };
 
+const salesList: MockHandler = (req) => {
+  const actor = authorize(req, 'GET /users/sales', Permissions.SalesUserList);
+  const items = users
+    .filter((u) => u.status && u.roles.includes('sales'))
+    .sort((a, b) => a.name.localeCompare(b.name, 'th'))
+    .map((u) => ({ id: u.id, name: u.name, phone: u.phone }));
+  return ok({ items, defaultId: items.some((u) => u.id === actor.id) ? actor.id : '' } satisfies SalesUserListResponse);
+};
+
 export const userRoutes: Record<string, MockHandler> = {
   'POST /users/list': list,
+  'GET /users/sales': salesList, // before /users/:id
   'GET /users/:id': get,
   'POST /users': create,
   'PUT /users': update,

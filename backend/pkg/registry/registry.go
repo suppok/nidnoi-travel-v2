@@ -36,6 +36,7 @@ type RepositoryRegistry struct {
 	WholesaleRepository        repository.WholesaleRepository
 	WholesaleContactRepository repository.WholesaleContactRepository
 	AirlineRepository          repository.AirlineRepository
+	BookingSourceRepository    repository.BookingSourceRepository
 
 	TourProgramRepository        repository.TourProgramRepository
 	TourProgramCountryRepository repository.TourProgramCountryRepository

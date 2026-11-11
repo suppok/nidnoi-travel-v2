@@ -32,4 +32,7 @@ p, sales, line-booking, update
 p, finance, line-booking, list
 p, finance, line-booking, get
 p, sales, line-contact, list
+p, sales, booking-source, list
+p, sales, booking-source, get
+p, sales, sales-user, list
 p, finance, line-contact, list

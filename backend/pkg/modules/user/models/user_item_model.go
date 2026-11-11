@@ -13,6 +13,7 @@ type UserItem struct {
 	ID                 string    `json:"id"`
 	Email              string    `json:"email"`
 	Name               string    `json:"name"`
+	Phone              string    `json:"phone"` // digits only; "" = none
 	Roles              []string  `json:"roles"`
 	Status             bool      `json:"status"`
 	MustChangePassword bool      `json:"mustChangePassword"`
@@ -28,6 +29,7 @@ func NewUserItem(u *domain.AppUser) UserItem {
 		ID:                 u.ID,
 		Email:              u.Email,
 		Name:               u.Name,
+		Phone:              u.Phone,
 		Roles:              u.Roles,
 		Status:             u.Status,
 		MustChangePassword: u.MustChangePassword,

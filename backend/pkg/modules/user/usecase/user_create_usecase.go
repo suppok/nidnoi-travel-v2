@@ -18,6 +18,7 @@ func (u *userUseCase) CreateValidate(request *models.UserCreateRequest) error {
 	return validation.ValidateStruct(request,
 		validation.Field(&request.Email, emailRules()...),
 		validation.Field(&request.Name, nameRules()...),
+		validation.Field(&request.Phone, phoneRules()...),
 		validation.Field(&request.Roles, rolesRules(role.Assignable)...),
 		validation.Field(&request.TemporaryPassword, validation.Required, u.shareRegistry.ServiceRegistry.Password.Rule()),
 	)
@@ -26,6 +27,7 @@ func (u *userUseCase) CreateValidate(request *models.UserCreateRequest) error {
 // Create adds a staff user with a temporary password; they must replace it at first login.
 func (u *userUseCase) Create(ctx context.Context, request *models.UserCreateRequest) (*models.UserCreateResponse, error) {
 	normalizeProfile(&request.Email, &request.Name, &request.Roles)
+	normalizePhone(&request.Phone)
 	if err := u.CreateValidate(request); err != nil {
 		return nil, cerrors.Validation(err)
 	}
@@ -56,6 +58,7 @@ func (u *userUseCase) Create(ctx context.Context, request *models.UserCreateRequ
 			ID:                 utils.NewID(),
 			Email:              request.Email,
 			Name:               request.Name,
+			Phone:              request.Phone,
 			PasswordHash:       hash,
 			Roles:              request.Roles,
 			MustChangePassword: true,

@@ -1,4 +1,4 @@
-import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -13,6 +13,7 @@ import { useBookingAlerts } from '../features/booking/hooks/useBookingAlerts.ts'
 import LineBookingAlertsProvider from '../features/line-booking/components/LineBookingAlertsProvider.tsx';
 import { useLineBookingAlerts } from '../features/line-booking/hooks/useLineBookingAlerts.ts';
 import LineLinkModal from '../features/line-link/LineLinkModal.tsx';
+import { SALES_TOOLS } from '../features/sales-tool/tools.tsx';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
 import { initials } from '../lib/format.ts';
 
@@ -33,7 +34,13 @@ const NAV: NavGroup[] = [
       { path: '/taxonomy/cities', label: 'เมือง', icon: <EnvironmentOutlined />, permission: Permissions.CityList },
       { path: '/wholesales', label: 'โฮลเซลล์', icon: <ShopOutlined />, permission: Permissions.WholesaleList },
       { path: '/airlines', label: 'สายการบิน', icon: <SendOutlined />, permission: Permissions.AirlineList },
+      { path: '/booking-sources', label: 'ช่องทางการจอง', icon: <ShareAltOutlined />, permission: Permissions.BookingSourceList },
     ],
+  },
+  {
+    key: 'sales-tools',
+    label: 'เครื่องมือฝ่ายขาย',
+    items: SALES_TOOLS.map(({ path, label, icon, permission }) => ({ path, label, icon, permission })),
   },
   {
     key: 'system',

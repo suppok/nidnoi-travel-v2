@@ -10,17 +10,17 @@ export type MockUser = User & {
   sessionVersion: number;
 };
 
-const DB_KEY = 'nidnoi.mock.users.v3';
+const DB_KEY = 'nidnoi.mock.users.v4';
 
 const now = '2026-10-01T09:00:00.000Z';
 
 function seed(): MockUser[] {
-  const base = { status: true, mustChangePassword: false, lastLoginAt: null, lineDisplayName: null, createDate: now, updateDate: now, sessionVersion: 1 };
+  const base = { phone: '', status: true, mustChangePassword: false, lastLoginAt: null, lineDisplayName: null, createDate: now, updateDate: now, sessionVersion: 1 };
   return [
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000000', email: 'owner@nidnoi.test', name: 'เจ้าของระบบ', roles: [Roles.SuperAdmin], password: MOCK_PASSWORD },
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000001', email: 'admin@nidnoi.test', name: 'แอดมิน', roles: [Roles.Admin], password: MOCK_PASSWORD },
-    { ...base, id: '0b9c6a52-0000-4000-8000-000000000002', email: 'sales@nidnoi.test', name: 'สมใจ ขายเก่ง', roles: [Roles.Sales], password: MOCK_PASSWORD },
-    { ...base, id: '0b9c6a52-0000-4000-8000-000000000003', email: 'finance@nidnoi.test', name: 'มานี บัญชีดี', roles: [Roles.Sales, Roles.Finance], password: MOCK_PASSWORD },
+    { ...base, id: '0b9c6a52-0000-4000-8000-000000000002', email: 'sales@nidnoi.test', name: 'สมใจ ขายเก่ง', phone: '0812345678', roles: [Roles.Sales], password: MOCK_PASSWORD },
+    { ...base, id: '0b9c6a52-0000-4000-8000-000000000003', email: 'finance@nidnoi.test', name: 'มานี บัญชีดี', phone: '0898765432', roles: [Roles.Sales, Roles.Finance], password: MOCK_PASSWORD },
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000004', email: 'new@nidnoi.test', name: 'พนักงานใหม่', roles: [Roles.Sales], password: MOCK_PASSWORD, mustChangePassword: true },
     { ...base, id: '0b9c6a52-0000-4000-8000-000000000005', email: 'old@nidnoi.test', name: 'อดีตพนักงาน', roles: [Roles.Sales], password: MOCK_PASSWORD, status: false },
   ];

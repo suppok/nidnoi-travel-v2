@@ -12,6 +12,7 @@ import TemporaryPasswordNotice from './TemporaryPasswordNotice.tsx';
 type UserForm = {
   name: string;
   email: string;
+  phone: string;
   roles: Role[];
   temporaryPassword: string;
 };
@@ -39,14 +40,14 @@ export default function UserFormModal({ open, user, isSelf, onClose, onSaved }: 
     form.resetFields();
     form.setFieldsValue(
       user
-        ? { name: user.name, email: user.email, roles: user.roles }
-        : { name: '', email: '', roles: [], temporaryPassword: generateTemporaryPassword() },
+        ? { name: user.name, email: user.email, phone: user.phone, roles: user.roles }
+        : { name: '', email: '', phone: '', roles: [], temporaryPassword: generateTemporaryPassword() },
     );
   }, [open, user, form]);
 
   const onFinish = async (values: UserForm) => {
     setSubmitting(true);
-    const profile = { name: values.name.trim(), email: values.email.trim().toLowerCase(), roles: values.roles };
+    const profile = { name: values.name.trim(), email: values.email.trim().toLowerCase(), phone: (values.phone ?? '').trim(), roles: values.roles };
     try {
       if (creating) {
         await usersApi.create({ ...profile, temporaryPassword: values.temporaryPassword });
@@ -93,6 +94,21 @@ export default function UserFormModal({ open, user, isSelf, onClose, onSaved }: 
           ]}
         >
           <Input type="email" autoComplete="off" />
+        </Form.Item>
+        <Form.Item
+          label="เบอร์โทร"
+          name="phone"
+          extra="ไม่บังคับ แสดงให้ลูกค้าเห็นในข้อความสรุปการจอง"
+          rules={[
+            {
+              validator: (_, value: string | undefined) => {
+                const digits = (value ?? '').replace(/[\s\-.()]/g, '');
+                return !digits || /^\+?[0-9]{9,15}$/.test(digits) ? Promise.resolve() : Promise.reject(new Error('เบอร์โทรต้องเป็นตัวเลข 9–15 หลัก'));
+              },
+            },
+          ]}
+        >
+          <Input type="tel" autoComplete="off" placeholder="081 234 5678" className="max-w-[240px]" />
         </Form.Item>
         <Form.Item
           label="บทบาท"

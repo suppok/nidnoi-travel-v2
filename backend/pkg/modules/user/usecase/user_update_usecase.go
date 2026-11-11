@@ -19,15 +19,17 @@ func (u *userUseCase) UpdateValidate(request *models.UserUpdateRequest) error {
 		validation.Field(&request.ID, validation.Required, validation.UUID),
 		validation.Field(&request.Email, emailRules()...),
 		validation.Field(&request.Name, nameRules()...),
+		validation.Field(&request.Phone, phoneRules()...),
 		validation.Field(&request.Roles, rolesRules(role.All)...),
 	)
 }
 
-// Update changes email, name and roles. Roles take effect on the user's next request. Only the
+// Update changes email, name, phone and roles. Roles take effect on the user's next request. Only the
 // super admin may edit the super admin (name and email; their roles are fixed), and only the
 // super admin may edit an admin or grant the admin role.
 func (u *userUseCase) Update(ctx context.Context, request *models.UserUpdateRequest) (*models.UserUpdateResponse, error) {
 	normalizeProfile(&request.Email, &request.Name, &request.Roles)
+	normalizePhone(&request.Phone)
 	if err := u.UpdateValidate(request); err != nil {
 		return nil, cerrors.Validation(err)
 	}
@@ -71,10 +73,11 @@ func (u *userUseCase) Update(ctx context.Context, request *models.UserUpdateRequ
 
 		target.Email = request.Email
 		target.Name = request.Name
+		target.Phone = request.Phone
 		target.Roles = request.Roles
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
-		updated, err = users.Update(ctx, target, "email", "name", "roles", "update_date", "update_by")
+		updated, err = users.Update(ctx, target, "email", "name", "phone", "roles", "update_date", "update_by")
 		if query.IsUniqueViolation(err) {
 			return cerrors.Conflict(errorcode.EmailTaken)
 		}

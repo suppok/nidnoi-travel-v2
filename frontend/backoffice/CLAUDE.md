@@ -135,6 +135,7 @@ Backend issues a short-lived JWT access token plus a refresh token in an HttpOnl
 - Login identifier is **email**.
 - Roles are **fixed** (`super_admin`, `admin`, `sales`, `finance`), defined in backend `policy.csv` and mirrored in `src/constants/roles.ts`. There is no role editor.
 - **The first user is the super admin** (created by the backend's `create-super-admin` command, at most one). `super_admin` has every permission, is never offered in the user form (`ASSIGNABLE_ROLES`), and only the super admin can edit themselves; the list disables edit/reset/deactivate on their row for everyone else (`SUPER_ADMIN_PROTECTED`).
+- **Phone** (optional) is set in the user form; the backend stores digits only and `formatPhone` (`src/lib/format.ts`) displays it. Sales tool texts show it next to the sales person's name.
 - **Every user has one or more roles.** Permissions are the union of the roles' policies. The users screen (`/users`) assigns roles with a checkbox group; at least one is required in both UI and backend.
 - **No self-service password reset** (no email service). An admin sets a temporary password (create user / "รีเซ็ตรหัสผ่าน"); the user is forced to `/change-password` until they replace it. Backend enforces this with `PASSWORD_CHANGE_REQUIRED`.
 - Guard rails: you can't change your own roles or status (`CANNOT_MODIFY_SELF`), and nobody but the super admin can change the super admin (`SUPER_ADMIN_PROTECTED`).
@@ -364,6 +365,28 @@ Booking requests sent from the customer site (leads — no seats reserved, no pa
 
 - `/line-bookings` — bookings sales submit from the LIFF app; `LineBookingDrawer` shows the slip, travellers, state and staff note.
 - **แชท LINE ของลูกค้า** (`LineContactSection`): links the booking to the customer's LINE OA chat so a receipt can be pushed later. A searchable `Select` over `POST /line-contacts/list` (debounced, most recent chat first) saves at once through `PUT /line-bookings/line-contact`; "ยกเลิกการเชื่อม" unlinks. Needs `line-booking:update` and `line-contact:list`. A contact with `following: false` (blocked the OA) is flagged — a push would not reach them. Customers appear only after they message or follow the OA.
+
+## Sales Tools
+
+Day-to-day helpers for sales staff. Each tool is its own item in the sidebar group "เครื่องมือฝ่ายขาย", at `/sales-tools/<tool>`.
+
+- **Registry:** `src/features/sales-tool/tools.tsx` (`SALES_TOOLS`) drives both the sidebar items and the routes in `App.tsx`. A tool without `element` renders `SalesToolComingSoon` ("เร็วๆ นี้").
+- **Adding a tool:** build its page under `src/routes/sales-tools/<tool>/` (shared UI in `features/sales-tool/`), then set `element` (and `permission`, if it needs one — the route is wrapped in `RequirePermission` automatically) in the registry.
+- Planned: อ่านพาสปอร์ต (passport OCR), ค้นหาโปรแกรมด่วน (quick tour search), ค้นหาประกันเดินทาง (insurance search).
+
+### สรุปยอดโอน (booking summary)
+
+`/sales-tools/booking-summary` (`features/sales-tool/booking-summary/`, guarded by `sales-user:list`). Sales fill in a form and copy a plain-text summary to paste into LINE OA / Facebook. **Nothing is saved** — the form lives only on the page.
+
+- Data from the backend: booking sources (`POST /booking-sources/list`), tours (`TourPicker`, remote search), active future periods, the tour (name, days/nights, airline, wholesale, PDF link) and sales users with phone (`GET /users/sales`, defaults to the caller).
+- Picking a period fills adult price, child price (`childWithBedPrice`, else adult), single supplement and deposit/person; turns the deposit on when departure is more than 30 days away and the period has a deposit; sets the balance due date to 30 days before departure. Everything stays editable.
+- Totals and text are pure functions in `summary.ts` (`computeTotals`, `buildSummaryText`): discount/person comes off adult, child and infant prices; fuel/airport tax counts left empty follow the traveller count; card fee (default 2.6%) is rounded up and charged on the deposit only when paying a deposit, else on the full amount.
+- Logic follows the legacy booking page (`ex/Booking.jsx`, gitignored).
+
+## Booking Sources
+
+- `/booking-sources` ("ช่องทางการจอง", sidebar group "ฝ่ายขาย") — list + `BookingSourceFormModal` (name, short name, sort order). `sales` sees it read-only (`booking-source:list|get`). `NAME_TAKEN` (409) is shown on the name field.
+- The short name labels the source's own reference name in the booking summary ("ชื่อ <shortName>").
 
 ## Customer Site Rebuild
 

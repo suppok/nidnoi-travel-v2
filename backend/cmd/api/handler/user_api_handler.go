@@ -32,6 +32,7 @@ func (h *UserAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middlewar
 	r.Post("/users/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.UserList), h.UserList)
 	r.Put("/users/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.UserStatus), h.UserUpdateStatus)
 	r.Put("/users/password", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.UserPasswordReset), h.UserResetPassword)
+	r.Get("/users/sales", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.SalesUserList), h.UserSalesList)
 	r.Get("/users/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.UserGet), h.UserGet)
 }
 
@@ -146,5 +147,21 @@ func (h *UserAPIHandler) UserResetPassword(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.userUseCase.ResetPassword(ctx, request)
+	})
+}
+
+// UserSalesList godoc
+// @Summary     List sales users for sales tools
+// @Description Active users with the sales role, by name, with their phone. defaultId is the caller when they are one of them.
+// @Tags        users
+// @Produce     json
+// @Security    BearerAuth
+// @Success     200 {object} models.UserSalesListResponse
+// @Router      /users/sales [get]
+func (h *UserAPIHandler) UserSalesList(c *fiber.Ctx) error {
+	request := &models.UserSalesListRequest{}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.userUseCase.SalesList(ctx, request)
 	})
 }

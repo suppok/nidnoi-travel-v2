@@ -13,4 +13,6 @@ type UserUseCase interface {
 	Update(ctx context.Context, request *models.UserUpdateRequest) (*models.UserUpdateResponse, error)
 	UpdateStatus(ctx context.Context, request *models.UserUpdateStatusRequest) (*models.UserUpdateStatusResponse, error)
 	ResetPassword(ctx context.Context, request *models.UserResetPasswordRequest) (*models.UserResetPasswordResponse, error)
+	// SalesList returns active sales users for the backoffice sales tools (not limited by user:list).
+	SalesList(ctx context.Context, request *models.UserSalesListRequest) (*models.UserSalesListResponse, error)
 }
