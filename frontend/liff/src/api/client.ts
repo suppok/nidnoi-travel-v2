@@ -6,6 +6,9 @@ import type {
   SalesUserList,
   LineBookingCreateRequest,
   LineBookingCreateResponse,
+  LineBookingItem,
+  LineBookingLIFFUpdateRequest,
+  LineBookingLIFFUpdateResponse,
   MediaUploadResponse,
   TourPeriodItem,
   TourPublicItem,
@@ -118,4 +121,14 @@ export async function createLineBooking(
 ): Promise<LineBookingCreateResponse> {
   const res = await send('POST', '/line-bookings', body)
   return parse<LineBookingCreateResponse>(res)
+}
+
+// A deposit booking reopened by its booking no. NOT_FOUND when there is none,
+// LINE_BOOKING_NOT_EDITABLE until its deposit documents were sent (or once it is paid in full).
+export async function getEditableBooking(bookingNo: string): Promise<LineBookingItem> {
+  return parse<LineBookingItem>(await send('GET', `/liff/line-bookings/${encodeURIComponent(bookingNo)}`, undefined))
+}
+
+export async function updateLineBooking(body: LineBookingLIFFUpdateRequest): Promise<LineBookingLIFFUpdateResponse> {
+  return parse<LineBookingLIFFUpdateResponse>(await send('PUT', '/liff/line-bookings', body))
 }

@@ -44,6 +44,10 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
   // The sales owner (or an admin) confirms or cancels a new booking; the backend re-checks.
   const decidable = editable && booking?.state === LineBookingStates.New && (isOwner || seesAll);
   const [confirming, setConfirming] = useState(false);
+  // A balance recorded from LIFF waits for the sales owner (or an admin) to check the slip.
+  const balancePending =
+    booking?.state === LineBookingStates.DepositPaid && !!booking.balanceSubmittedAt && !booking.balanceConfirmedAt;
+  const confirmsBalance = editable && balancePending && (isOwner || seesAll);
   const paid = booking?.state === LineBookingStates.DepositPaid || booking?.state === LineBookingStates.PaidInFull;
   // Its finance user (or an admin) uploads and sends the documents; the backend re-checks.
   const sendsDocuments =
@@ -125,6 +129,26 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
     });
   };
 
+  const confirmBalance = () => {
+    if (!booking) return;
+    modal.confirm({
+      title: `ยืนยันยอดคงเหลือของ ${booking.bookingNo}?`,
+      content: `ใบจองจะเปลี่ยนเป็น "ชำระครบแล้ว" และส่งให้ ${booking.financeUser?.name ?? 'ฝ่ายการเงิน'} ออกใบเสร็จรับเงิน (RE)`,
+      okText: 'ยืนยัน',
+      cancelText: 'ปิด',
+      onOk: async () => {
+        try {
+          const updated = await lineBookingsApi.confirmBalance(booking.id);
+          setBooking(updated);
+          message.success(`ยืนยันยอดคงเหลือแล้ว — ส่งให้ ${updated.financeUser?.name ?? 'ฝ่ายการเงิน'} ออกใบเสร็จ`);
+          onChanged();
+        } catch (err) {
+          message.error(errorMessage(err));
+        }
+      },
+    });
+  };
+
   const state = booking ? LINE_BOOKING_STATE_INFO.find((s) => s.value === booking.state) : null;
 
   return (
@@ -185,6 +209,21 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
               }
             />
           )}
+          {balancePending && (
+            <Alert
+              type="warning"
+              showIcon
+              title={`ลูกค้าชำระส่วนที่เหลือแล้ว — รอ${confirmsBalance ? 'คุณ' : ` ${booking.salesUser?.name ?? 'เซลล์'} `}ยืนยัน`}
+              description={`บันทึกจาก LINE เมื่อ ${formatDateTime(booking.balanceSubmittedAt ?? '')} ตรวจสลิปส่วนที่เหลือด้านล่าง แล้วกดยืนยันเพื่อส่งให้ฝ่ายการเงินออกใบเสร็จ`}
+              action={
+                confirmsBalance && (
+                  <Button type="primary" icon={<CheckOutlined />} onClick={confirmBalance}>
+                    ยืนยันยอดคงเหลือ
+                  </Button>
+                )
+              }
+            />
+          )}
           <section>
             <Typography.Title level={5}>ข้อมูลจาก LINE</Typography.Title>
             <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
@@ -234,7 +273,23 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
 
           <section>
             <Typography.Title level={5}>สลิปโอนเงิน</Typography.Title>
-            <Image src={booking.slipImage} alt="สลิปโอนเงิน" width={240} className="rounded-lg" />
+            {booking.balanceSlipImage ? (
+              <div className="flex flex-wrap gap-4">
+                <figure className="m-0">
+                  <Image src={booking.slipImage} alt="สลิปมัดจำ" width={200} className="rounded-lg" />
+                  <figcaption className="mt-1 text-xs text-ink-muted">มัดจำ</figcaption>
+                </figure>
+                <figure className="m-0">
+                  <Image src={booking.balanceSlipImage} alt="สลิปส่วนที่เหลือ" width={200} className="rounded-lg" />
+                  <figcaption className="mt-1 text-xs text-ink-muted">
+                    ส่วนที่เหลือ
+                    {booking.balanceConfirmedAt ? ` · ยืนยันเมื่อ ${formatDateTime(booking.balanceConfirmedAt)}` : ' · รอยืนยัน'}
+                  </figcaption>
+                </figure>
+              </div>
+            ) : (
+              <Image src={booking.slipImage} alt="สลิปโอนเงิน" width={240} className="rounded-lg" />
+            )}
           </section>
 
           <section>

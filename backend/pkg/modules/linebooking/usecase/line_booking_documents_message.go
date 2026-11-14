@@ -10,7 +10,7 @@ import (
 // documentButtons are the PDFs of b in plan order, with their button labels (LINE allows 20
 // characters per label).
 func documentButtons(b *domain.LineBooking) [][2]string {
-	if b.IsDeposit {
+	if !b.NeedsReceipt() {
 		return [][2]string{{"AI ใบรับเงินมัดจำ", b.AIFile}, {"IV ใบแจ้งหนี้", b.IVFile}}
 	}
 	return [][2]string{{"RE ใบเสร็จรับเงิน", b.REFile}}
@@ -46,7 +46,7 @@ func documentsMessages(b *domain.LineBooking) []any {
 		return m
 	}
 	title := "ใบเสร็จรับเงิน"
-	if b.IsDeposit {
+	if !b.NeedsReceipt() {
 		title = "เอกสารรับเงินมัดจำ"
 	}
 	return []any{map[string]any{

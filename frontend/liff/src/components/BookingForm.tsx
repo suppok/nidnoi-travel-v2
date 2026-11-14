@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ApiError, createLineBooking, getBookingSources, getSalesUsers, searchTours } from '../api/client.ts'
-import { applyPeriod, computeTotals, type Deal, dealError, dealFromSummary, dealRequest, emptyDeal } from '../lib/deal.ts'
+import { ApiError, createLineBooking, getBookingSources, getSalesUsers, searchTours, updateLineBooking } from '../api/client.ts'
+import { applyPeriod, computeTotals, type Deal, dealError, dealFromBooking, dealFromSummary, dealRequest, emptyDeal } from '../lib/deal.ts'
 import type { ParsedSummary } from '../lib/parseSummary.ts'
-import type { BookingSource, LineContact, SalesUser, TourPeriodItem, TourPublicItem } from '../types/index.ts'
+import type { BookingSource, LineBookingItem, LineContact, SalesUser, TourPeriodItem, TourPublicItem } from '../types/index.ts'
 import { CustomerChatPicker } from './CustomerChatPicker.tsx'
 import { DealSection } from './DealSection.tsx'
+import { OpenBooking } from './OpenBooking.tsx'
 import { formatPrice, inputClass } from '../lib/format.ts'
 import { Label } from './fields.tsx'
 import { PaymentSection } from './PaymentSection.tsx'
@@ -20,7 +21,10 @@ type Props = {
   staffName: string
 }
 
-type SuccessData = { bookingNo: string; totalPrice: number }
+type SuccessData = { bookingNo: string; totalPrice: number; message?: string }
+
+// line_booking.state 20: deposit paid, the balance may still be recorded. MUST match the backend.
+const DEPOSIT_PAID = 20
 
 export function BookingForm({ staffName }: Props) {
   const [tour, setTour] = useState<TourPublicItem | null>(null)
@@ -42,6 +46,9 @@ export function BookingForm({ staffName }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<SuccessData | null>(null)
+  // A booking reopened by its booking no (edit mode), and the balance slip to record with it.
+  const [editing, setEditing] = useState<LineBookingItem | null>(null)
+  const [balanceSlip, setBalanceSlip] = useState('')
   // Prefill from a pasted sales-tool summary.
   const [pasteReport, setPasteReport] = useState<PasteReport | null>(null)
   const [autoPeriod, setAutoPeriod] = useState<{ startDate: string; endDate: string } | null>(null)
@@ -56,6 +63,14 @@ export function BookingForm({ staffName }: Props) {
 
   const totals = computeTotals(deal)
   const source = sources?.find((s) => s.id === bookingSourceId) ?? null
+  // A source deleted since the booking was made still shows on it.
+  // Only a deposit booking not yet paid in full, whose deposit documents were sent, takes a balance slip.
+  const awaitsBalance = editing !== null && editing.isDeposit && editing.state === DEPOSIT_PAID && editing.documentsApprovedAt !== null
+  // Finance hasn't finished this round's documents: saving asks for a second confirm.
+  const waitingFinance = editing !== null && editing.documentsApprovedAt === null
+  const [confirmingWarning, setConfirmingWarning] = useState(false)
+  const sourceOptions = [...(sources ?? [])]
+  if (editing?.bookingSource && !sourceOptions.some((s) => s.id === editing.bookingSource?.id)) sourceOptions.push(editing.bookingSource)
 
   // Sales owner options (the submitter is preselected when they are sales) and booking sources.
   useEffect(() => {
@@ -180,7 +195,63 @@ export function BookingForm({ staffName }: Props) {
     })
   }
 
+  function openBooking(b: LineBookingItem) {
+    setEditing(b)
+    setDeal(dealFromBooking(b))
+    setBookingSourceId(b.bookingSource?.id ?? '')
+    setRefName(b.refName)
+    setRefBookingNo(b.refBookingNo)
+    setLineContact(b.lineContact ? { ...b.lineContact, lastMessageAt: null } : null)
+    setCustomerName(b.customerName)
+    setCustomerPhone(b.customerPhone)
+    setCustomerAddress(b.customerAddress)
+    setNote(b.note)
+    setBalanceSlip('')
+    setError('')
+    setConfirmingWarning(false)
+    setStarted(true)
+  }
+
+  async function handleUpdate(b: LineBookingItem) {
+    setError('')
+    const invalid = dealError(deal)
+    if (invalid) return setError(invalid)
+    if (!customerName.trim()) return setError('กรุณาระบุชื่อลูกค้า')
+    if (!customerPhone.trim()) return setError('กรุณาระบุเบอร์โทรลูกค้า')
+    if (waitingFinance && !confirmingWarning) return setConfirmingWarning(true)
+
+    setConfirmingWarning(false)
+    setSubmitting(true)
+    try {
+      const result = await updateLineBooking({
+        bookingNo: b.bookingNo,
+        lineContactId: lineContact?.id ?? null,
+        bookingSourceId: bookingSourceId || null,
+        refName: refName.trim(),
+        refBookingNo: refBookingNo.trim(),
+        ...dealRequest(deal),
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        customerAddress: customerAddress.trim(),
+        note: note.trim(),
+        balanceSlipImage: awaitsBalance ? balanceSlip : '',
+      })
+      setSuccess({
+        bookingNo: result.bookingNo,
+        totalPrice: result.totalPrice,
+        message: awaitsBalance && balanceSlip
+          ? `บันทึกยอดคงเหลือแล้ว รอ ${b.salesUser?.name ?? 'เซลล์เจ้าของการจอง'} ยืนยันในระบบหลังบ้าน แล้วฝ่ายการเงินจะออกใบเสร็จ`
+          : 'บันทึกการแก้ไขใบจองแล้ว',
+      })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   async function handleSubmit() {
+    if (editing) return handleUpdate(editing)
     setError('')
 
     if (!salesUserId) return setError('กรุณาเลือกเซลล์เจ้าของการจอง')
@@ -234,17 +305,20 @@ export function BookingForm({ staffName }: Props) {
     setPasteReport(null)
     setAutoPeriod(null)
     setPastedTotal(null)
+    setEditing(null)
+    setBalanceSlip('')
+    setConfirmingWarning(false)
     keepDealRef.current = false
     setStarted(false)
   }
 
   if (success) {
-    return <SuccessView bookingNo={success.bookingNo} totalPrice={success.totalPrice} onReset={handleReset} />
+    return <SuccessView bookingNo={success.bookingNo} totalPrice={success.totalPrice} message={success.message} onReset={handleReset} />
   }
 
   const header = (
     <div className="text-center">
-      <h1 className="text-lg font-semibold text-gray-900">บันทึกการจอง</h1>
+      <h1 className="text-lg font-semibold text-gray-900">{editing ? `แก้ไขใบจอง ${editing.bookingNo}` : 'บันทึกการจอง'}</h1>
       <p className="text-xs text-gray-500">โดย {staffName}</p>
     </div>
   )
@@ -254,6 +328,7 @@ export function BookingForm({ staffName }: Props) {
       <div className="space-y-6 px-4 pb-8 pt-4">
         {header}
         <SummaryPasteStart onApply={applySummary} onDone={() => setStarted(true)} />
+        <OpenBooking onOpen={openBooking} />
       </div>
     )
   }
@@ -262,22 +337,28 @@ export function BookingForm({ staffName }: Props) {
     <div className="space-y-6 px-4 pb-8 pt-4">
       {header}
 
-      <SummaryPaste onApply={applySummary} report={pasteReport} />
+      {editing ? (
+        <EditingSummary booking={editing} onCancel={handleReset} />
+      ) : (
+        <SummaryPaste onApply={applySummary} report={pasteReport} />
+      )}
 
-      {/* Sales owner */}
-      <section>
-        <Label htmlFor="sales-owner">เซลล์เจ้าของการจอง</Label>
-        <Select
-          id="sales-owner"
-          value={salesUserId}
-          onChange={setSalesUserId}
-          disabled={salesUsers === null}
-          placeholder={salesUsers === null && !salesUsersError ? 'กำลังโหลด...' : 'เลือกเซลล์'}
-          options={(salesUsers ?? []).map((u) => ({ value: u.id, label: u.name }))}
-        />
-        {salesUsersError && <p className="mt-1 text-xs text-red-600">{salesUsersError}</p>}
-        {salesUsers?.length === 0 && <p className="mt-1 text-xs text-gray-500">ยังไม่มีผู้ใช้บทบาทเซลล์ในระบบ</p>}
-      </section>
+      {/* Sales owner (fixed on a reopened booking) */}
+      {!editing && (
+        <section>
+          <Label htmlFor="sales-owner">เซลล์เจ้าของการจอง</Label>
+          <Select
+            id="sales-owner"
+            value={salesUserId}
+            onChange={setSalesUserId}
+            disabled={salesUsers === null}
+            placeholder={salesUsers === null && !salesUsersError ? 'กำลังโหลด...' : 'เลือกเซลล์'}
+            options={(salesUsers ?? []).map((u) => ({ value: u.id, label: u.name }))}
+          />
+          {salesUsersError && <p className="mt-1 text-xs text-red-600">{salesUsersError}</p>}
+          {salesUsers?.length === 0 && <p className="mt-1 text-xs text-gray-500">ยังไม่มีผู้ใช้บทบาทเซลล์ในระบบ</p>}
+        </section>
+      )}
 
       {/* Booking source */}
       <section className="space-y-2">
@@ -292,7 +373,7 @@ export function BookingForm({ staffName }: Props) {
           placeholder={sources === null ? 'กำลังโหลด...' : 'ไม่ระบุ'}
           options={[
             { value: '', label: 'ไม่ระบุ' },
-            ...(sources ?? []).map((s) => ({ value: s.id, label: s.name })),
+            ...sourceOptions.map((s) => ({ value: s.id, label: s.name })),
           ]}
         />
         <div className="grid grid-cols-2 gap-2">
@@ -313,35 +394,40 @@ export function BookingForm({ staffName }: Props) {
         </div>
       </section>
 
-      {/* Tour */}
-      <section>
-        <Label>โปรแกรมทัวร์</Label>
-        <TourSelector
-          selected={tour}
-          onSelect={(t) => {
-            setTour(t)
-            setAutoPeriod(null)
-            keepDealRef.current = false
-          }}
-        />
-      </section>
+      {/* Tour and period are fixed on a reopened booking (shown in its summary above). */}
+      {!editing && (
+        <>
+          {/* Tour */}
+          <section>
+            <Label>โปรแกรมทัวร์</Label>
+            <TourSelector
+              selected={tour}
+              onSelect={(t) => {
+                setTour(t)
+                setAutoPeriod(null)
+                keepDealRef.current = false
+              }}
+            />
+          </section>
 
-      {/* Period */}
-      <section>
-        <Label>ช่วงเดินทาง</Label>
-        <PeriodSelector
-          key={pasteSeq}
-          tourCode={tour?.code ?? null}
-          selected={period}
-          onSelect={handlePeriodSelect}
-          autoSelect={autoPeriod}
-          onAutoSelect={handleAutoPeriod}
-        />
-      </section>
+          {/* Period */}
+          <section>
+            <Label>ช่วงเดินทาง</Label>
+            <PeriodSelector
+              key={pasteSeq}
+              tourCode={tour?.code ?? null}
+              selected={period}
+              onSelect={handlePeriodSelect}
+              autoSelect={autoPeriod}
+              onAutoSelect={handleAutoPeriod}
+            />
+          </section>
+        </>
+      )}
 
       <DealSection deal={deal} onChange={setDeal} />
 
-      <PaymentSection deal={deal} totals={totals} onChange={setDeal} />
+      <PaymentSection deal={deal} totals={totals} onChange={setDeal} depositLocked={editing !== null} />
       {pastedTotal !== null && pastedTotal !== totals.grandTotal && (
         <p className="-mt-4 text-right text-xs text-amber-700">
           ข้อความสรุป {formatPrice(pastedTotal)} บาท ไม่ตรงกับยอดในฟอร์ม ตรวจสอบราคาอีกครั้ง
@@ -395,11 +481,32 @@ export function BookingForm({ staffName }: Props) {
         />
       </section>
 
-      {/* Slip upload */}
-      <section>
-        <Label>สลิปโอนเงิน</Label>
-        <SlipUpload value={slipImage} onChange={setSlipImage} />
-      </section>
+      {/* Slip upload: a reopened booking takes only the balance slip, when it still owes one. */}
+      {editing ? (
+        awaitsBalance && (
+          <section>
+            <Label optional>สลิปชำระส่วนที่เหลือ</Label>
+            <p className="mb-2 text-xs text-gray-500">
+              อัพโหลดเมื่อลูกค้าชำระส่วนที่เหลือแล้ว ({formatPrice(totals.remaining)} บาท) เซลล์เจ้าของการจองจะยืนยันในระบบหลังบ้าน
+              ถ้าแค่แก้ไขข้อมูลไม่ต้องอัพโหลด
+            </p>
+            {editing.balanceSubmittedAt && !balanceSlip && (
+              <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                มีสลิปส่วนที่เหลือรอเซลล์ยืนยันอยู่แล้ว อัพโหลดใหม่เพื่อแทนที่{' '}
+                <a href={editing.balanceSlipImage} target="_blank" rel="noreferrer" className="underline">
+                  ดูสลิปเดิม
+                </a>
+              </p>
+            )}
+            <SlipUpload value={balanceSlip} onChange={setBalanceSlip} />
+          </section>
+        )
+      ) : (
+        <section>
+          <Label>สลิปโอนเงิน</Label>
+          <SlipUpload value={slipImage} onChange={setSlipImage} />
+        </section>
+      )}
 
       {/* Note */}
       <section>
@@ -416,14 +523,85 @@ export function BookingForm({ staffName }: Props) {
 
       {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
+      {editing && confirmingWarning && (
+        <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="font-medium">{financeWarning(editing)}</p>
+          <p className="text-xs">แจ้งฝ่ายการเงินด้วยว่ามีการแก้ไขใบจอง เพื่อออกเอกสารตามยอดใหม่</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmingWarning(false)}
+              disabled={submitting}
+              className="flex-1 rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-700 disabled:opacity-50"
+            >
+              กลับไปแก้ไข
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex-1 rounded-lg bg-amber-600 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {submitting ? 'กำลังบันทึก...' : 'ยืนยันบันทึก'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || confirmingWarning}
         className="w-full rounded-lg bg-green-600 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
       >
-        {submitting ? 'กำลังบันทึก...' : `บันทึกการจอง${totals.grandTotal > 0 ? ` · ${formatPrice(totals.grandTotal)} บาท` : ''}`}
+        {submitting
+          ? 'กำลังบันทึก...'
+          : `${editing ? (awaitsBalance && balanceSlip ? 'บันทึกและส่งยอดคงเหลือ' : 'บันทึกการแก้ไข') : 'บันทึกการจอง'}${totals.grandTotal > 0 ? ` · ${formatPrice(totals.grandTotal)} บาท` : ''}`}
       </button>
     </div>
   )
+}
+
+// The fixed part of a reopened booking: tour, departure, sales owner, payment and the slips.
+function EditingSummary({ booking, onCancel }: { booking: LineBookingItem; onCancel: () => void }) {
+  return (
+    <section className="space-y-1 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
+      <p className="font-medium text-gray-900">
+        {booking.tourCode} {booking.tourName}
+      </p>
+      <p className="text-gray-600">
+        เดินทาง {booking.startDate} – {booking.endDate}
+      </p>
+      <p className="text-gray-600">เซลล์ {booking.salesUser?.name ?? '-'}</p>
+      <p className="text-gray-600">
+        {booking.state === DEPOSIT_PAID ? 'ชำระมัดจำแล้ว' : 'ชำระครบแล้ว'} · ยอดเดิม {formatPrice(booking.totalPrice)} บาท
+      </p>
+      <p className="text-gray-600">
+        <a href={booking.slipImage} target="_blank" rel="noreferrer" className="text-blue-700 underline">
+          {booking.isDeposit ? 'สลิปมัดจำ' : 'สลิปโอนเงิน'}
+        </a>
+        {booking.balanceConfirmedAt && booking.balanceSlipImage && (
+          <>
+            {' · '}
+            <a href={booking.balanceSlipImage} target="_blank" rel="noreferrer" className="text-blue-700 underline">
+              สลิปส่วนที่เหลือ
+            </a>
+          </>
+        )}
+      </p>
+      {!booking.documentsApprovedAt && <p className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-900">{financeWarning(booking)}</p>}
+      <button type="button" onClick={onCancel} className="pt-1 text-xs text-gray-500 underline">
+        ยกเลิกการแก้ไข
+      </button>
+    </section>
+  )
+}
+
+// Why saving a booking whose documents aren't approved yet needs care: finance may issue them for
+// the old amounts.
+function financeWarning(b: LineBookingItem): string {
+  const finance = b.financeUser?.name ?? 'ฝ่ายการเงิน'
+  return b.documentsAt
+    ? `${finance} ส่งเอกสารการเงินแล้วแต่ยังรอเซลล์ตรวจ เอกสารอาจไม่ตรงกับข้อมูลที่แก้ไข`
+    : `ใบจองนี้รอ ${finance} ออกเอกสารการเงิน การแก้ไขตอนนี้อาจทำให้เอกสารไม่ตรงกับยอดใหม่`
 }

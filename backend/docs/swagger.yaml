@@ -1194,8 +1194,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -1358,6 +1368,179 @@ definitions:
       price:
         type: integer
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingConfirmRequest:
     properties:
       financeUserId:
@@ -1381,8 +1564,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -1661,8 +1854,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -1827,8 +2030,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -1996,8 +2209,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -2168,8 +2391,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -2326,8 +2559,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -2471,11 +2714,300 @@ definitions:
       updateDate:
         type: string
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        type: string
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest:
+    properties:
+      adultPrice:
+        description: |-
+          Unit prices agreed with the customer (whole baht). Null = the period's price. AdultPrice is per
+          adult; an adult in a single room pays AdultPrice + SingleSupplement.
+        type: integer
+      adultPriceBeforeDiscount:
+        description: AdultPriceBeforeDiscount is shown as "(จาก …)"; display only.
+        type: integer
+      adultSingle:
+        type: integer
+      adultTwin:
+        type: integer
+      balanceSlipImage:
+        description: |-
+          BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/liff); "" = no balance
+          paid yet. Only for a deposit booking not paid in full (state 20) whose deposit
+          documents were approved; sending one makes the booking
+          wait for the sales owner to confirm the balance.
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSourceId:
+        description: BookingSourceID is where the customer booked (GET /liff/booking-sources);
+          optional.
+        type: string
+      charges:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq'
+        type: array
+      childNoBed:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBed:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      creditFeePercent:
+        description: credit only, up to 2 decimals
+        example: 3
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      depositDueDate:
+        description: Dates are YYYY-MM-DD, times HH:mm; all optional.
+        type: string
+      depositDueTime:
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        description: DiscountPerPerson comes off every traveller's price, infants
+          included.
+        type: integer
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      infant:
+        type: integer
+      infantPrice:
+        description: required when Infant > 0
+        type: integer
+      isDeposit:
+        type: boolean
+      lineContactId:
+        description: LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list);
+          optional.
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        description: '"" = transfer'
+        enum:
+        - transfer
+        - credit
+        type: string
+      periodId:
+        type: string
+      refBookingNo:
+        description: the booking number on that source
+        type: string
+      refName:
+        description: the customer's name on that source
+        type: string
+      remainingDueDate:
+        type: string
+      salesUserId:
+        description: SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
+        type: string
+      singleSupplement:
+        type: integer
+      slipImage:
+        description: R2 URL from /media/upload/liff
+        type: string
+      tourCode:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse:
+    properties:
+      balancePending:
+        description: 'BalancePending: the balance waits for the sales owner''s confirm.'
+        type: boolean
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      totalPrice:
+        description: TotalPrice is the new grand total, card fee included.
+        type: integer
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingListRequest:
     properties:
       assignedToMe:
         description: AssignedToMe lists only bookings sent to the caller as finance
           (the finance alert).
+        type: boolean
+      balancePending:
+        description: 'BalancePending: true = sales recorded the balance from LIFF
+          and it waits for the owner''s confirm.'
         type: boolean
       documentsApproved:
         description: 'DocumentsApproved: true = the sales owner approved the documents,
@@ -2574,8 +3106,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -2739,8 +3281,18 @@ definitions:
       adultTwinPrice:
         type: integer
       aiFile:
-        description: 'Finance documents (PDF URLs, "" = none): deposit → aiFile +
-          ivFile, full payment → reFile.'
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSubmittedAt:
         type: string
       bookingNo:
         example: 26X8K9AQ
@@ -5343,6 +5895,97 @@ paths:
       summary: Booking source options for the LIFF booking form
       tags:
       - liff
+  /liff/line-bookings:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
+        stay). The total is quoted again. A balanceSlipImage records the balance, which then
+        waits for the sales owner's PUT /line-bookings/confirm-balance.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Edit a reopened LINE booking from LIFF, or record its balance
+      tags:
+      - line-bookings
+  /liff/line-bookings/{bookingNo}:
+    get:
+      description: |-
+        Only a paid booking (state 20 or 25), also while its documents wait for finance.
+        Any staff user with line-booking:create may open it.
+      parameters:
+      - description: Booking no
+        in: path
+        name: bookingNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse'
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Reopen a LINE booking in LIFF by booking no
+      tags:
+      - line-bookings
   /liff/line-contacts/list:
     post:
       consumes:
@@ -5690,6 +6333,52 @@ paths:
       security:
       - BearerAuth: []
       summary: Confirm a new LINE booking and send it to a finance user
+      tags:
+      - line-bookings
+  /line-bookings/confirm-balance:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        The sales owner (or an admin) checked the balance slip recorded from LIFF. The state becomes
+        25 (paid in full) and the booking goes back to its finance user for the RE.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED (not the sales owner)
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_BALANCE_NOT_PENDING
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Confirm the balance of a deposit LINE booking
       tags:
       - line-bookings
   /line-bookings/documents:

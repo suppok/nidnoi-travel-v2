@@ -7,10 +7,12 @@ type Props = {
   deal: Deal
   totals: Totals
   onChange: (deal: Deal) => void
+  // A reopened booking already paid its deposit: hide the full/deposit choice.
+  depositLocked?: boolean
 }
 
 // Payment method, full or deposit, due dates, and the totals the customer is told.
-export function PaymentSection({ deal, totals, onChange }: Props) {
+export function PaymentSection({ deal, totals, onChange, depositLocked }: Props) {
   const p = deal.payment
   const set = (patch: Partial<Payment>) => onChange({ ...deal, payment: { ...p, ...patch } })
 
@@ -33,14 +35,16 @@ export function PaymentSection({ deal, totals, onChange }: Props) {
           </div>
         )}
 
-        <Toggle
-          options={[
-            { value: 'full', label: 'ชำระเต็มจำนวน' },
-            { value: 'deposit', label: 'ชำระมัดจำ' },
-          ]}
-          value={p.isDeposit ? 'deposit' : 'full'}
-          onChange={(v) => set({ isDeposit: v === 'deposit' })}
-        />
+        {!depositLocked && (
+          <Toggle
+            options={[
+              { value: 'full', label: 'ชำระเต็มจำนวน' },
+              { value: 'deposit', label: 'ชำระมัดจำ' },
+            ]}
+            value={p.isDeposit ? 'deposit' : 'full'}
+            onChange={(v) => set({ isDeposit: v === 'deposit' })}
+          />
+        )}
 
         {p.isDeposit ? (
           <>

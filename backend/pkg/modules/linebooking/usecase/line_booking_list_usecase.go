@@ -64,6 +64,7 @@ func (u *lineBookingUseCase) List(ctx context.Context, request *models.LineBooki
 		SalesUserID:       ownedBy(request),
 		DocumentsDone:     request.DocumentsDone,
 		DocumentsApproved: request.DocumentsApproved,
+		BalancePending:    request.BalancePending,
 		Page:              request.Page,
 		PageSize:          request.PageSize,
 	})

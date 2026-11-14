@@ -3,7 +3,15 @@
 // faked; public tour/period endpoints still go to the real backend at VITE_API_BASE_URL, so a
 // summary copied from the local backoffice matches real tours.
 import { env } from '../config/env.ts'
-import type { BookingSource, LineBookingCreateRequest, LineContact, SalesUserList, TourPeriodItem } from '../types/index.ts'
+import type {
+  BookingSource,
+  LineBookingCreateRequest,
+  LineBookingItem,
+  LineBookingLIFFUpdateRequest,
+  LineContact,
+  SalesUserList,
+  TourPeriodItem,
+} from '../types/index.ts'
 
 const LATENCY_MS = 250
 
@@ -53,6 +61,102 @@ async function quote(b: LineBookingCreateRequest): Promise<number | null> {
   return subtotal + (b.paymentMethod === 'credit' ? Math.ceil((base * bps) / 10000) : 0)
 }
 
+// A deposit booking whose deposit documents were sent: open it with booking no "26DEMO01".
+const DEPOSIT_BOOKING: LineBookingItem = {
+  id: 'd1000000-0000-4000-8000-000000000001',
+  bookingNo: '26DEMO01',
+  state: 20,
+  tourCode: 'NIDN000001',
+  tourName: 'ทัวร์ญี่ปุ่น โตเกียว ฟูจิ 5 วัน 3 คืน (mock)',
+  tourProgramPeriodId: 'e1000000-0000-4000-8000-000000000001',
+  startDate: '2027-03-10',
+  endDate: '2027-03-14',
+  adultTwinCount: 2,
+  adultTwinPrice: 39900,
+  adultSingleCount: 0,
+  adultSinglePrice: null,
+  childWithBedCount: 0,
+  childWithBedPrice: null,
+  childNoBedCount: 0,
+  childNoBedPrice: null,
+  infantCount: 0,
+  infantPrice: null,
+  adultPriceBeforeDiscount: 42900,
+  discountPerPerson: 0,
+  charges: [],
+  paymentMethod: 'transfer',
+  creditFeePercent: 0,
+  cardFee: 0,
+  isDeposit: true,
+  depositPerPerson: 10000,
+  depositDueDate: '2026-11-12',
+  depositDueTime: '18:00',
+  remainingDueDate: '2027-02-08',
+  fullDueDate: null,
+  fullDueTime: '',
+  totalPrice: 79800,
+  customerName: 'สมชาย ใจดี',
+  customerPhone: '0812345678',
+  customerAddress: '',
+  refName: '',
+  refBookingNo: '',
+  bookingSource: SOURCES[0],
+  salesUser: SALES.items[2],
+  lineContact: { id: CONTACTS[0].id, displayName: CONTACTS[0].displayName, pictureUrl: null, following: true },
+  slipImage: 'https://placehold.co/400x600?text=deposit+slip',
+  note: '',
+  balanceSlipImage: '',
+  balanceSubmittedAt: null,
+  balanceConfirmedAt: null,
+  financeUser: { id: '0b9c6a52-0000-4000-8000-000000000003', name: 'มานี บัญชีดี' },
+  documentsAt: '2026-11-10T09:00:00Z',
+  documentsApprovedAt: '2026-11-10T10:00:00Z',
+}
+
+// A booking paid in full whose RE was sent: "26FULL01".
+const FULL_BOOKING: LineBookingItem = {
+  ...DEPOSIT_BOOKING,
+  id: 'd1000000-0000-4000-8000-000000000002',
+  bookingNo: '26FULL01',
+  state: 25,
+  isDeposit: false,
+  depositPerPerson: 0,
+  depositDueDate: null,
+  depositDueTime: '',
+  remainingDueDate: null,
+  fullDueDate: '2026-11-20',
+  fullDueTime: '18:00',
+  slipImage: 'https://placehold.co/400x600?text=full+payment+slip',
+}
+
+// A deposit booking whose AI + IV finance hasn't sent yet: "26WAIT01".
+const WAITING_BOOKING: LineBookingItem = {
+  ...DEPOSIT_BOOKING,
+  id: 'd1000000-0000-4000-8000-000000000003',
+  bookingNo: '26WAIT01',
+  documentsAt: null,
+  documentsApprovedAt: null,
+}
+
+const EDITABLE = [DEPOSIT_BOOKING, FULL_BOOKING, WAITING_BOOKING]
+
+// The update's total from its own prices (no period lookup: every price is sent).
+function mockTotal(b: LineBookingLIFFUpdateRequest): number {
+  const adult = b.adultPrice ?? 0
+  const pax = b.adultTwin + b.adultSingle + b.childWithBed + b.childNoBed + b.infant
+  const subtotal =
+    b.adultTwin * adult +
+    b.adultSingle * (adult + (b.singleSupplement ?? 0)) +
+    b.childWithBed * (b.childWithBedPrice ?? 0) +
+    b.childNoBed * (b.childNoBedPrice ?? 0) +
+    b.infant * (b.infantPrice ?? 0) -
+    b.discountPerPerson * pax +
+    b.charges.reduce((sum, c) => sum + c.count * c.price, 0)
+  const bps = Math.round(b.creditFeePercent * 100)
+  const base = b.isDeposit ? b.depositPerPerson * pax : subtotal
+  return subtotal + (b.paymentMethod === 'credit' ? Math.ceil((base * bps) / 10000) : 0)
+}
+
 export async function mockSend(method: string, path: string, body: unknown): Promise<Response | null> {
   const route = `${method} ${path.split('?')[0]}`
   const handlers: Record<string, () => Response | Promise<Response>> = {
@@ -62,7 +166,8 @@ export async function mockSend(method: string, path: string, body: unknown): Pro
     'GET /liff/booking-sources': () => json({ items: SOURCES }),
     'POST /liff/line-contacts/list': () => {
       const keyword = String((body as { keyword?: string })?.keyword ?? '').toLowerCase()
-      return json({ items: CONTACTS.filter((c) => !keyword || c.displayName.toLowerCase().includes(keyword)) })
+      // Whole display name only, like the backend.
+      return json({ items: CONTACTS.filter((c) => !keyword || c.displayName.toLowerCase() === keyword.trim()) })
     },
     'POST /media/upload/liff': () => {
       const file = body instanceof FormData ? body.get('file') : null
@@ -77,6 +182,22 @@ export async function mockSend(method: string, path: string, body: unknown): Pro
       console.info('[mock] POST /line-bookings', req)
       return json({ bookingNo, totalPrice: total })
     },
+    'PUT /liff/line-bookings': () => {
+      const req = body as LineBookingLIFFUpdateRequest
+      if (!EDITABLE.some((b) => b.bookingNo === req.bookingNo)) return failure(404, 'NOT_FOUND', 'Not found')
+      console.info('[mock] PUT /liff/line-bookings', req)
+      return json({ bookingNo: req.bookingNo, totalPrice: mockTotal(req), balancePending: req.balanceSlipImage !== '' })
+    },
+  }
+  // GET /liff/line-bookings/:bookingNo — "26DEMO01" (deposit), "26FULL01" (paid in full) and
+// "26WAIT01" (waiting for finance: warns on save) open; "26NEW001" answers LINE_BOOKING_NOT_EDITABLE.
+  if (method === 'GET' && path.startsWith('/liff/line-bookings/')) {
+    const no = decodeURIComponent(path.slice('/liff/line-bookings/'.length)).toUpperCase()
+    await new Promise((r) => setTimeout(r, LATENCY_MS))
+    const found = EDITABLE.find((b) => b.bookingNo === no)
+    if (found) return json(found)
+    if (no === '26NEW001') return failure(409, 'LINE_BOOKING_NOT_EDITABLE', 'Only a paid booking can be edited')
+    return failure(404, 'NOT_FOUND', 'Not found')
   }
   const handler = handlers[route]
   if (!handler) return null // not mocked: let client.ts call the real backend

@@ -72,6 +72,12 @@ export type LineBooking = {
   // The latest fix request from sales to finance ('' = none).
   fixNote: string;
   fixRequestedAt: string | null;
+  // The balance of a deposit booking, recorded from LIFF with a slip ('' / null = not yet); it waits
+  // for the sales owner's confirm (balanceConfirmedAt), then the booking is paid in full and finance
+  // issues the RE.
+  balanceSlipImage: string;
+  balanceSubmittedAt: string | null;
+  balanceConfirmedAt: string | null;
   // The customer's LINE OA chat; null until staff link it.
   lineContact: LineBookingContact | null;
 };
@@ -98,6 +104,7 @@ export type LineBookingListRequest = Paging & {
   ownedByMe?: boolean; // only bookings the caller owns as sales
   documentsDone?: boolean; // true = finance sent the documents (newest first), false = waiting
   documentsApproved?: boolean; // true = the sales owner approved them, false = not yet
+  balancePending?: boolean; // true = a balance recorded from LIFF waits for the owner's confirm
 };
 
 // The state changes only through confirm / cancel.

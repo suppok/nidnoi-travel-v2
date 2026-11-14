@@ -28,6 +28,7 @@ export const ErrorCodes = {
   LineQuotaExceeded: 'LINE_QUOTA_EXCEEDED',
   LineBookingNotNew: 'LINE_BOOKING_NOT_NEW',
   LineBookingDocumentsNotReady: 'LINE_BOOKING_DOCUMENTS_NOT_READY',
+  LineBookingBalanceNotPending: 'LINE_BOOKING_BALANCE_NOT_PENDING',
   PeriodUnavailable: 'PERIOD_UNAVAILABLE', // customer site only (POST /bookings/public)
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',

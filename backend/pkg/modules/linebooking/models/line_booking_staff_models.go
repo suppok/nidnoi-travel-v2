@@ -21,9 +21,11 @@ type LineBookingListRequest struct {
 	DocumentsDone *bool `json:"documentsDone"`
 	// DocumentsApproved: true = the sales owner approved the documents, false = not yet, omitted = any.
 	DocumentsApproved *bool `json:"documentsApproved"`
-	Status            *bool `json:"status"`   // omitted = all
-	Page              int   `json:"page"`     // default 1
-	PageSize          int   `json:"pageSize"` // default 20, max 100
+	// BalancePending: true = sales recorded the balance from LIFF and it waits for the owner's confirm.
+	BalancePending *bool `json:"balancePending"`
+	Status         *bool `json:"status"`   // omitted = all
+	Page           int   `json:"page"`     // default 1
+	PageSize       int   `json:"pageSize"` // default 20, max 100
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }

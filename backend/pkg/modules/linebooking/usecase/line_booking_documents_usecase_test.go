@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"testing"
+	"time"
 
 	"github.com/guregu/null/v5"
 
@@ -15,6 +16,7 @@ func TestDocumentsForPlan(t *testing.T) {
 	const pdf = "https://media.test/bookings/documents/abc/x.pdf"
 	deposit := &domain.LineBooking{IsDeposit: true}
 	full := &domain.LineBooking{}
+	balance := &domain.LineBooking{IsDeposit: true, BalanceConfirmedAt: null.TimeFrom(time.Now())}
 
 	tests := []struct {
 		name string
@@ -28,6 +30,8 @@ func TestDocumentsForPlan(t *testing.T) {
 		{"full RE", full, models.LineBookingDocumentsRequest{REFile: pdf}, true},
 		{"full missing RE", full, models.LineBookingDocumentsRequest{}, false},
 		{"full with AI", full, models.LineBookingDocumentsRequest{AIFile: pdf, REFile: pdf}, false},
+		{"balance RE (deposit files kept)", balance, models.LineBookingDocumentsRequest{AIFile: pdf, IVFile: pdf, REFile: pdf}, true},
+		{"balance missing RE", balance, models.LineBookingDocumentsRequest{AIFile: pdf, IVFile: pdf}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

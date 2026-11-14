@@ -52,12 +52,15 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
 	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
 	r.Get("/liff/booking-sources", append(liff, h.LIFFBookingSourceList)...)
+	r.Get("/liff/line-bookings/:bookingNo", append(liff, h.LIFFLineBookingGet)...)
+	r.Put("/liff/line-bookings", append(liff, h.LIFFLineBookingUpdate)...)
 
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Put("/line-bookings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdate)
 	r.Post("/line-bookings/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingList), h.LineBookingList)
 	r.Put("/line-bookings/line-contact", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdateLineContact)
 	r.Put("/line-bookings/confirm", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingConfirm)
+	r.Put("/line-bookings/confirm-balance", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingConfirmBalance)
 	r.Put("/line-bookings/cancel", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingCancel)
 	r.Put("/line-bookings/documents", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingDocument), h.LineBookingDocuments)
 	r.Put("/line-bookings/documents/approve", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingDocumentsApprove)
@@ -66,6 +69,74 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Put("/line-bookings/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingStatus), h.LineBookingUpdateStatus)
 	r.Get("/line-bookings/:id/finance-users", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingFinanceUserList)
 	r.Get("/line-bookings/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingGet)
+}
+
+// LIFFLineBookingGet godoc
+// @Summary     Reopen a LINE booking in LIFF by booking no
+// @Description Only a paid booking (state 20 or 25), also while its documents wait for finance.
+// @Description Any staff user with line-booking:create may open it.
+// @Tags        line-bookings
+// @Produce     json
+// @Param       bookingNo path string true "Booking no"
+// @Success     200 {object} models.LineBookingLIFFGetResponse
+// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE"
+// @Router      /liff/line-bookings/{bookingNo} [get]
+func (h *LineBookingAPIHandler) LIFFLineBookingGet(c *fiber.Ctx) error {
+	request := &models.LineBookingLIFFGetRequest{BookingNo: c.Params("bookingNo")}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.LIFFGet(ctx, request)
+	})
+}
+
+// LIFFLineBookingUpdate godoc
+// @Summary     Edit a reopened LINE booking from LIFF, or record its balance
+// @Description The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
+// @Description stay). The total is quoted again. A balanceSlipImage records the balance, which then
+// @Description waits for the sales owner's PUT /line-bookings/confirm-balance.
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Param       body body models.LineBookingLIFFUpdateRequest true "Booking"
+// @Success     200 {object} models.LineBookingLIFFUpdateResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE"
+// @Router      /liff/line-bookings [put]
+func (h *LineBookingAPIHandler) LIFFLineBookingUpdate(c *fiber.Ctx) error {
+	request := &models.LineBookingLIFFUpdateRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.LIFFUpdate(ctx, request)
+	})
+}
+
+// LineBookingConfirmBalance godoc
+// @Summary     Confirm the balance of a deposit LINE booking
+// @Description The sales owner (or an admin) checked the balance slip recorded from LIFF. The state becomes
+// @Description 25 (paid in full) and the booking goes back to its finance user for the RE.
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.LineBookingConfirmBalanceRequest true "Booking"
+// @Success     200 {object} models.LineBookingConfirmBalanceResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED (not the sales owner)"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Failure     409 {object} map[string]any "LINE_BOOKING_BALANCE_NOT_PENDING"
+// @Router      /line-bookings/confirm-balance [put]
+func (h *LineBookingAPIHandler) LineBookingConfirmBalance(c *fiber.Ctx) error {
+	request := &models.LineBookingConfirmBalanceRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.ConfirmBalance(ctx, request)
+	})
 }
 
 // LineBookingCreate godoc
