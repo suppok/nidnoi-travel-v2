@@ -18,6 +18,30 @@ const PAID_STATES: readonly number[] = [LineBookingStates.DepositPaid, LineBooki
 
 type StateFilter = LineBookingState | 0;
 // Finance page: which bookings by documents. Default "waiting".
+// Where a paid booking stands for its sales owner: the finance documents of the current round, and
+// a balance recorded from LIFF that waits for their confirm.
+function salesProgress(b: LineBooking): { label: string; color: string }[] {
+  if (!PAID_STATES.includes(b.state)) return [];
+  const codes = requiredDocuments(b)
+    .map((d) => d.code)
+    .join(' + ');
+  const finance = b.financeUser?.name ?? 'การเงิน';
+  const items: { label: string; color: string }[] = [];
+  if (b.documentsApprovedAt) {
+    items.push({ label: b.customerSentAt ? `ส่ง ${codes} ให้ลูกค้าแล้ว` : `ยืนยัน ${codes} แล้ว`, color: 'green' });
+  } else if (b.documentsAt) {
+    items.push({ label: `${finance} ส่ง ${codes} แล้ว · รอตรวจ`, color: 'blue' });
+  } else if (b.fixRequestedAt) {
+    items.push({ label: `รอ ${finance} แก้ ${codes}`, color: 'red' });
+  } else {
+    items.push({ label: `รอ ${finance} ออก ${codes}`, color: 'orange' });
+  }
+  if (b.state === LineBookingStates.DepositPaid && b.balanceSubmittedAt && !b.balanceConfirmedAt) {
+    items.push({ label: 'รอยืนยันยอดคงเหลือ', color: 'gold' });
+  }
+  return items;
+}
+
 type DocsFilter = 'waiting' | 'done' | 'all';
 const DOCS_FILTERS: { value: DocsFilter; label: string }[] = [
   { value: 'waiting', label: 'รอออกเอกสาร' },
@@ -171,13 +195,22 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
     {
       title: 'สถานะ',
       key: 'state',
-      width: 120,
+      width: finance ? 120 : 190,
       render: (_, b) => {
         const s = lineBookingStateInfo(b.state);
+        // Sales also see where the finance documents are (finance has its own column).
+        const progress = finance ? [] : salesProgress(b);
         return (
-          <Tag color={s.color} className="m-0">
-            {s.label}
-          </Tag>
+          <div className="flex flex-col items-start gap-1">
+            <Tag color={s.color} className="m-0">
+              {s.label}
+            </Tag>
+            {progress.map((p) => (
+              <Tag key={p.label} color={p.color} variant="outlined" className="m-0">
+                {p.label}
+              </Tag>
+            ))}
+          </div>
         );
       },
     },

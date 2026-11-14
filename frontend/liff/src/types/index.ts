@@ -182,3 +182,14 @@ export type LineBookingLIFFUpdateResponse = {
   // The balance waits for the sales owner to confirm it in the backoffice.
   balancePending: boolean
 }
+
+// GET /liff/line-bookings/:bookingNo/events — one action in the booking's history (oldest first).
+export type LineBookingEvent = {
+  id: string
+  action: string // backend pkg/constants/linebookingevent
+  changes: { field: string; from: string; to: string }[]
+  target: string
+  note: string
+  createDate: string
+  user: { id: string; name: string } | null
+}

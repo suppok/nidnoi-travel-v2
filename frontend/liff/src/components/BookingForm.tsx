@@ -4,6 +4,7 @@ import { applyPeriod, computeTotals, type Deal, dealError, dealFromBooking, deal
 import type { ParsedSummary } from '../lib/parseSummary.ts'
 import type { BookingSource, LineBookingItem, LineContact, SalesUser, TourPeriodItem, TourPublicItem } from '../types/index.ts'
 import { CustomerChatPicker } from './CustomerChatPicker.tsx'
+import { BookingHistory } from './BookingHistory.tsx'
 import { DealSection } from './DealSection.tsx'
 import { OpenBooking } from './OpenBooking.tsx'
 import { formatPrice, inputClass } from '../lib/format.ts'
@@ -22,6 +23,8 @@ type Props = {
 }
 
 type SuccessData = { bookingNo: string; totalPrice: number; message?: string }
+
+type Purpose = 'balance' | 'edit'
 
 // line_booking.state 20: deposit paid, the balance may still be recorded. MUST match the backend.
 const DEPOSIT_PAID = 20
@@ -63,12 +66,14 @@ export function BookingForm({ staffName }: Props) {
 
   const totals = computeTotals(deal)
   const source = sources?.find((s) => s.id === bookingSourceId) ?? null
-  // A source deleted since the booking was made still shows on it.
-  // Only a deposit booking not yet paid in full, whose deposit documents were sent, takes a balance slip.
-  const awaitsBalance = editing !== null && editing.isDeposit && editing.state === DEPOSIT_PAID && editing.documentsApprovedAt !== null
-  // Finance hasn't finished this round's documents: saving asks for a second confirm.
+  // What sales reopened the booking for: record the balance, or edit it. Asked only when the
+  // booking can take a balance; otherwise it is an edit.
+  const [purpose, setPurpose] = useState<Purpose | null>(null)
+  const balanceMode = editing !== null && purpose === 'balance'
+  // Finance hasn't finished this round's documents: saving an edit asks for a second confirm.
   const waitingFinance = editing !== null && editing.documentsApprovedAt === null
   const [confirmingWarning, setConfirmingWarning] = useState(false)
+  // A source deleted since the booking was made still shows on it.
   const sourceOptions = [...(sources ?? [])]
   if (editing?.bookingSource && !sourceOptions.some((s) => s.id === editing.bookingSource?.id)) sourceOptions.push(editing.bookingSource)
 
@@ -209,16 +214,21 @@ export function BookingForm({ staffName }: Props) {
     setBalanceSlip('')
     setError('')
     setConfirmingWarning(false)
+    setPurpose(canRecordBalance(b) ? null : 'edit')
     setStarted(true)
   }
 
   async function handleUpdate(b: LineBookingItem) {
     setError('')
-    const invalid = dealError(deal)
-    if (invalid) return setError(invalid)
-    if (!customerName.trim()) return setError('กรุณาระบุชื่อลูกค้า')
-    if (!customerPhone.trim()) return setError('กรุณาระบุเบอร์โทรลูกค้า')
-    if (waitingFinance && !confirmingWarning) return setConfirmingWarning(true)
+    if (balanceMode) {
+      if (!balanceSlip) return setError('กรุณาอัพโหลดสลิปชำระส่วนที่เหลือ')
+    } else {
+      const invalid = dealError(deal)
+      if (invalid) return setError(invalid)
+      if (!customerName.trim()) return setError('กรุณาระบุชื่อลูกค้า')
+      if (!customerPhone.trim()) return setError('กรุณาระบุเบอร์โทรลูกค้า')
+      if (waitingFinance && !confirmingWarning) return setConfirmingWarning(true)
+    }
 
     setConfirmingWarning(false)
     setSubmitting(true)
@@ -234,12 +244,12 @@ export function BookingForm({ staffName }: Props) {
         customerPhone: customerPhone.trim(),
         customerAddress: customerAddress.trim(),
         note: note.trim(),
-        balanceSlipImage: awaitsBalance ? balanceSlip : '',
+        balanceSlipImage: balanceMode ? balanceSlip : '',
       })
       setSuccess({
         bookingNo: result.bookingNo,
         totalPrice: result.totalPrice,
-        message: awaitsBalance && balanceSlip
+        message: balanceMode
           ? `บันทึกยอดคงเหลือแล้ว รอ ${b.salesUser?.name ?? 'เซลล์เจ้าของการจอง'} ยืนยันในระบบหลังบ้าน แล้วฝ่ายการเงินจะออกใบเสร็จ`
           : 'บันทึกการแก้ไขใบจองแล้ว',
       })
@@ -308,6 +318,7 @@ export function BookingForm({ staffName }: Props) {
     setEditing(null)
     setBalanceSlip('')
     setConfirmingWarning(false)
+    setPurpose(null)
     keepDealRef.current = false
     setStarted(false)
   }
@@ -318,7 +329,9 @@ export function BookingForm({ staffName }: Props) {
 
   const header = (
     <div className="text-center">
-      <h1 className="text-lg font-semibold text-gray-900">{editing ? `แก้ไขใบจอง ${editing.bookingNo}` : 'บันทึกการจอง'}</h1>
+      <h1 className="text-lg font-semibold text-gray-900">
+        {editing ? `${balanceMode ? 'ชำระส่วนที่เหลือ' : 'แก้ไขใบจอง'} ${editing.bookingNo}` : 'บันทึกการจอง'}
+      </h1>
       <p className="text-xs text-gray-500">โดย {staffName}</p>
     </div>
   )
@@ -333,12 +346,73 @@ export function BookingForm({ staffName }: Props) {
     )
   }
 
+  // A reopened booking that can take a balance: first choose what to do.
+  if (editing && purpose === null) {
+    return (
+      <div className="space-y-6 px-4 pb-8 pt-4">
+        {header}
+        <EditingSummary booking={editing} onCancel={handleReset} />
+        <PurposeChoice remaining={totals.remaining} onChoose={setPurpose} />
+      </div>
+    )
+  }
+
+  // Recording the balance: only the slip (and a note); the deal stays as it is.
+  if (editing && balanceMode) {
+    return (
+      <div className="space-y-6 px-4 pb-8 pt-4">
+        {header}
+        <EditingSummary booking={editing} onCancel={handleReset} onChangePurpose={() => setPurpose(null)} />
+
+        <section className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <p className="text-sm text-green-800">ยอดคงเหลือที่ลูกค้าต้องชำระ</p>
+          <p className="text-2xl font-semibold text-green-900">{formatPrice(totals.remaining)} บาท</p>
+          {editing.remainingDueDate && <p className="text-xs text-green-800">กำหนดชำระภายใน {thaiDate.format(new Date(`${editing.remainingDueDate}T00:00:00Z`))}</p>}
+        </section>
+
+        <section>
+          <Label>สลิปชำระส่วนที่เหลือ</Label>
+          {editing.balanceSubmittedAt && !balanceSlip && (
+            <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              มีสลิปส่วนที่เหลือรอเซลล์ยืนยันอยู่แล้ว อัพโหลดใหม่เพื่อแทนที่{' '}
+              <a href={editing.balanceSlipImage} target="_blank" rel="noreferrer" className="underline">
+                ดูสลิปเดิม
+              </a>
+            </p>
+          )}
+          <SlipUpload value={balanceSlip} onChange={setBalanceSlip} />
+          <p className="mt-1 text-xs text-gray-500">{editing.salesUser?.name ?? 'เซลล์เจ้าของการจอง'} จะตรวจสลิปและยืนยันในระบบหลังบ้าน</p>
+        </section>
+
+        <section>
+          <Label htmlFor="note">หมายเหตุ</Label>
+          <textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} className={inputClass} />
+        </section>
+
+        {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !balanceSlip}
+          className="w-full rounded-lg bg-green-600 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+        >
+          {submitting ? 'กำลังบันทึก...' : 'ส่งยอดคงเหลือให้เซลล์ยืนยัน'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 px-4 pb-8 pt-4">
       {header}
 
       {editing ? (
-        <EditingSummary booking={editing} onCancel={handleReset} />
+        <EditingSummary
+          booking={editing}
+          onCancel={handleReset}
+          onChangePurpose={canRecordBalance(editing) ? () => setPurpose(null) : undefined}
+        />
       ) : (
         <SummaryPaste onApply={applySummary} report={pasteReport} />
       )}
@@ -481,27 +555,8 @@ export function BookingForm({ staffName }: Props) {
         />
       </section>
 
-      {/* Slip upload: a reopened booking takes only the balance slip, when it still owes one. */}
-      {editing ? (
-        awaitsBalance && (
-          <section>
-            <Label optional>สลิปชำระส่วนที่เหลือ</Label>
-            <p className="mb-2 text-xs text-gray-500">
-              อัพโหลดเมื่อลูกค้าชำระส่วนที่เหลือแล้ว ({formatPrice(totals.remaining)} บาท) เซลล์เจ้าของการจองจะยืนยันในระบบหลังบ้าน
-              ถ้าแค่แก้ไขข้อมูลไม่ต้องอัพโหลด
-            </p>
-            {editing.balanceSubmittedAt && !balanceSlip && (
-              <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                มีสลิปส่วนที่เหลือรอเซลล์ยืนยันอยู่แล้ว อัพโหลดใหม่เพื่อแทนที่{' '}
-                <a href={editing.balanceSlipImage} target="_blank" rel="noreferrer" className="underline">
-                  ดูสลิปเดิม
-                </a>
-              </p>
-            )}
-            <SlipUpload value={balanceSlip} onChange={setBalanceSlip} />
-          </section>
-        )
-      ) : (
+      {/* Slip upload (a new booking only; an edit takes no slip, the balance has its own screen) */}
+      {!editing && (
         <section>
           <Label>สลิปโอนเงิน</Label>
           <SlipUpload value={slipImage} onChange={setSlipImage} />
@@ -556,43 +611,93 @@ export function BookingForm({ staffName }: Props) {
       >
         {submitting
           ? 'กำลังบันทึก...'
-          : `${editing ? (awaitsBalance && balanceSlip ? 'บันทึกและส่งยอดคงเหลือ' : 'บันทึกการแก้ไข') : 'บันทึกการจอง'}${totals.grandTotal > 0 ? ` · ${formatPrice(totals.grandTotal)} บาท` : ''}`}
+          : `${editing ? 'บันทึกการแก้ไข' : 'บันทึกการจอง'}${totals.grandTotal > 0 ? ` · ${formatPrice(totals.grandTotal)} บาท` : ''}`}
       </button>
     </div>
   )
 }
 
 // The fixed part of a reopened booking: tour, departure, sales owner, payment and the slips.
-function EditingSummary({ booking, onCancel }: { booking: LineBookingItem; onCancel: () => void }) {
+const thaiDate = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' })
+
+// "30 พ.ย. 69 – 2 ธ.ค. 69 (3 วัน)" from YYYY-MM-DD dates.
+function tripRange(start: string, end: string): string {
+  const s = new Date(`${start.slice(0, 10)}T00:00:00Z`)
+  const e = new Date(`${end.slice(0, 10)}T00:00:00Z`)
+  const days = Math.round((e.getTime() - s.getTime()) / 86_400_000) + 1
+  return `${thaiDate.format(s)} – ${thaiDate.format(e)} (${days} วัน)`
+}
+
+function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-1 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
-      <p className="font-medium text-gray-900">
-        {booking.tourCode} {booking.tourName}
-      </p>
-      <p className="text-gray-600">
-        เดินทาง {booking.startDate} – {booking.endDate}
-      </p>
-      <p className="text-gray-600">เซลล์ {booking.salesUser?.name ?? '-'}</p>
-      <p className="text-gray-600">
-        {booking.state === DEPOSIT_PAID ? 'ชำระมัดจำแล้ว' : 'ชำระครบแล้ว'} · ยอดเดิม {formatPrice(booking.totalPrice)} บาท
-      </p>
-      <p className="text-gray-600">
-        <a href={booking.slipImage} target="_blank" rel="noreferrer" className="text-blue-700 underline">
-          {booking.isDeposit ? 'สลิปมัดจำ' : 'สลิปโอนเงิน'}
-        </a>
-        {booking.balanceConfirmedAt && booking.balanceSlipImage && (
-          <>
-            {' · '}
-            <a href={booking.balanceSlipImage} target="_blank" rel="noreferrer" className="text-blue-700 underline">
-              สลิปส่วนที่เหลือ
-            </a>
-          </>
+    <div className="flex items-baseline justify-between gap-3 py-1.5">
+      <dt className="shrink-0 text-gray-500">{label}</dt>
+      <dd className="text-right font-medium text-gray-900">{children}</dd>
+    </div>
+  )
+}
+
+function SlipLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-700"
+    >
+      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2zm8-12h.01" />
+      </svg>
+      {label}
+    </a>
+  )
+}
+
+function EditingSummary({ booking, onCancel, onChangePurpose }: { booking: LineBookingItem; onCancel: () => void; onChangePurpose?: () => void }) {
+  const depositPaid = booking.state === DEPOSIT_PAID
+  return (
+    <section className="overflow-hidden rounded-xl border border-blue-200 bg-blue-50/60 text-sm">
+      <div className="space-y-1.5 border-b border-blue-100 bg-white px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-700">{booking.tourCode}</span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${depositPaid ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}
+          >
+            {depositPaid ? 'ชำระมัดจำแล้ว' : 'ชำระครบแล้ว'}
+          </span>
+        </div>
+        <p className="line-clamp-2 font-medium leading-snug text-gray-900">{booking.tourName}</p>
+      </div>
+
+      <dl className="divide-y divide-blue-100 px-4 py-1">
+        <SummaryRow label="วันเดินทาง">{tripRange(booking.startDate, booking.endDate)}</SummaryRow>
+        <SummaryRow label="เซลล์">{booking.salesUser?.name ?? '-'}</SummaryRow>
+        <SummaryRow label="ยอดเดิม">{formatPrice(booking.totalPrice)} บาท</SummaryRow>
+      </dl>
+
+      <div className="flex flex-wrap gap-2 px-4 pb-3">
+        <SlipLink href={booking.slipImage} label={booking.isDeposit ? 'สลิปมัดจำ' : 'สลิปโอนเงิน'} />
+        {booking.balanceConfirmedAt && booking.balanceSlipImage && <SlipLink href={booking.balanceSlipImage} label="สลิปส่วนที่เหลือ" />}
+      </div>
+
+      {!booking.documentsApprovedAt && (
+        <p className="mx-4 mb-3 rounded-lg bg-amber-100 px-3 py-2 text-xs leading-relaxed text-amber-900">⚠️ {financeWarning(booking)}</p>
+      )}
+
+      <BookingHistory bookingNo={booking.bookingNo} />
+
+      <div className="flex justify-between gap-3 border-t border-blue-100 bg-white px-4 py-2">
+        {onChangePurpose ? (
+          <button type="button" onClick={onChangePurpose} className="text-xs text-blue-700 underline">
+            เปลี่ยนสิ่งที่ต้องการทำ
+          </button>
+        ) : (
+          <span />
         )}
-      </p>
-      {!booking.documentsApprovedAt && <p className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-900">{financeWarning(booking)}</p>}
-      <button type="button" onClick={onCancel} className="pt-1 text-xs text-gray-500 underline">
-        ยกเลิกการแก้ไข
-      </button>
+        <button type="button" onClick={onCancel} className="text-xs text-gray-500 underline">
+          ยกเลิก
+        </button>
+      </div>
     </section>
   )
 }
@@ -604,4 +709,26 @@ function financeWarning(b: LineBookingItem): string {
   return b.documentsAt
     ? `${finance} ส่งเอกสารการเงินแล้วแต่ยังรอเซลล์ตรวจ เอกสารอาจไม่ตรงกับข้อมูลที่แก้ไข`
     : `ใบจองนี้รอ ${finance} ออกเอกสารการเงิน การแก้ไขตอนนี้อาจทำให้เอกสารไม่ตรงกับยอดใหม่`
+}
+
+// A deposit booking not yet paid in full whose deposit documents were sent can take the balance.
+function canRecordBalance(b: LineBookingItem): boolean {
+  return b.isDeposit && b.state === DEPOSIT_PAID && b.documentsApprovedAt !== null
+}
+
+function PurposeChoice({ remaining, onChoose }: { remaining: number; onChoose: (p: Purpose) => void }) {
+  const card = 'w-full rounded-xl border-2 px-4 py-4 text-left transition active:scale-[0.99]'
+  return (
+    <section className="space-y-3">
+      <p className="text-sm font-medium text-gray-700">ต้องการทำอะไรกับใบจองนี้?</p>
+      <button type="button" onClick={() => onChoose('balance')} className={`${card} border-green-300 bg-green-50 hover:border-green-500`}>
+        <p className="font-semibold text-green-900">💰 ลูกค้าชำระส่วนที่เหลือ</p>
+        <p className="mt-1 text-xs text-green-800">แนบสลิปยอดคงเหลือ {formatPrice(remaining)} บาท ให้เซลล์ยืนยัน แล้วฝ่ายการเงินออกใบเสร็จ</p>
+      </button>
+      <button type="button" onClick={() => onChoose('edit')} className={`${card} border-gray-200 bg-white hover:border-blue-400`}>
+        <p className="font-semibold text-gray-900">✏️ แก้ไขข้อมูลใบจอง</p>
+        <p className="mt-1 text-xs text-gray-500">เช่น เพิ่ม/ลดผู้เดินทาง เปลี่ยนราคา ข้อมูลลูกค้า หรือกำหนดชำระ</p>
+      </button>
+    </section>
+  )
 }

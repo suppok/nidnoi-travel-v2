@@ -14,6 +14,7 @@ import (
 
 	"backend/pkg/constants/bookingstate"
 	"backend/pkg/constants/errorcode"
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/constants/linebookingpayment"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/constants/tourprogramstate"
@@ -440,7 +441,10 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		b.CreateBy = info.UserID
 		b.UpdateBy = info.UserID
 		created, err = u.repositoryRegistry.LineBookingRepository.WithTx(appDB).Create(ctx, b)
-		return err
+		if err != nil {
+			return err
+		}
+		return u.logEvent(ctx, appDB, created.ID, linebookingevent.Created, info.UserID, domain.LineBookingEventDetail{})
 	})
 	return created, err
 }

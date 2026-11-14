@@ -9,6 +9,7 @@ import (
 
 	"github.com/guregu/null/v5"
 
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
@@ -124,7 +125,9 @@ func (u *lineBookingUseCase) Documents(ctx context.Context, request *models.Line
 		}
 		target.AIFile, target.IVFile, target.REFile = request.AIFile, request.IVFile, request.REFile
 		columns := []string{"ai_file", "iv_file", "re_file", "update_date", "update_by"}
+		action := linebookingevent.DocumentsUpdated
 		if !target.DocumentsAt.Valid {
+			action = linebookingevent.DocumentsSent
 			target.DocumentsAt = null.TimeFrom(now)
 			target.DocumentsBy = null.StringFrom(info.UserID)
 			columns = append(columns, "documents_at", "documents_by")
@@ -132,6 +135,9 @@ func (u *lineBookingUseCase) Documents(ctx context.Context, request *models.Line
 		target.UpdateDate = now
 		target.UpdateBy = info.UserID
 		if _, err = repo.Update(ctx, target, columns...); err != nil {
+			return err
+		}
+		if err := u.logEvent(ctx, appDB, target.ID, action, info.UserID, domain.LineBookingEventDetail{Target: documentCodes(target)}); err != nil {
 			return err
 		}
 		updated, err = repo.FindByID(ctx, target.ID)

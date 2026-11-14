@@ -52,6 +52,7 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
 	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
 	r.Get("/liff/booking-sources", append(liff, h.LIFFBookingSourceList)...)
+	r.Get("/liff/line-bookings/:bookingNo/events", append(liff, h.LIFFLineBookingEventList)...)
 	r.Get("/liff/line-bookings/:bookingNo", append(liff, h.LIFFLineBookingGet)...)
 	r.Put("/liff/line-bookings", append(liff, h.LIFFLineBookingUpdate)...)
 
@@ -67,6 +68,7 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Put("/line-bookings/documents/reject", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingDocumentsReject)
 	r.Post("/media/upload/line-booking", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingDocument), h.LineBookingDocumentUpload)
 	r.Put("/line-bookings/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingStatus), h.LineBookingUpdateStatus)
+	r.Get("/line-bookings/:id/events", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingEventList)
 	r.Get("/line-bookings/:id/finance-users", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingFinanceUserList)
 	r.Get("/line-bookings/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingGet)
 }
@@ -89,6 +91,26 @@ func (h *LineBookingAPIHandler) LIFFLineBookingGet(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.LIFFGet(ctx, request)
+	})
+}
+
+// LIFFLineBookingEventList godoc
+// @Summary     History of a LINE booking reopened in LIFF
+// @Description Same items as GET /line-bookings/{id}/events, for a booking LIFF may open (paid).
+// @Tags        line-bookings
+// @Produce     json
+// @Param       bookingNo path string true "Booking no"
+// @Success     200 {object} models.LineBookingEventListResponse
+// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE"
+// @Router      /liff/line-bookings/{bookingNo}/events [get]
+func (h *LineBookingAPIHandler) LIFFLineBookingEventList(c *fiber.Ctx) error {
+	request := &models.LineBookingLIFFGetRequest{BookingNo: c.Params("bookingNo")}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.LIFFEvents(ctx, request)
 	})
 }
 
@@ -346,6 +368,25 @@ func (h *LineBookingAPIHandler) LineBookingList(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.List(ctx, request)
+	})
+}
+
+// LineBookingEventList godoc
+// @Summary  A LINE booking's history
+// @Description Every action on the booking, oldest first: created, confirmed, documents, LIFF edits (with
+// @Description the changed fields), balance, LINE chat, staff note, delete/restore. Same visibility as GET /line-bookings/{id}.
+// @Tags     line-bookings
+// @Produce  json
+// @Security BearerAuth
+// @Param    id path string true "LINE Booking ID"
+// @Success  200 {object} models.LineBookingEventListResponse
+// @Failure  404 {object} map[string]any "NOT_FOUND"
+// @Router   /line-bookings/{id}/events [get]
+func (h *LineBookingAPIHandler) LineBookingEventList(c *fiber.Ctx) error {
+	request := &models.LineBookingEventListRequest{ID: c.Params("id")}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.Events(ctx, request)
 	})
 }
 

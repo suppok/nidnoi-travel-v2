@@ -6,6 +6,7 @@ import type {
   SalesUserList,
   LineBookingCreateRequest,
   LineBookingCreateResponse,
+  LineBookingEvent,
   LineBookingItem,
   LineBookingLIFFUpdateRequest,
   LineBookingLIFFUpdateResponse,
@@ -127,6 +128,12 @@ export async function createLineBooking(
 // LINE_BOOKING_NOT_EDITABLE until its deposit documents were sent (or once it is paid in full).
 export async function getEditableBooking(bookingNo: string): Promise<LineBookingItem> {
   return parse<LineBookingItem>(await send('GET', `/liff/line-bookings/${encodeURIComponent(bookingNo)}`, undefined))
+}
+
+// The history of a reopened booking, oldest first.
+export async function getBookingHistory(bookingNo: string): Promise<LineBookingEvent[]> {
+  const res = await send('GET', `/liff/line-bookings/${encodeURIComponent(bookingNo)}/events`, undefined)
+  return (await parse<{ items: LineBookingEvent[] }>(res)).items
 }
 
 export async function updateLineBooking(body: LineBookingLIFFUpdateRequest): Promise<LineBookingLIFFUpdateResponse> {

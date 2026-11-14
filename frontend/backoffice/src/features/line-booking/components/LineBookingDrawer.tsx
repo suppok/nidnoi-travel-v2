@@ -13,6 +13,7 @@ import type { LineBooking } from '../../../types/lineBooking.ts';
 import ConfirmLineBookingModal from './ConfirmLineBookingModal.tsx';
 import DocumentsReviewModal from './DocumentsReviewModal.tsx';
 import FinanceDocumentsSection from './FinanceDocumentsSection.tsx';
+import LineBookingHistory from './LineBookingHistory.tsx';
 import LineContactSection from './LineContactSection.tsx';
 import { dueDate, lineBookingLines, type Line, paymentPlan, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
 
@@ -376,6 +377,8 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
               </Form.Item>
             </Form>
           </section>
+
+          <LineBookingHistory bookingId={booking.id} version={`${booking.updateDate}|${booking.status}`} />
         </div>
       )}
       <DocumentsReviewModal

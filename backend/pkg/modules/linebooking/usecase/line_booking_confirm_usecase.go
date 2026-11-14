@@ -9,6 +9,7 @@ import (
 	"github.com/guregu/null/v5"
 
 	"backend/pkg/constants/errorcode"
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/constants/role"
 	coremodels "backend/pkg/core/api/models"
@@ -62,8 +63,11 @@ func (u *lineBookingUseCase) Confirm(ctx context.Context, request *models.LineBo
 		if _, err = repo.Update(ctx, target, "state", "finance_user_id", "confirmed_at", "update_date", "update_by"); err != nil {
 			return err
 		}
-		updated, err = repo.FindByID(ctx, target.ID)
-		return err
+		if updated, err = repo.FindByID(ctx, target.ID); err != nil {
+			return err
+		}
+		return u.logEvent(ctx, appDB, target.ID, linebookingevent.Confirmed, request.UserRequestInfo.UserID,
+			domain.LineBookingEventDetail{Target: userName(updated.FinanceUser)})
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "confirm line booking")
@@ -94,6 +98,9 @@ func (u *lineBookingUseCase) Cancel(ctx context.Context, request *models.LineBoo
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
 		if _, err = repo.Update(ctx, target, "state", "update_date", "update_by"); err != nil {
+			return err
+		}
+		if err := u.logEvent(ctx, appDB, target.ID, linebookingevent.Cancelled, request.UserRequestInfo.UserID, domain.LineBookingEventDetail{}); err != nil {
 			return err
 		}
 		updated, err = repo.FindByID(ctx, target.ID)

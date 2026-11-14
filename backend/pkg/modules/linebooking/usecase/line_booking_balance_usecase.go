@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"backend/pkg/constants/errorcode"
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/constants/linebookingstate"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
@@ -100,9 +101,11 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 			return cerrors.Validation(err)
 		}
 
+		before := dealSnapshot(b)
 		lineContactID := null.String{}
+		var contact *domain.LineContact
 		if r.LineContactID.Valid {
-			contact, err := u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, r.LineContactID.String)
+			contact, err = u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, r.LineContactID.String)
 			if err != nil {
 				return err
 			}
@@ -112,8 +115,9 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 			lineContactID = r.LineContactID
 		}
 		sourceID := null.String{}
+		var source *domain.BookingSource
 		if r.BookingSourceID.Valid {
-			source, err := u.repositoryRegistry.BookingSourceRepository.WithTx(appDB).FindByID(ctx, r.BookingSourceID.String)
+			source, err = u.repositoryRegistry.BookingSourceRepository.WithTx(appDB).FindByID(ctx, r.BookingSourceID.String)
 			if err != nil {
 				return err
 			}
@@ -145,8 +149,8 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 		}
 		b.CustomerName, b.CustomerPhone, b.CustomerAddress = r.CustomerName, r.CustomerPhone, r.CustomerAddress
 		b.RefName, b.RefBookingNo = r.RefName, r.RefBookingNo
-		b.BookingSourceID = sourceID
-		b.LineContactID = lineContactID
+		b.BookingSourceID, b.BookingSource = sourceID, source
+		b.LineContactID, b.LineContact = lineContactID, contact
 		b.Note = r.Note
 		b.UpdateDate = now
 		b.UpdateBy = info.UserID
@@ -167,6 +171,16 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 		}
 		if _, err := repo.Update(ctx, b, columns...); err != nil {
 			return err
+		}
+		if changes := diffSnapshots(before, dealSnapshot(b)); len(changes) > 0 {
+			if err := u.logEvent(ctx, appDB, b.ID, linebookingevent.Edited, info.UserID, domain.LineBookingEventDetail{Changes: changes}); err != nil {
+				return err
+			}
+		}
+		if request.BalanceSlipImage != "" {
+			if err := u.logEvent(ctx, appDB, b.ID, linebookingevent.BalanceSubmitted, info.UserID, domain.LineBookingEventDetail{}); err != nil {
+				return err
+			}
 		}
 		updated = b
 		return nil
@@ -224,8 +238,11 @@ func (u *lineBookingUseCase) ConfirmBalance(ctx context.Context, request *models
 			"update_date", "update_by"); err != nil {
 			return err
 		}
-		updated, err = repo.FindByID(ctx, target.ID)
-		return err
+		if updated, err = repo.FindByID(ctx, target.ID); err != nil {
+			return err
+		}
+		return u.logEvent(ctx, appDB, target.ID, linebookingevent.BalanceConfirmed, info.UserID,
+			domain.LineBookingEventDetail{Target: userName(updated.FinanceUser)})
 	})
 	if err != nil {
 		return nil, cerrors.Wrap(err, "confirm line booking balance")

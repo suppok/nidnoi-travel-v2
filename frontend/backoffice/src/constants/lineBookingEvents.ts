@@ -1,0 +1,83 @@
+// Actions in a LINE booking's history. MUST match backend pkg/constants/linebookingevent.
+export const LineBookingEvents = {
+  Created: 'created',
+  Confirmed: 'confirmed',
+  Cancelled: 'cancelled',
+  DocumentsSent: 'documents_sent',
+  DocumentsUpdated: 'documents_updated',
+  DocumentsApproved: 'documents_approved',
+  DocumentsRejected: 'documents_rejected',
+  LineContactSet: 'line_contact_set',
+  StaffNoteUpdated: 'staff_note_updated',
+  Edited: 'edited',
+  BalanceSubmitted: 'balance_submitted',
+  BalanceConfirmed: 'balance_confirmed',
+  Deleted: 'deleted',
+  Restored: 'restored',
+} as const;
+
+// Timeline dot colors (antd Timeline item color).
+export const LINE_BOOKING_EVENT_COLOR: Record<string, string> = {
+  [LineBookingEvents.Created]: 'blue',
+  [LineBookingEvents.Confirmed]: 'green',
+  [LineBookingEvents.Cancelled]: 'red',
+  [LineBookingEvents.DocumentsSent]: 'blue',
+  [LineBookingEvents.DocumentsUpdated]: 'gray',
+  [LineBookingEvents.DocumentsApproved]: 'green',
+  [LineBookingEvents.DocumentsRejected]: 'red',
+  [LineBookingEvents.LineContactSet]: 'gray',
+  [LineBookingEvents.StaffNoteUpdated]: 'gray',
+  [LineBookingEvents.Edited]: 'orange',
+  [LineBookingEvents.BalanceSubmitted]: 'gold',
+  [LineBookingEvents.BalanceConfirmed]: 'green',
+  [LineBookingEvents.Deleted]: 'red',
+  [LineBookingEvents.Restored]: 'gray',
+};
+
+// Labels of the fields an action may change (backend dealSnapshot keys, plus staffNote / lineContact).
+export const LINE_BOOKING_FIELD_LABELS: Record<string, string> = {
+  adultTwin: 'ผู้ใหญ่ (พักคู่)',
+  adultSingle: 'ผู้ใหญ่ (พักเดี่ยว)',
+  childWithBed: 'เด็ก',
+  childNoBed: 'เด็ก (ไม่เสริมเตียง)',
+  infant: 'ทารก',
+  adultPrice: 'ราคาผู้ใหญ่',
+  adultSinglePrice: 'ราคาผู้ใหญ่พักเดี่ยว',
+  childWithBedPrice: 'ราคาเด็ก',
+  childNoBedPrice: 'ราคาเด็ก (ไม่เสริมเตียง)',
+  infantPrice: 'ราคาทารก',
+  adultPriceBeforeDiscount: 'ราคาก่อนลด',
+  discountPerPerson: 'ส่วนลด/ท่าน',
+  charges: 'ค่าใช้จ่ายเพิ่ม',
+  paymentMethod: 'วิธีชำระ',
+  creditFeePercent: 'ค่าธรรมเนียมบัตร (%)',
+  depositPerPerson: 'มัดจำ/ท่าน',
+  depositDueDate: 'ชำระมัดจำภายใน',
+  depositDueTime: 'เวลาชำระมัดจำ',
+  remainingDueDate: 'ชำระส่วนเหลือภายใน',
+  fullDueDate: 'ชำระเต็มจำนวนภายใน',
+  fullDueTime: 'เวลาชำระเต็มจำนวน',
+  totalPrice: 'ยอดรวม',
+  customerName: 'ชื่อลูกค้า',
+  customerPhone: 'เบอร์โทร',
+  customerAddress: 'ที่อยู่',
+  bookingSource: 'ช่องทางการจอง',
+  refName: 'ชื่อในช่องทาง',
+  refBookingNo: 'เลข booking ช่องทาง',
+  lineContact: 'แชท LINE ลูกค้า',
+  note: 'หมายเหตุ',
+  staffNote: 'บันทึกของเจ้าหน้าที่',
+};
+
+// Fields whose values are whole baht, shown with thousands separators.
+export const LINE_BOOKING_MONEY_FIELDS = new Set([
+  'adultPrice',
+  'adultSinglePrice',
+  'childWithBedPrice',
+  'childNoBedPrice',
+  'infantPrice',
+  'adultPriceBeforeDiscount',
+  'discountPerPerson',
+  'depositPerPerson',
+  'totalPrice',
+]);

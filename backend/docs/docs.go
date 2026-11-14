@@ -1651,6 +1651,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/liff/line-bookings/{bookingNo}/events": {
+            "get": {
+                "description": "Same items as GET /line-bookings/{id}/events, for a booking LIFF may open (paid).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "History of a LINE booking reopened in LIFF",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking no",
+                        "name": "bookingNo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_NOT_EDITABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/liff/line-contacts/list": {
             "post": {
                 "description": "Same as POST /line-contacts/list. Authorization: Bearer \u003cLIFF access token\u003e of a linked\nstaff user with line-contact:list.",
@@ -2522,6 +2579,47 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/{id}/events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Every action on the booking, oldest first: created, confirmed, documents, LIFF edits (with\nthe changed fields), balance, LINE chat, staff note, delete/restore. Same visibility as GET /line-bookings/{id}.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "A LINE booking's history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "LINE Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse"
                         }
                     },
                     "404": {
@@ -4148,6 +4246,21 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_domain.LineBookingEventChange": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "description": "a key the backoffice labels (adultTwin, totalPrice, customerName, ...)",
+                    "type": "string"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
                 }
             }
         },
@@ -7514,6 +7627,57 @@ const docTemplate = `{
                 },
                 "updateDate": {
                     "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingEventItem": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action is one of pkg/constants/linebookingevent.",
+                    "type": "string",
+                    "example": "edited"
+                },
+                "changes": {
+                    "description": "Changes are the fields the action changed, as display strings (edits, LINE chat, staff note).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingEventChange"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "note": {
+                    "description": "Note is the fix request of documents_rejected (\"\" = none).",
+                    "type": "string"
+                },
+                "target": {
+                    "description": "Target names what the action pointed at: a finance user, a LINE chat, document codes (\"\" = none).",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "User did it; null if the user row is gone.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingEventListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items are oldest first.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventItem"
+                    }
                 }
             }
         },
