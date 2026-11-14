@@ -123,6 +123,10 @@ Backend issues a short-lived JWT access token plus a refresh token in an HttpOnl
 5. On page load, `AuthProvider` calls `/auth/refresh` to restore the session from the cookie.
 6. `POST /api/v1/auth/logout` revokes the refresh token and clears the cookie.
 
+### Log in with LINE
+
+"ล็อกอินด้วย LINE" (LINE green, under the login form) shows when `GET /auth/line/config` says it is enabled (never in mock mode). `auth/lineLogin.ts` sends the browser to LINE's authorize page (PKCE S256, state, nonce, `scope=profile openid`, redirect `<origin>/login/line/callback`); `routes/login/LineCallbackPage.tsx` checks the state, posts the code to `POST /auth/line/login` (`AuthProvider.loginWithLine`) and lands on the page the user came from. Only a LINE account a user linked ("เชื่อมบัญชี LINE") signs in; anything else shows `LINE_NOT_LINKED` with how to link. The one-time state/nonce/verifier sit in `sessionStorage` only for the round trip — the session itself is the usual in-memory token + refresh cookie, and "จดจำฉันไว้ในเครื่องนี้" applies.
+
 ### Token storage (decided 2026-10-29)
 
 - Access token: **in memory only** (`src/auth/token.ts`).

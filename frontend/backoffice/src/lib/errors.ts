@@ -8,6 +8,8 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.NotFound]: 'ไม่พบข้อมูล อาจถูกลบไปแล้ว',
   [ErrorCodes.RateLimited]: 'ลองหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
   [ErrorCodes.InvalidCredentials]: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  [ErrorCodes.LineNotLinked]: 'บัญชี LINE นี้ยังไม่ได้เชื่อมกับผู้ใช้ในระบบหลังบ้าน',
+  [ErrorCodes.InvalidLineLogin]: 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จหรือหมดเวลา กรุณาลองใหม่',
   [ErrorCodes.InvalidPassword]: 'รหัสผ่านปัจจุบันไม่ถูกต้อง',
   [ErrorCodes.PasswordChangeRequired]: 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งาน',
   [ErrorCodes.EmailTaken]: 'อีเมลนี้มีผู้ใช้อยู่แล้ว',

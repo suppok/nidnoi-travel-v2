@@ -1,4 +1,5 @@
 import { StyleProvider } from '@ant-design/cssinjs';
+import { LINE_CALLBACK_PATH } from './auth/lineLogin.ts';
 import { App as AntApp, ConfigProvider } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
@@ -15,6 +16,7 @@ import BookingListPage from './routes/bookings/BookingListPage.tsx';
 import LineBookingListPage from './routes/line-bookings/LineBookingListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
+import LineCallbackPage from './routes/login/LineCallbackPage.tsx';
 import LoginPage from './routes/login/LoginPage.tsx';
 import NotFoundPage from './routes/not-found/NotFoundPage.tsx';
 import { SALES_TOOLS } from './features/sales-tool/tools.tsx';
@@ -35,7 +37,10 @@ const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/dashboard" replace /> },
   {
     element: <AuthLayout />,
-    children: [{ path: '/login', element: <LoginPage /> }],
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: LINE_CALLBACK_PATH, element: <LineCallbackPage /> },
+    ],
   },
   {
     element: <RequireAuth />,

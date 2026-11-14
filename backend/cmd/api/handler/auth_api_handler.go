@@ -34,6 +34,8 @@ func (h *AuthAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middleware.LIFFA
 	r := h.router
 
 	r.Post("/auth/login", middleware.RateLimit(h.config.RateLimit.Login, h.config.Server.ClientIPHeader), h.AuthLogin)
+	r.Get("/auth/line/config", h.AuthLineLoginConfig)
+	r.Post("/auth/line/login", middleware.RateLimit(h.config.RateLimit.Login, h.config.Server.ClientIPHeader), h.AuthLineLogin)
 	r.Post("/auth/refresh", h.AuthRefresh)
 	r.Post("/auth/logout", h.AuthLogout)
 	r.Get("/auth/me", jwtAuth.AuthAllowPasswordChange, h.AuthMe)
@@ -63,6 +65,48 @@ func (h *AuthAPIHandler) AuthLogin(c *fiber.Ctx) error {
 		request.ClientIP = requestInfo.ClientIP
 		request.UserAgent = requestInfo.UserAgent
 		response, err := h.authUseCase.Login(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+		h.setRefreshCookie(c, response.RefreshToken, response.RefreshExpiresAt, response.Persistent)
+		return response, nil
+	})
+}
+
+// AuthLineLoginConfig godoc
+// @Summary     Whether "log in with LINE" is available (backoffice)
+// @Tags        auth
+// @Produce     json
+// @Success     200 {object} models.AuthLineLoginConfigResponse
+// @Router      /auth/line/config [get]
+func (h *AuthAPIHandler) AuthLineLoginConfig(c *fiber.Ctx) error {
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, _ *coremodels.RequestInfo) (any, error) {
+		return h.authUseCase.LineLoginConfig(ctx)
+	})
+}
+
+// AuthLineLogin godoc
+// @Summary     Log in with LINE (backoffice)
+// @Description Finishes LINE Login (authorization code + PKCE): the LINE account must be linked to an active
+// @Description backoffice user ("เชื่อมบัญชี LINE"), otherwise LINE_NOT_LINKED. Same session as /auth/login:
+// @Description an access token and the HttpOnly refresh cookie. Rate-limited.
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       body body models.AuthLineLoginRequest true "Code from LINE"
+// @Success     200 {object} models.AuthLoginResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     401 {object} map[string]any "INVALID_LINE_LOGIN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED"
+// @Failure     429 {object} map[string]any "RATE_LIMITED"
+// @Failure     503 {object} map[string]any "LINE_NOT_CONFIGURED"
+// @Router      /auth/line/login [post]
+func (h *AuthAPIHandler) AuthLineLogin(c *fiber.Ctx) error {
+	request := &models.AuthLineLoginRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.ClientIP = requestInfo.ClientIP
+		request.UserAgent = requestInfo.UserAgent
+		response, err := h.authUseCase.LineLogin(ctx, request)
 		if err != nil {
 			return nil, err
 		}

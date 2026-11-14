@@ -9,6 +9,10 @@ import (
 
 type AuthUseCase interface {
 	Login(ctx context.Context, request *models.AuthLoginRequest) (*models.AuthLoginResponse, error)
+	// LineLoginConfig says whether LINE Login is available on the login page.
+	LineLoginConfig(ctx context.Context) (*models.AuthLineLoginConfigResponse, error)
+	// LineLogin signs in the user who linked the LINE account LINE vouched for.
+	LineLogin(ctx context.Context, request *models.AuthLineLoginRequest) (*models.AuthLoginResponse, error)
 	Refresh(ctx context.Context, request *models.AuthRefreshRequest) (*models.AuthRefreshResponse, error)
 	Logout(ctx context.Context, request *models.AuthLogoutRequest) (*models.AuthLogoutResponse, error)
 	Me(ctx context.Context, request *models.AuthMeRequest) (*models.AuthMeResponse, error)

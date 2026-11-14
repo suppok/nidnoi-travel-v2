@@ -62,12 +62,21 @@ type Client interface {
 	// PushMessage sends Messaging API messages to one OA friend (uses the OA's message quota).
 	// ErrNotConfigured without the channel access token, ErrPushQuota when the quota is used up.
 	PushMessage(ctx context.Context, to string, messages []any, retryKey string) error
+
+	// LoginConfigured reports whether backoffice LINE Login can run (channel ID and secret set).
+	LoginConfigured() bool
+	// LoginChannelID is the LINE Login channel ID for the browser's authorize URL.
+	LoginChannelID() string
+	// ExchangeLoginCode redeems a LINE Login code and returns the verified LINE user.
+	// ErrLoginRejected when LINE refuses it, ErrNotConfigured without the channel secret.
+	ExchangeLoginCode(ctx context.Context, code, redirectURI, codeVerifier, nonce string) (*TokenInfo, error)
 }
 
 type client struct {
 	liffChannelID      string
 	channelSecret      string
 	channelAccessToken string
+	loginChannelSecret string
 	http               *http.Client
 }
 
@@ -77,6 +86,7 @@ func New(cfg config.LINEConfig) Client {
 		liffChannelID:      cfg.LIFFChannelID,
 		channelSecret:      cfg.ChannelSecret,
 		channelAccessToken: cfg.ChannelAccessToken,
+		loginChannelSecret: cfg.LoginChannelSecret,
 		http:               &http.Client{Timeout: requestTimeout},
 	}
 }
