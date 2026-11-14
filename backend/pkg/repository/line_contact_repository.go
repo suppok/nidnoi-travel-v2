@@ -54,7 +54,8 @@ func (r *lineContactRepository) List(ctx context.Context, criteria repomodels.Li
 	q := r.query.NewSelect().Model(&items).Where("lc.status = TRUE")
 
 	if kw := strings.TrimSpace(criteria.Keyword); kw != "" {
-		q = q.Where("lower(lc.display_name) LIKE ?", "%"+escapeLike(strings.ToLower(kw))+"%")
+		// Whole display name only (case-insensitive): partial matches surface the wrong customer's chat.
+		q = q.Where("lower(lc.display_name) = ?", strings.ToLower(kw))
 	}
 	if criteria.Following != nil {
 		q = q.Where("lc.following = ?", *criteria.Following)

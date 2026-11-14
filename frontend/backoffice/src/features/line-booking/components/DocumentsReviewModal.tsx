@@ -1,11 +1,12 @@
-import { FilePdfOutlined, SendOutlined, WarningOutlined } from '@ant-design/icons';
-import { Alert, App, Avatar, Button, Input, Modal } from 'antd';
+import { FilePdfOutlined, SendOutlined, SwapOutlined, WarningOutlined } from '@ant-design/icons';
+import { Alert, App, Button, Input, Modal } from 'antd';
 import { useState } from 'react';
 import { lineBookingsApi } from '../../../api/lineBookings.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import type { LineBooking } from '../../../types/lineBooking.ts';
+import type { LineBooking, LineBookingContact } from '../../../types/lineBooking.ts';
 import { fileNameFromUrl } from '../../tour-program/components/mediaUpload.ts';
 import { requiredDocuments } from '../lib/lineBookingFormat.ts';
+import LineContactPicker, { ContactAvatar } from './LineContactPicker.tsx';
 
 type Props = {
   booking: LineBooking | null; // open when set
@@ -15,31 +16,43 @@ type Props = {
 
 // The sales owner's review of the finance documents: recheck the PDFs, then send them to the
 // customer's LINE chat (or just approve when no chat is linked), or send them back with a note.
+// The chat defaults to the booking's linked contact; staff can pick another one before sending, which
+// relinks the booking to it.
 export default function DocumentsReviewModal({ booking, onClose, onDone }: Props) {
   const { message } = App.useApp();
   const [fixing, setFixing] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
+  const [picked, setPicked] = useState<LineBookingContact | null>(null); // null = the booking's own chat
+  const [picking, setPicking] = useState(false);
   if (!booking) return null;
+
+  const reset = () => {
+    setFixing(false);
+    setNote('');
+    setPicked(null);
+    setPicking(false);
+  };
 
   // Start fresh next time it opens.
   const close = () => {
-    setFixing(false);
-    setNote('');
+    reset();
     onClose();
   };
 
   const docs = requiredDocuments(booking);
-  const chat = booking.lineContact;
+  const chat = picked ?? booking.lineContact;
+  const relink = chat !== null && chat.id !== booking.lineContact?.id;
   const canPush = chat !== null && chat.following;
 
   const approve = async () => {
     setBusy('approve');
     try {
+      // The push goes to the booking's linked chat, so link the picked one first.
+      if (relink) await lineBookingsApi.updateLineContact({ id: booking.id, lineContactId: chat.id });
       const updated = await lineBookingsApi.approveDocuments(booking.id);
       message.success(updated.customerSentAt ? `ส่งเอกสารให้ ${chat?.displayName ?? 'ลูกค้า'} ทาง LINE แล้ว` : 'ยืนยันเอกสารแล้ว (ไม่ได้ส่ง LINE)');
-      setFixing(false);
-      setNote('');
+      reset();
       onDone(updated);
     } catch (err) {
       message.error(errorMessage(err));
@@ -53,8 +66,7 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
     try {
       const updated = await lineBookingsApi.rejectDocuments(booking.id, note.trim());
       message.success(`ส่งกลับให้ ${updated.financeUser?.name ?? 'ฝ่ายการเงิน'} แก้ไขแล้ว`);
-      setFixing(false);
-      setNote('');
+      reset();
       onDone(updated);
     } catch (err) {
       message.error(errorMessage(err));
@@ -127,21 +139,53 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
             placeholder="เช่น ชื่อลูกค้าในใบรับเงินมัดจำสะกดผิด / ยอดในใบแจ้งหนี้ไม่ตรง"
           />
         </>
-      ) : canPush && chat ? (
-        <div className="flex items-center gap-3 rounded-lg border border-line px-3 py-2">
-          <Avatar src={chat.pictureUrl ?? undefined}>{chat.displayName.slice(0, 1)}</Avatar>
-          <div className="flex flex-col">
-            <span className="text-xs text-ink-muted">จะส่งทางแชท LINE ของลูกค้า</span>
-            <span className="font-medium">{chat.displayName}</span>
-          </div>
-        </div>
-      ) : (
-        <Alert
-          type="info"
-          showIcon
-          title={chat ? `${chat.displayName} บล็อก LINE OA แล้ว — ส่งทาง LINE ไม่ได้` : 'ใบจองนี้ยังไม่ได้เชื่อมแชท LINE ของลูกค้า'}
-          description="กดยืนยันเอกสารเพื่อปิดงานโดยไม่ส่ง LINE (ส่งเอกสารให้ลูกค้าเองได้)"
+      ) : picking ? (
+        <LineContactPicker
+          value={chat}
+          defaultOpen
+          disabled={busy !== null}
+          onPick={(c) => setPicked(c.id === booking.lineContact?.id ? null : c)}
+          onClose={() => setPicking(false)}
         />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {chat && (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => setPicking(true)}
+              title="กดเพื่อเลือกแชทอื่น"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-line bg-transparent px-3 py-2 text-left hover:border-brand-line disabled:cursor-not-allowed"
+            >
+              <ContactAvatar pictureUrl={chat.pictureUrl} />
+              <div className="flex min-w-0 flex-col">
+                <span className="text-xs text-ink-muted">
+                  {canPush ? 'จะส่งทางแชท LINE ของลูกค้า' : 'แชท LINE ของลูกค้า'}
+                  {relink && ' (เปลี่ยนจากแชทเดิมของใบจอง)'}
+                </span>
+                <span className="truncate font-medium">{chat.displayName || '(ไม่มีชื่อ)'}</span>
+              </div>
+              <span className="ml-auto shrink-0 text-xs text-ink-muted">
+                <SwapOutlined /> เปลี่ยนแชท
+              </span>
+            </button>
+          )}
+          {!canPush && (
+            <Alert
+              type="info"
+              showIcon
+              title={chat ? `${chat.displayName} บล็อก LINE OA แล้ว — ส่งทาง LINE ไม่ได้` : 'ใบจองนี้ยังไม่ได้เชื่อมแชท LINE ของลูกค้า'}
+              description="กดยืนยันเอกสารเพื่อปิดงานโดยไม่ส่ง LINE (ส่งเอกสารให้ลูกค้าเองได้)"
+              action={
+                !chat && (
+                  <Button size="small" disabled={busy !== null} onClick={() => setPicking(true)}>
+                    เลือกแชท
+                  </Button>
+                )
+              }
+            />
+          )}
+        </div>
       )}
     </Modal>
   );

@@ -9,7 +9,7 @@ import (
 // --- list ---
 
 type LineBookingListRequest struct {
-	Keyword string `json:"keyword"` // booking no, customer name, phone, tour code or LINE display name
+	Keyword string `json:"keyword"` // booking no, customer name, phone, tour code (partial) or exact LINE display name
 	State   int    `json:"state"`   // 0 = all
 	// Paid lists confirmed bookings only (states 20 and 25), newest confirmation first.
 	Paid bool `json:"paid"`
