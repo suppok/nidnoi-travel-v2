@@ -18,11 +18,11 @@ const (
 
 // Config holds non-secret settings from config/config_api.yml and secrets from environment variables.
 type Config struct {
-	AppEnv             string   `mapstructure:"-"`
-	Port               string   `mapstructure:"-"`
-	DatabaseURL        string   `mapstructure:"-"`
-	JWTSecret          string   `mapstructure:"-"`
-	CORSAllowedOrigins []string `mapstructure:"-"`
+	AppEnv             string     `mapstructure:"-"`
+	Port               string     `mapstructure:"-"`
+	DatabaseURL        string     `mapstructure:"-"`
+	JWTSecret          string     `mapstructure:"-"`
+	CORSAllowedOrigins []string   `mapstructure:"-"`
 	R2                 R2Config   `mapstructure:"-"`
 	LINE               LINEConfig `mapstructure:"-"`
 	// DeployHookURL is the customer Worker's Cloudflare Deploy Hook (the URL is the credential).
@@ -72,6 +72,9 @@ type LINEConfig struct {
 	ChannelAccessToken string // Messaging API channel access token (long-lived)
 	LIFFChannelID      string // LINE Login channel ID (the channel that owns the LIFF app)
 	LIFFID             string // LIFF app ID
+	// LoginChannelSecret is the LINE Login channel's secret (the LIFF channel): backoffice "ล็อกอินด้วย
+	// LINE" is off without it.
+	LoginChannelSecret string
 }
 
 func (l LINEConfig) Configured() bool {
@@ -190,6 +193,7 @@ func read(path string) (*Config, error) {
 		ChannelAccessToken: strings.TrimSpace(os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")),
 		LIFFChannelID:      strings.TrimSpace(os.Getenv("LINE_LIFF_CHANNEL_ID")),
 		LIFFID:             strings.TrimSpace(os.Getenv("LINE_LIFF_ID")),
+		LoginChannelSecret: strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_SECRET")),
 	}
 	return cfg, nil
 }

@@ -2,7 +2,7 @@ import { App } from 'antd';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../api/auth.ts';
 import type { Permission } from '../constants/permissions.ts';
-import type { LoginRequest, Me } from '../types/auth.ts';
+import type { LineLoginRequest, LoginRequest, Me } from '../types/auth.ts';
 import { authBus, tokenStore } from './token.ts';
 import { AuthContext, type AuthContextValue, type AuthStatus } from './useAuth.ts';
 
@@ -63,6 +63,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     [reloadUser],
   );
 
+  const loginWithLine = useCallback(
+    async (body: LineLoginRequest) => {
+      const { accessToken } = await authApi.lineLogin(body);
+      tokenStore.set(accessToken);
+      return reloadUser();
+    },
+    [reloadUser],
+  );
+
   const logout = useCallback(async () => {
     await authApi.logout().catch(() => undefined);
     tokenStore.clear();
@@ -75,11 +84,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
       login,
+      loginWithLine,
       logout,
       reloadUser,
       can: (permission: Permission) => user?.permissions.includes(permission) ?? false,
     }),
-    [status, user, login, logout, reloadUser],
+    [status, user, login, loginWithLine, logout, reloadUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -44,9 +44,15 @@ func (u *authUseCase) Login(ctx context.Context, request *models.AuthLoginReques
 		return nil, cerrors.New(http.StatusUnauthorized, errorcode.InvalidCredentials)
 	}
 
+	return u.startSession(ctx, user, request.RememberMe, request.ClientIP, request.UserAgent)
+}
+
+// startSession signs user in (password or LINE login): records the login, creates the refresh
+// token and issues the access token.
+func (u *authUseCase) startSession(ctx context.Context, user *domain.AppUser, rememberMe bool, clientIP, userAgent string) (*models.AuthLoginResponse, error) {
 	var refresh *domain.RefreshToken
 	var refreshToken string
-	err = u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
+	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
 		now := time.Now()
 
 		user.LastLoginAt = null.TimeFrom(now)
@@ -54,7 +60,8 @@ func (u *authUseCase) Login(ctx context.Context, request *models.AuthLoginReques
 			return err
 		}
 
-		refresh, refreshToken, err = u.createRefreshToken(ctx, appDB, user.ID, request.RememberMe, request.ClientIP, request.UserAgent, now)
+		var err error
+		refresh, refreshToken, err = u.createRefreshToken(ctx, appDB, user.ID, rememberMe, clientIP, userAgent, now)
 		return err
 	})
 	if err != nil {

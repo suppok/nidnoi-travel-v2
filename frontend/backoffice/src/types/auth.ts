@@ -10,6 +10,18 @@ export type LoginRequest = {
 };
 
 // POST /auth/login, POST /auth/refresh. The refresh token itself is an HttpOnly cookie.
+// GET /auth/line/config — whether "ล็อกอินด้วย LINE" shows, and the LINE Login channel.
+export type LineLoginConfig = { enabled: boolean; channelId: string };
+
+// POST /auth/line/login — the code LINE redirected back with (PKCE).
+export type LineLoginRequest = {
+  code: string;
+  redirectUri: string;
+  codeVerifier: string;
+  nonce: string;
+  rememberMe: boolean;
+};
+
 export type TokenResponse = {
   accessToken: string;
   expiresIn: number; // seconds

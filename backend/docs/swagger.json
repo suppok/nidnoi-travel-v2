@@ -299,6 +299,94 @@
                 }
             }
         },
+        "/auth/line/config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Whether \"log in with LINE\" is available (backoffice)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.AuthLineLoginConfigResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/line/login": {
+            "post": {
+                "description": "Finishes LINE Login (authorization code + PKCE): the LINE account must be linked to an active\nbackoffice user (\"เชื่อมบัญชี LINE\"), otherwise LINE_NOT_LINKED. Same session as /auth/login:\nan access token and the HttpOnly refresh cookie. Rate-limited.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Log in with LINE (backoffice)",
+                "parameters": [
+                    {
+                        "description": "Code from LINE",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.AuthLineLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_auth_models.AuthLoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_LOGIN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "429": {
+                        "description": "RATE_LIMITED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "LINE_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Returns a short-lived access token and sets the HttpOnly refresh cookie. Rate-limited.",
@@ -4683,6 +4771,40 @@
                     "description": "URL opens the LIFF app with the one-time code; the backoffice shows it as a QR code.",
                     "type": "string",
                     "example": "https://liff.line.me/1234567890-AbCdEfGh?lineLink=..."
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.AuthLineLoginConfigResponse": {
+            "type": "object",
+            "properties": {
+                "channelId": {
+                    "description": "ChannelID is the LINE Login channel for the authorize URL (\"\" when disabled).",
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_auth_models.AuthLineLoginRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "codeVerifier": {
+                    "description": "PKCE",
+                    "type": "string"
+                },
+                "nonce": {
+                    "type": "string"
+                },
+                "redirectUri": {
+                    "description": "RedirectURI is the callback the authorize request used: \u003cbackoffice origin\u003e/login/line/callback,\nwhere the origin is one of CORS_ALLOWED_ORIGINS.",
+                    "type": "string"
+                },
+                "rememberMe": {
+                    "type": "boolean"
                 }
             }
         },

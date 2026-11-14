@@ -1,8 +1,10 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Checkbox, Form, Input, Spin } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type Location, Navigate, useLocation, useNavigate } from 'react-router';
+import { authApi } from '../../api/auth.ts';
 import { MOCK_PASSWORD } from '../../api/mock/credentials.ts';
+import { startLineLogin } from '../../auth/lineLogin.ts';
 import { useAuth } from '../../auth/useAuth.ts';
 import { PlaneIcon } from '../../components/BrandMark.tsx';
 import { env } from '../../config/env.ts';
@@ -70,6 +72,15 @@ function BoardingPassStub() {
   );
 }
 
+// The LINE speech-bubble mark, white on the LINE green button.
+function LineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M12 3C6.48 3 2 6.6 2 11.04c0 3.98 3.55 7.31 8.35 7.94.33.07.77.22.88.5.1.25.07.65.03.9l-.14.85c-.04.25-.2.98.86.53 1.06-.45 5.73-3.38 7.82-5.78C21.25 14.4 22 12.8 22 11.04 22 6.6 17.52 3 12 3Zm-3.6 10.2H6.44a.52.52 0 0 1-.52-.52V8.76a.52.52 0 1 1 1.04 0v3.4H8.4a.52.52 0 1 1 0 1.04Zm2.03-.52a.52.52 0 1 1-1.04 0V8.76a.52.52 0 1 1 1.04 0v3.92Zm4.72 0a.52.52 0 0 1-.94.31l-2-2.73v2.42a.52.52 0 1 1-1.04 0V8.76a.52.52 0 0 1 .94-.31l2 2.73V8.76a.52.52 0 1 1 1.04 0v3.92Zm3.17-2.48a.52.52 0 1 1 0 1.04h-1.44v.92h1.44a.52.52 0 1 1 0 1.04h-1.96a.52.52 0 0 1-.52-.52V8.76c0-.29.23-.52.52-.52h1.96a.52.52 0 1 1 0 1.04h-1.44v.92h1.44Z" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const { modal } = App.useApp();
   const { status, user, login } = useAuth();
@@ -78,6 +89,20 @@ export default function LoginPage() {
   const [form] = Form.useForm<LoginForm>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // LINE Login shows only when the backend has the LINE Login channel configured.
+  const [lineChannelId, setLineChannelId] = useState<string | null>(null);
+  const [lineStarting, setLineStarting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    authApi
+      .lineConfig()
+      .then((c) => !cancelled && setLineChannelId(c.enabled ? c.channelId : null))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const from = (location.state as { from?: Location } | null)?.from;
   const target = from ? `${from.pathname}${from.search}` : '/dashboard';
@@ -91,6 +116,15 @@ export default function LoginPage() {
       content: 'หากลืมรหัสผ่านหรือเข้าสู่ระบบไม่ได้ ให้ผู้ดูแลระบบรีเซ็ตรหัสผ่านชั่วคราวให้ที่เมนู "ผู้ใช้และสิทธิ์" แล้วเปลี่ยนรหัสผ่านใหม่หลังเข้าสู่ระบบ',
       okText: 'เข้าใจแล้ว',
     });
+
+  const loginWithLine = () => {
+    if (!lineChannelId) return;
+    setLineStarting(true);
+    void startLineLogin(lineChannelId, form.getFieldValue('rememberMe') ?? true, target).catch(() => {
+      setLineStarting(false);
+      setError('เปิดหน้าเข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่');
+    });
+  };
 
   const onFinish = async (values: LoginForm) => {
     setSubmitting(true);
@@ -169,6 +203,27 @@ export default function LoginPage() {
             เข้าสู่ระบบ
           </Button>
         </Form>
+
+        {lineChannelId && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 text-xs text-ink-muted">
+              <div className="h-px flex-1 bg-line" />
+              หรือ
+              <div className="h-px flex-1 bg-line" />
+            </div>
+            <Button
+              block
+              size="large"
+              loading={lineStarting}
+              onClick={loginWithLine}
+              icon={<LineIcon />}
+              className="h-[52px] border-[#06C755] bg-[#06C755] font-semibold text-white hover:!border-[#05b14c] hover:!bg-[#05b14c] hover:!text-white"
+            >
+              ล็อกอินด้วย LINE
+            </Button>
+            <p className="m-0 text-center text-xs text-ink-muted">ใช้ได้เฉพาะบัญชี LINE ที่เชื่อมกับผู้ใช้ในระบบแล้ว (เมนูชื่อผู้ใช้ → เชื่อมบัญชี LINE)</p>
+          </div>
+        )}
 
         <p className="m-0 text-center text-sm leading-relaxed text-ink-muted">
           มีปัญหาในการเข้าสู่ระบบ?{' '}

@@ -101,6 +101,8 @@ const lineUnlink: MockHandler = (req) => {
 
 export const authRoutes: Record<string, MockHandler> = {
   'POST /auth/login': login,
+  // LINE Login needs the real LINE platform: hidden in mock mode.
+  'GET /auth/line/config': () => ok({ enabled: false, channelId: '' }),
   'POST /auth/refresh': refresh,
   'POST /auth/logout': logout,
   'GET /auth/me': me,

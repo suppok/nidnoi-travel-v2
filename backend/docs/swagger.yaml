@@ -195,6 +195,32 @@ definitions:
         example: https://liff.line.me/1234567890-AbCdEfGh?lineLink=...
         type: string
     type: object
+  backend_pkg_modules_auth_models.AuthLineLoginConfigResponse:
+    properties:
+      channelId:
+        description: ChannelID is the LINE Login channel for the authorize URL (""
+          when disabled).
+        type: string
+      enabled:
+        type: boolean
+    type: object
+  backend_pkg_modules_auth_models.AuthLineLoginRequest:
+    properties:
+      code:
+        type: string
+      codeVerifier:
+        description: PKCE
+        type: string
+      nonce:
+        type: string
+      redirectUri:
+        description: |-
+          RedirectURI is the callback the authorize request used: <backoffice origin>/login/line/callback,
+          where the origin is one of CORS_ALLOWED_ORIGINS.
+        type: string
+      rememberMe:
+        type: boolean
+    type: object
   backend_pkg_modules_auth_models.AuthLoginRequest:
     properties:
       email:
@@ -5385,6 +5411,68 @@ paths:
       security:
       - BearerAuth: []
       summary: Unlink my LINE account
+      tags:
+      - auth
+  /auth/line/config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineLoginConfigResponse'
+      summary: Whether "log in with LINE" is available (backoffice)
+      tags:
+      - auth
+  /auth/line/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Finishes LINE Login (authorization code + PKCE): the LINE account must be linked to an active
+        backoffice user ("เชื่อมบัญชี LINE"), otherwise LINE_NOT_LINKED. Same session as /auth/login:
+        an access token and the HttpOnly refresh cookie. Rate-limited.
+      parameters:
+      - description: Code from LINE
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLoginResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_LOGIN
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: RATE_LIMITED
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: LINE_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Log in with LINE (backoffice)
       tags:
       - auth
   /auth/login:
