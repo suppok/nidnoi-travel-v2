@@ -7,6 +7,7 @@ import { authRoutes } from './auth.ts';
 import { bookingRoutes } from './bookings.ts';
 import { bookingSourceRoutes } from './bookingSources.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
+import { lineBookingRoutes } from './lineBookings.ts';
 import { mediaRoutes } from './media.ts';
 import { siteRoutes } from './site.ts';
 import { taxonomyRoutes } from './taxonomy.ts';
@@ -27,6 +28,7 @@ const routes: Record<string, MockHandler> = {
   ...siteRoutes,
   ...bookingRoutes,
   ...salesFinanceRoutes,
+  ...lineBookingRoutes,
 };
 
 const LATENCY_MS = 300;

@@ -13,6 +13,17 @@ definitions:
       price:
         type: integer
     type: object
+  backend_pkg_domain.LineBookingEventChange:
+    properties:
+      field:
+        description: a key the backoffice labels (adultTwin, totalPrice, customerName,
+          ...)
+        type: string
+      from:
+        type: string
+      to:
+        type: string
+    type: object
   backend_pkg_modules_airline_models.AirlineCreateRequest:
     properties:
       code:
@@ -2363,6 +2374,42 @@ definitions:
         type: string
       updateDate:
         type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingEventItem:
+    properties:
+      action:
+        description: Action is one of pkg/constants/linebookingevent.
+        example: edited
+        type: string
+      changes:
+        description: Changes are the fields the action changed, as display strings
+          (edits, LINE chat, staff note).
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingEventChange'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      note:
+        description: Note is the fix request of documents_rejected ("" = none).
+        type: string
+      target:
+        description: 'Target names what the action pointed at: a finance user, a LINE
+          chat, document codes ("" = none).'
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: User did it; null if the user row is gone.
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingEventListResponse:
+    properties:
+      items:
+        description: Items are oldest first.
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventItem'
+        type: array
     type: object
   backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse:
     properties:
@@ -5986,6 +6033,46 @@ paths:
       summary: Reopen a LINE booking in LIFF by booking no
       tags:
       - line-bookings
+  /liff/line-bookings/{bookingNo}/events:
+    get:
+      description: Same items as GET /line-bookings/{id}/events, for a booking LIFF
+        may open (paid).
+      parameters:
+      - description: Booking no
+        in: path
+        name: bookingNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse'
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE
+          schema:
+            additionalProperties: true
+            type: object
+      summary: History of a LINE booking reopened in LIFF
+      tags:
+      - line-bookings
   /liff/line-contacts/list:
     post:
       consumes:
@@ -6220,6 +6307,34 @@ paths:
       security:
       - BearerAuth: []
       summary: Get a LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/{id}/events:
+    get:
+      description: |-
+        Every action on the booking, oldest first: created, confirmed, documents, LIFF edits (with
+        the changed fields), balance, LINE chat, staff note, delete/restore. Same visibility as GET /line-bookings/{id}.
+      parameters:
+      - description: LINE Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: A LINE booking's history
       tags:
       - line-bookings
   /line-bookings/{id}/finance-users:

@@ -140,6 +140,28 @@ const WAITING_BOOKING: LineBookingItem = {
 
 const EDITABLE = [DEPOSIT_BOOKING, FULL_BOOKING, WAITING_BOOKING]
 
+// The same history for every mock booking.
+const SOMJAI = { id: SALES.items[2].id, name: SALES.items[2].name }
+const MANEE = { id: SALES.items[0].id, name: SALES.items[0].name }
+const MOCK_HISTORY = [
+  { id: 'e1', action: 'created', changes: [], target: '', note: '', createDate: '2026-11-09T08:00:00Z', user: SOMJAI },
+  { id: 'e2', action: 'confirmed', changes: [], target: MANEE.name, note: '', createDate: '2026-11-09T09:30:00Z', user: SOMJAI },
+  { id: 'e3', action: 'documents_sent', changes: [], target: 'AI + IV', note: '', createDate: '2026-11-10T09:00:00Z', user: MANEE },
+  { id: 'e4', action: 'documents_approved', changes: [], target: 'Somchai', note: 'AI + IV', createDate: '2026-11-10T10:00:00Z', user: SOMJAI },
+  {
+    id: 'e5',
+    action: 'edited',
+    changes: [
+      { field: 'adultTwin', from: '2', to: '3' },
+      { field: 'totalPrice', from: '79800', to: '119700' },
+    ],
+    target: '',
+    note: '',
+    createDate: '2026-11-12T04:15:00Z',
+    user: SOMJAI,
+  },
+]
+
 // The update's total from its own prices (no period lookup: every price is sent).
 function mockTotal(b: LineBookingLIFFUpdateRequest): number {
   const adult = b.adultPrice ?? 0
@@ -191,6 +213,10 @@ export async function mockSend(method: string, path: string, body: unknown): Pro
   }
   // GET /liff/line-bookings/:bookingNo — "26DEMO01" (deposit), "26FULL01" (paid in full) and
 // "26WAIT01" (waiting for finance: warns on save) open; "26NEW001" answers LINE_BOOKING_NOT_EDITABLE.
+  if (method === 'GET' && path.startsWith('/liff/line-bookings/') && path.endsWith('/events')) {
+    await new Promise((r) => setTimeout(r, LATENCY_MS))
+    return json({ items: MOCK_HISTORY })
+  }
   if (method === 'GET' && path.startsWith('/liff/line-bookings/')) {
     const no = decodeURIComponent(path.slice('/liff/line-bookings/'.length)).toUpperCase()
     await new Promise((r) => setTimeout(r, LATENCY_MS))

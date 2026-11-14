@@ -3,6 +3,7 @@ import type {
   LineBooking,
   LineBookingConfirmRequest,
   LineBookingDocumentsRequest,
+  LineBookingEvent,
   LineBookingFinanceUsers,
   LineBookingListRequest,
   LineBookingUpdateLineContactRequest,
@@ -15,6 +16,7 @@ import { request } from './client.ts';
 export const lineBookingsApi = {
   list: (body: LineBookingListRequest) => request<ListResponse<LineBooking>>('POST', '/line-bookings/list', body),
   get: (id: string) => request<LineBooking>('GET', `/line-bookings/${encodeURIComponent(id)}`),
+  events: (id: string) => request<{ items: LineBookingEvent[] }>('GET', `/line-bookings/${encodeURIComponent(id)}/events`),
   update: (body: LineBookingUpdateRequest) => request<LineBooking>('PUT', '/line-bookings', body),
   updateLineContact: (body: LineBookingUpdateLineContactRequest) => request<LineBooking>('PUT', '/line-bookings/line-contact', body),
   confirm: (body: LineBookingConfirmRequest) => request<LineBooking>('PUT', '/line-bookings/confirm', body),

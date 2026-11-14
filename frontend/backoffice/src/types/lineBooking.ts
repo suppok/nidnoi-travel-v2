@@ -139,3 +139,16 @@ export type LineContactListRequest = Paging & {
   keyword?: string;
   following?: boolean;
 };
+
+// GET /line-bookings/:id/events — one action in a booking's history (oldest first).
+export type LineBookingEventChange = { field: string; from: string; to: string };
+
+export type LineBookingEvent = {
+  id: string;
+  action: string; // constants/lineBookingEvents.ts
+  changes: LineBookingEventChange[];
+  target: string; // a finance user, a LINE chat or document codes; '' = none
+  note: string;
+  createDate: string;
+  user: { id: string; name: string } | null;
+};

@@ -7,6 +7,7 @@ import (
 
 	"github.com/guregu/null/v5"
 
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
@@ -46,8 +47,9 @@ func (u *lineBookingUseCase) UpdateLineContact(ctx context.Context, request *mod
 			return cerrors.NotFound()
 		}
 
+		var contact *domain.LineContact
 		if request.LineContactID.Valid {
-			contact, err := u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, request.LineContactID.String)
+			contact, err = u.repositoryRegistry.LineContactRepository.WithTx(appDB).FindByID(ctx, request.LineContactID.String)
 			if err != nil {
 				return err
 			}
@@ -55,12 +57,21 @@ func (u *lineBookingUseCase) UpdateLineContact(ctx context.Context, request *mod
 				return cerrors.FieldError("lineContactId", "no such LINE contact")
 			}
 		}
+		changed := target.LineContactID != request.LineContactID
+		before := contactName(target.LineContact)
 
 		target.LineContactID = request.LineContactID
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
 		if _, err = repo.Update(ctx, target, "line_contact_id", "update_date", "update_by"); err != nil {
 			return err
+		}
+		if changed {
+			change := domain.LineBookingEventChange{Field: "lineContact", From: before, To: contactName(contact)}
+			if err := u.logEvent(ctx, appDB, target.ID, linebookingevent.LineContactSet, request.UserRequestInfo.UserID,
+				domain.LineBookingEventDetail{Changes: []domain.LineBookingEventChange{change}}); err != nil {
+				return err
+			}
 		}
 		// Reload for the contact's name and picture.
 		updated, err = repo.FindByID(ctx, target.ID)

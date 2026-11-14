@@ -18,6 +18,10 @@ type LineBookingUseCase interface {
 	LIFFUpdate(ctx context.Context, request *models.LineBookingLIFFUpdateRequest) (*models.LineBookingLIFFUpdateResponse, error)
 	// ConfirmBalance confirms the balance recorded from LIFF: paid in full, finance issues the RE.
 	ConfirmBalance(ctx context.Context, request *models.LineBookingConfirmBalanceRequest) (*models.LineBookingConfirmBalanceResponse, error)
+	// LIFFEvents returns the history of a booking reopened in LIFF, oldest first.
+	LIFFEvents(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingEventListResponse, error)
+	// Events returns the booking's history, oldest first.
+	Events(ctx context.Context, request *models.LineBookingEventListRequest) (*models.LineBookingEventListResponse, error)
 	List(ctx context.Context, request *models.LineBookingListRequest) (*models.LineBookingListResponse, error)
 	Get(ctx context.Context, request *models.LineBookingGetRequest) (*models.LineBookingGetResponse, error)
 	// Update saves the staff note.

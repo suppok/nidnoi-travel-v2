@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"backend/pkg/constants/linebookingevent"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
@@ -38,11 +39,19 @@ func (u *lineBookingUseCase) Update(ctx context.Context, request *models.LineBoo
 			return cerrors.NotFound()
 		}
 
+		before := target.StaffNote
 		target.StaffNote = request.StaffNote
 		target.UpdateDate = time.Now()
 		target.UpdateBy = request.UserRequestInfo.UserID
 		if _, err = repo.Update(ctx, target, "staff_note", "update_date", "update_by"); err != nil {
 			return err
+		}
+		if before != target.StaffNote {
+			change := domain.LineBookingEventChange{Field: "staffNote", From: before, To: target.StaffNote}
+			if err := u.logEvent(ctx, appDB, target.ID, linebookingevent.StaffNoteUpdated, request.UserRequestInfo.UserID,
+				domain.LineBookingEventDetail{Changes: []domain.LineBookingEventChange{change}}); err != nil {
+				return err
+			}
 		}
 		updated, err = repo.FindByID(ctx, target.ID)
 		return err

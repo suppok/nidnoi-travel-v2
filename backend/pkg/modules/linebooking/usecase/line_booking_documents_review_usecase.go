@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"backend/pkg/constants/errorcode"
+	"backend/pkg/constants/linebookingevent"
 	coremodels "backend/pkg/core/api/models"
 	"backend/pkg/core/database/query"
 	cerrors "backend/pkg/core/errors"
@@ -111,6 +112,14 @@ func (u *lineBookingUseCase) DocumentsApprove(ctx context.Context, request *mode
 		if _, err = repo.Update(ctx, current, columns...); err != nil {
 			return err
 		}
+		sentTo := ""
+		if target != nil {
+			sentTo = target.DisplayName
+		}
+		if err := u.logEvent(ctx, appDB, current.ID, linebookingevent.DocumentsApproved, info.UserID,
+			domain.LineBookingEventDetail{Target: sentTo, Note: documentCodes(current)}); err != nil {
+			return err
+		}
 		updated, err = repo.FindByID(ctx, current.ID)
 		return err
 	})
@@ -151,6 +160,10 @@ func (u *lineBookingUseCase) DocumentsReject(ctx context.Context, request *model
 		b.UpdateDate = now
 		b.UpdateBy = info.UserID
 		if _, err = repo.Update(ctx, b, "fix_note", "fix_requested_at", "documents_at", "documents_by", "update_date", "update_by"); err != nil {
+			return err
+		}
+		if err := u.logEvent(ctx, appDB, b.ID, linebookingevent.DocumentsRejected, info.UserID,
+			domain.LineBookingEventDetail{Target: documentCodes(b), Note: request.Note}); err != nil {
 			return err
 		}
 		updated, err = repo.FindByID(ctx, b.ID)

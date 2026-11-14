@@ -31,6 +31,11 @@ const POLICY: Record<Role, readonly Permission[]> = {
     Permissions.SalesUserList,
     Permissions.SalesFinanceGet,
     Permissions.SalesFinanceUpdate,
+    Permissions.LineBookingCreate,
+    Permissions.LineBookingList,
+    Permissions.LineBookingGet,
+    Permissions.LineBookingUpdate,
+    Permissions.LineContactList,
   ],
   [Roles.Finance]: [
     Permissions.TourProgramList,

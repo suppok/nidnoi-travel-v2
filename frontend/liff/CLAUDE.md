@@ -56,8 +56,11 @@ Sales can paste the text from the backoffice sales tool **สรุปยอด�
 
 Under the paste box on the first screen, **แก้ไขใบจองเดิม / ลูกค้าชำระส่วนที่เหลือ** takes a booking no (`GET /liff/line-bookings/:bookingNo`). Any paid booking (deposit or in full) opens (`LINE_BOOKING_NOT_EDITABLE` for new or cancelled ones); any sales user may open it. While its documents aren't approved yet (finance still issuing them, or waiting for the owner's review) the summary box shows a warning and saving asks for a second confirm ("ยืนยันบันทึก"), since the documents may not match the new amounts.
 
-- The form opens in edit mode prefilled (`dealFromBooking` maps the backend's room types back to the summary rows). Tour, period, sales owner, slips and the payment plan are fixed and shown in a summary box; the full/deposit choice is hidden (`PaymentSection depositLocked`).
-- "สลิปชำระส่วนที่เหลือ" shows only on a deposit booking not yet paid in full (state 20) whose deposit documents were sent, and is optional: without it the save only changes the deal (`PUT /liff/line-bookings`, total recomputed). With it the balance waits for the sales owner to confirm it in the backoffice, then finance issues the RE.
+- **ประวัติ:** the summary box has a collapsible history (`BookingHistory`, `GET /liff/line-bookings/:bookingNo/events`, newest first, with "field: from → to" lines). Labels copy the backoffice's `constants/lineBookingEvents.ts` (no shared code) — keep both in step with the backend actions and `dealSnapshot` keys.
+- **Choose first:** when the booking can take a balance (deposit, state 20, deposit documents approved) the app asks **ลูกค้าชำระส่วนที่เหลือ** or **แก้ไขข้อมูลใบจอง** (`PurposeChoice`); otherwise it goes straight to editing. "เปลี่ยนสิ่งที่ต้องการทำ" in the summary box returns to the choice.
+- **Balance:** its own short screen — the amount still due (`computeTotals().remaining`) and due date, a **required** balance slip and the note; the deal is sent back unchanged. Saved through the same `PUT /liff/line-bookings` with `balanceSlipImage`.
+- **Edit:** the form opens prefilled (`dealFromBooking` maps the backend's room types back to the summary rows). Tour, period, sales owner, slips and the payment plan are fixed and shown in a summary box; the full/deposit choice is hidden (`PaymentSection depositLocked`).
+- An edit takes no slip; the save changes the deal (`PUT /liff/line-bookings`, total recomputed) and the backend logs the changed fields in the booking's history. A recorded balance waits for the sales owner to confirm it in the backoffice, then finance issues the RE.
 - Mock: `26DEMO01` (deposit), `26FULL01` (paid in full) and `26WAIT01` (waiting for finance — warns) open; `26NEW001` answers `LINE_BOOKING_NOT_EDITABLE`.
 
 ## Environment Variables
@@ -96,7 +99,8 @@ LIFF login only works on the HTTPS endpoint registered for a LIFF app, so plain 
 - `POST /liff/line-contacts/list` — customer chat picker (`CustomerChatPicker`, optional; sent as `lineContactId`)
 - `POST /media/upload/liff` — upload slip image (`purpose=booking-slip` only)
 - `POST /line-bookings` — create booking; the backend records the staff user as `create_by`
-- `GET /liff/line-bookings/:bookingNo`, `PUT /liff/line-bookings` — reopen a deposit booking, save edits and the balance slip
+- `GET /liff/line-bookings/:bookingNo`, `PUT /liff/line-bookings` — reopen a paid booking, save edits and the balance slip
+- `GET /liff/line-bookings/:bookingNo/events` — its history
 
 ## CORS
 
