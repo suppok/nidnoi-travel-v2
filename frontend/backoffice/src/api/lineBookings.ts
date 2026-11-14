@@ -4,6 +4,7 @@ import type {
   LineBookingConfirmRequest,
   LineBookingDocumentsRequest,
   LineBookingEvent,
+  LineBookingNotification,
   LineBookingFinanceUsers,
   LineBookingListRequest,
   LineBookingUpdateLineContactRequest,
@@ -16,6 +17,13 @@ import { request } from './client.ts';
 export const lineBookingsApi = {
   list: (body: LineBookingListRequest) => request<ListResponse<LineBooking>>('POST', '/line-bookings/list', body),
   get: (id: string) => request<LineBooking>('GET', `/line-bookings/${encodeURIComponent(id)}`),
+  // Comments: anyone who can see the booking; mentionUserIds from mentionable(id).
+  comment: (body: { id: string; text: string; mentionUserIds: string[] }) => request<LineBookingEvent>('POST', '/line-bookings/comments', body),
+  mentionable: (id: string) => request<{ items: { id: string; name: string }[] }>('GET', `/line-bookings/${encodeURIComponent(id)}/mentionable`),
+  notifications: (body: { unread?: boolean; page: number; pageSize: number }) =>
+    request<ListResponse<LineBookingNotification>>('POST', '/line-booking-notifications/list', body),
+  // Opening a booking marks the caller's notifications on it read.
+  readNotifications: (lineBookingId: string) => request<null>('PUT', '/line-booking-notifications/read', { lineBookingId }),
   events: (id: string) => request<{ items: LineBookingEvent[] }>('GET', `/line-bookings/${encodeURIComponent(id)}/events`),
   update: (body: LineBookingUpdateRequest) => request<LineBooking>('PUT', '/line-bookings', body),
   updateLineContact: (body: LineBookingUpdateLineContactRequest) => request<LineBooking>('PUT', '/line-bookings/line-contact', body),

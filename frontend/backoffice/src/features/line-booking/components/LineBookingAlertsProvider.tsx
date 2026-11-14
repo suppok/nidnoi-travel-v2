@@ -5,7 +5,7 @@ import { lineBookingsApi } from '../../../api/lineBookings.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
 import { FINANCE_LINE_BOOKINGS_PATH, LineBookingStates, lineBookingStateInfo } from '../../../constants/lineBookingStates.ts';
 import { Permissions } from '../../../constants/permissions.ts';
-import { Roles } from '../../../constants/roles.ts';
+import { Roles, worksAs } from '../../../constants/roles.ts';
 import type { LineBooking, LineBookingListRequest } from '../../../types/lineBooking.ts';
 import { requiredDocuments } from '../lib/lineBookingFormat.ts';
 import { LineBookingAlertsContext } from '../hooks/useLineBookingAlerts.ts';
@@ -129,15 +129,56 @@ export default function LineBookingAlertsProvider({ children }: { children: Reac
     [navigate, notification],
   );
 
+  // Comments and @mentions: a popup per new unread notification (the first poll is the baseline).
+  const seenComments = useRef<number | null>(null);
+  const checkComments = useCallback(() => {
+    lineBookingsApi
+      .notifications({ unread: true, page: 1, pageSize: 5 })
+      .then((res) => {
+        const before = seenComments.current;
+        const newest = Math.max(0, ...res.items.map((n) => Date.parse(n.createDate)));
+        seenComments.current = Math.max(before ?? 0, newest);
+        if (before === null) return;
+        // Oldest first, so the newest popup ends up on top.
+        for (const n of res.items.filter((x) => Date.parse(x.createDate) > before).reverse()) {
+          const key = `line-booking-comment-${n.id}`;
+          const author = n.author?.name ?? 'มีผู้';
+          notification.info({
+            key,
+            title: n.kind === 'mention' ? `${author} กล่าวถึงคุณ` : `${author} แสดงความคิดเห็น`,
+            description: `${n.bookingNo} · ${n.text.length > 120 ? `${n.text.slice(0, 120)}…` : n.text}`,
+            duration: 0,
+            placement: 'bottomRight',
+            actions: (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => {
+                  notification.destroy(key);
+                  // Finance-only users open bookings from their own page.
+                  const base = worksAs(user?.roles, Roles.Sales) ? '/line-bookings' : FINANCE_LINE_BOOKINGS_PATH;
+                  navigate(`${base}?open=${n.lineBookingId}`);
+                }}
+              >
+                ดูใบจอง
+              </Button>
+            ),
+          });
+        }
+      })
+      .catch(() => {});
+  }, [navigate, notification, user]);
+
   const poll = useCallback(() => {
     if (!enabled) return;
+    checkComments();
     check('newBooking', setNewCount);
     if (isFinance) check('waitingDocuments', setWaitingCount);
     if (isSales) {
       check('documentsReady');
       check('balancePending');
     }
-  }, [check, enabled, isFinance, isSales]);
+  }, [check, checkComments, enabled, isFinance, isSales]);
 
   useEffect(() => {
     if (!enabled) return;

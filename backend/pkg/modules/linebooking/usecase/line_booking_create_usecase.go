@@ -70,6 +70,23 @@ func phoneRule(value any) error {
 	return nil
 }
 
+// normalizeSlips trims the slip URLs and drops empty ones; an empty list falls back to the older
+// single-slip field.
+func normalizeSlips(list []string, single string) []string {
+	out := make([]string, 0, len(list))
+	for _, s := range list {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	if len(out) == 0 {
+		if s := strings.TrimSpace(single); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 func trimNull(v null.String) null.String {
 	s := strings.TrimSpace(v.String)
 	return null.NewString(s, v.Valid && s != "")
@@ -81,7 +98,11 @@ func normalizeCreate(r *models.LineBookingCreateRequest) {
 	r.CustomerName = strings.TrimSpace(r.CustomerName)
 	r.CustomerPhone = strings.TrimSpace(r.CustomerPhone)
 	r.CustomerAddress = strings.TrimSpace(r.CustomerAddress)
-	r.SlipImage = strings.TrimSpace(r.SlipImage)
+	r.SlipImages = normalizeSlips(r.SlipImages, r.SlipImage)
+	r.SlipImage = ""
+	if len(r.SlipImages) > 0 {
+		r.SlipImage = r.SlipImages[0]
+	}
 	r.Note = strings.TrimSpace(r.Note)
 	r.RefName = strings.TrimSpace(r.RefName)
 	r.RefBookingNo = strings.TrimSpace(r.RefBookingNo)
@@ -134,7 +155,7 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 		validation.Field(&request.CustomerAddress, validation.RuneLength(0, maxAddressRunes)),
 		validation.Field(&request.RefName, validation.RuneLength(0, maxRefRunes)),
 		validation.Field(&request.RefBookingNo, validation.RuneLength(0, maxRefRunes)),
-		validation.Field(&request.SlipImage, validation.Required),
+		validation.Field(&request.SlipImages, validation.Required, validation.Length(1, maxSlips), validation.Each(validation.RuneLength(1, maxSlipURLRunes))),
 		validation.Field(&request.Note, validation.RuneLength(0, maxNoteRunes)),
 	)
 	if err != nil {
@@ -432,7 +453,7 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 			b.FullDueDate = parseDate(request.FullDueDate)
 			b.FullDueTime = request.FullDueTime
 		}
-		b.SlipImage = request.SlipImage
+		b.SlipImage, b.SlipImages = request.SlipImage, request.SlipImages
 		b.Note = request.Note
 		b.State = linebookingstate.New
 		b.Status = true

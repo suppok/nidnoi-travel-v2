@@ -63,6 +63,8 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
         if (cancelled) return;
         setLoaded({ id: bookingId, booking: b, error: null });
         form.setFieldsValue({ staffNote: b.staffNote });
+        // Opening the booking reads its comment notifications.
+        lineBookingsApi.readNotifications(b.id).catch(() => {});
         setReviewing(!!user && b.salesUser?.id === user.id && waitsForReview(b));
       })
       .catch((err: unknown) => !cancelled && setLoaded({ id: bookingId, booking: null, error: err }));
@@ -274,23 +276,20 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
 
           <section>
             <Typography.Title level={5}>สลิปโอนเงิน</Typography.Title>
-            {booking.balanceSlipImage ? (
-              <div className="flex flex-wrap gap-4">
-                <figure className="m-0">
-                  <Image src={booking.slipImage} alt="สลิปมัดจำ" width={200} className="rounded-lg" />
-                  <figcaption className="mt-1 text-xs text-ink-muted">มัดจำ</figcaption>
-                </figure>
-                <figure className="m-0">
-                  <Image src={booking.balanceSlipImage} alt="สลิปส่วนที่เหลือ" width={200} className="rounded-lg" />
-                  <figcaption className="mt-1 text-xs text-ink-muted">
-                    ส่วนที่เหลือ
-                    {booking.balanceConfirmedAt ? ` · ยืนยันเมื่อ ${formatDateTime(booking.balanceConfirmedAt)}` : ' · รอยืนยัน'}
-                  </figcaption>
-                </figure>
+            <Image.PreviewGroup>
+              <div className="flex flex-col gap-4">
+                <SlipGroup
+                  title={booking.balanceSlipImages.length > 0 ? 'มัดจำ' : null}
+                  urls={booking.slipImages.length > 0 ? booking.slipImages : [booking.slipImage]}
+                />
+                {booking.balanceSlipImages.length > 0 && (
+                  <SlipGroup
+                    title={`ส่วนที่เหลือ${booking.balanceConfirmedAt ? ` · ยืนยันเมื่อ ${formatDateTime(booking.balanceConfirmedAt)}` : ' · รอยืนยัน'}`}
+                    urls={booking.balanceSlipImages}
+                  />
+                )}
               </div>
-            ) : (
-              <Image src={booking.slipImage} alt="สลิปโอนเงิน" width={240} className="rounded-lg" />
-            )}
+            </Image.PreviewGroup>
           </section>
 
           <section>
@@ -407,6 +406,20 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
 // Finance sent the documents and the sales owner hasn't approved or returned them yet.
 function waitsForReview(b: LineBooking): boolean {
   return b.status && b.documentsAt !== null && b.documentsApprovedAt === null;
+}
+
+// A payment's slips side by side; tapping one opens the preview, which pages through every slip.
+function SlipGroup({ title, urls }: { title: string | null; urls: string[] }) {
+  return (
+    <div>
+      {title && <div className="mb-1 text-xs text-ink-muted">{title}</div>}
+      <div className="flex flex-wrap gap-3">
+        {urls.map((url, i) => (
+          <Image key={url} src={url} alt={`สลิป ${i + 1}`} width={urls.length > 1 ? 150 : 220} className="rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function PaymentDetails({ booking }: { booking: LineBooking }) {

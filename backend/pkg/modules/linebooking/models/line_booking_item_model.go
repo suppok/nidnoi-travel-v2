@@ -33,7 +33,8 @@ type LineBookingItem struct {
 	TotalPrice               int       `json:"totalPrice"`
 	CustomerName             string    `json:"customerName"`
 	CustomerPhone            string    `json:"customerPhone"`
-	SlipImage                string    `json:"slipImage"`
+	SlipImage                string    `json:"slipImage"` // the first of slipImages
+	SlipImages               []string  `json:"slipImages"`
 	Note                     string    `json:"note"`
 	State                    int       `json:"state" enums:"10,20,25,30"`
 	StaffNote                string    `json:"staffNote"`
@@ -84,7 +85,8 @@ type LineBookingItem struct {
 	LineContact *LineBookingContact `json:"lineContact"`
 	// The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
 	// the sales owner confirmed it (state 25; finance then issues the RE).
-	BalanceSlipImage   string    `json:"balanceSlipImage"`
+	BalanceSlipImage   string    `json:"balanceSlipImage"` // the first of balanceSlipImages
+	BalanceSlipImages  []string  `json:"balanceSlipImages"`
 	BalanceSubmittedAt null.Time `json:"balanceSubmittedAt" swaggertype:"string"`
 	BalanceConfirmedAt null.Time `json:"balanceConfirmedAt" swaggertype:"string"`
 }
@@ -165,6 +167,7 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 	item.DocumentsApprovedAt, item.CustomerSentAt = b.DocumentsApprovedAt, b.CustomerSentAt
 	item.FixNote, item.FixRequestedAt = b.FixNote, b.FixRequestedAt
 	item.BalanceSlipImage, item.BalanceSubmittedAt, item.BalanceConfirmedAt = b.BalanceSlipImage, b.BalanceSubmittedAt, b.BalanceConfirmedAt
+	item.SlipImages, item.BalanceSlipImages = b.Slips(), b.BalanceSlips()
 	if f := b.FinanceUser; f != nil {
 		item.FinanceUser = &LineBookingUser{ID: f.ID, Name: f.Name}
 	}

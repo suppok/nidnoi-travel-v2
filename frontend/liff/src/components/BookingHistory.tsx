@@ -60,6 +60,7 @@ const DOT: Record<string, string> = {
   edited: 'bg-orange-500',
   balance_submitted: 'bg-yellow-500',
   balance_confirmed: 'bg-green-500',
+  comment: 'bg-purple-500',
   deleted: 'bg-red-500',
 }
 
@@ -93,6 +94,8 @@ function title(e: LineBookingEvent): string {
       return 'ลบใบจอง'
     case 'restored':
       return 'กู้คืนใบจอง'
+    case 'comment':
+      return 'ความคิดเห็น'
     default:
       return e.action
   }
@@ -144,6 +147,7 @@ export function BookingHistory({ bookingNo }: { bookingNo: string }) {
                   {when.format(new Date(e.createDate))} · {e.user?.name ?? '-'}
                 </p>
                 {e.action === 'documents_rejected' && e.note && <p className="mt-0.5 whitespace-pre-wrap text-red-700">{e.note}</p>}
+                {e.action === 'comment' && <p className="mt-1 whitespace-pre-wrap rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-800">{e.note}</p>}
                 {e.changes.length > 0 && (
                   <ul className="mt-1 space-y-0.5">
                     {e.changes.map((c) => (

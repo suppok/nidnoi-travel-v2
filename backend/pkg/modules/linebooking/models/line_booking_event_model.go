@@ -29,9 +29,11 @@ type LineBookingEventItem struct {
 	Changes []domain.LineBookingEventChange `json:"changes"`
 	// Target names what the action pointed at: a finance user, a LINE chat, document codes ("" = none).
 	Target string `json:"target"`
-	// Note is the fix request of documents_rejected ("" = none).
-	Note       string    `json:"note"`
-	CreateDate time.Time `json:"createDate"`
+	// Note is the fix request of documents_rejected or the text of a comment ("" = none).
+	Note string `json:"note"`
+	// Mentions are the users @mentioned in a comment ([] otherwise).
+	Mentions   []LineBookingUser `json:"mentions"`
+	CreateDate time.Time         `json:"createDate"`
 	// User did it; null if the user row is gone.
 	User *LineBookingUser `json:"user"`
 }

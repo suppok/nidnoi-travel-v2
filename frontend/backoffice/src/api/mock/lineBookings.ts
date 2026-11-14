@@ -43,6 +43,7 @@ function base(id: number, bookingNo: string, hoursAgo: number, state: LineBookin
     customerName: 'สมชาย ใจดี',
     customerPhone: '0812345678',
     slipImage: SLIP('deposit slip'),
+    slipImages: [SLIP('deposit slip')],
     note: '',
     state,
     staffNote: '',
@@ -80,6 +81,7 @@ function base(id: number, bookingNo: string, hoursAgo: number, state: LineBookin
     fixNote: '',
     fixRequestedAt: null,
     balanceSlipImage: '',
+    balanceSlipImages: [],
     balanceSubmittedAt: null,
     balanceConfirmedAt: null,
     lineContact: { id: 'c1000000-0000-4000-8000-000000000001', displayName: 'Somchai', pictureUrl: null, following: true },
@@ -91,8 +93,17 @@ const event = (
   action: string,
   hoursAgo: number,
   user: { id: string; name: string },
-  extra: { target?: string; note?: string; changes?: LineBookingEventChange[] } = {},
-): LineBookingEvent => ({ id, action, changes: extra.changes ?? [], target: extra.target ?? '', note: extra.note ?? '', createDate: ago(hoursAgo), user });
+  extra: { target?: string; note?: string; changes?: LineBookingEventChange[]; mentions?: { id: string; name: string }[] } = {},
+): LineBookingEvent => ({
+  id,
+  action,
+  changes: extra.changes ?? [],
+  target: extra.target ?? '',
+  note: extra.note ?? '',
+  mentions: extra.mentions ?? [],
+  createDate: ago(hoursAgo),
+  user,
+});
 
 const E = LineBookingEvents;
 
@@ -117,7 +128,8 @@ const balanceBooking: LineBooking = {
   documentsAt: ago(60),
   documentsApprovedAt: ago(59),
   customerSentAt: ago(59),
-  balanceSlipImage: SLIP('balance slip'),
+  balanceSlipImage: SLIP('balance slip 1'),
+  balanceSlipImages: [SLIP('balance slip 1'), SLIP('balance slip 2')],
   balanceSubmittedAt: ago(1),
   updateDate: ago(1),
 };
@@ -131,7 +143,8 @@ const paidBooking: LineBooking = {
   documentsAt: ago(20),
   documentsApprovedAt: ago(19),
   customerSentAt: ago(19),
-  balanceSlipImage: SLIP('balance slip'),
+  balanceSlipImage: SLIP('balance slip 1'),
+  balanceSlipImages: [SLIP('balance slip 1'), SLIP('balance slip 2')],
   balanceSubmittedAt: ago(48),
   balanceConfirmedAt: ago(47),
   updateDate: ago(19),
@@ -160,6 +173,7 @@ const history: Record<string, LineBookingEvent[]> = {
       ],
     }),
     event('b6', E.StaffNoteUpdated, 5, sales, { changes: [{ field: 'staffNote', from: '', to: 'ลูกค้าขอเพิ่ม 1 ท่าน' }] }),
+    event('b6c', E.Comment, 4, finance, { note: `@${sales.name} ลูกค้าโอนส่วนที่เหลือมาแล้ว รบกวนแนบสลิปด้วยค่ะ`, mentions: [sales] }),
     event('b7', E.BalanceSubmitted, 1, sales),
   ],
   [paidBooking.id]: [
@@ -220,6 +234,30 @@ export const lineBookingRoutes: Record<string, MockHandler> = {
     return ok({ items: [finance], defaultId: finance.id });
   },
   'GET /line-bookings/:id': (req) => ok(find(req, 'GET /line-bookings/:id')),
+  'GET /line-bookings/:id/mentionable': (req) => {
+    find(req, 'GET /line-bookings/:id/mentionable');
+    return ok({ items: [finance, sales, { id: users[1].id, name: users[1].name }] });
+  },
+  // Comments are kept in memory for this page load; notifications are not mocked (always none).
+  'POST /line-bookings/comments': (req) => {
+    const user = authorize(req, 'POST /line-bookings/comments', Permissions.LineBookingGet);
+    const body = asRecord(req.body);
+    const b = bookings.find((x) => x.id === str(body.id));
+    if (!b || !visible(b, user)) throw new MockFail(404, ErrorCodes.NotFound, 'Not found');
+    const ids = Array.isArray(body.mentionUserIds) ? (body.mentionUserIds as string[]) : [];
+    const mentions = users.filter((u) => ids.includes(u.id)).map((u) => ({ id: u.id, name: u.name }));
+    const e: LineBookingEvent = { ...event(crypto.randomUUID(), E.Comment, 0, { id: user.id, name: user.name }, { note: str(body.text), mentions }) };
+    (history[b.id] ??= []).push(e);
+    return ok(e);
+  },
+  'POST /line-booking-notifications/list': (req) => {
+    authorize(req, 'POST /line-booking-notifications/list', Permissions.LineBookingList);
+    return ok({ items: [], total: 0, page: 1, pageSize: 20 });
+  },
+  'PUT /line-booking-notifications/read': (req) => {
+    authorize(req, 'PUT /line-booking-notifications/read', Permissions.LineBookingList);
+    return ok(null);
+  },
   'POST /line-contacts/list': (req) => {
     authorize(req, 'POST /line-contacts/list', Permissions.LineContactList);
     const keyword = str(asRecord(req.body).keyword).trim().toLowerCase();

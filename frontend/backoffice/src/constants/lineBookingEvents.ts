@@ -14,6 +14,7 @@ export const LineBookingEvents = {
   BalanceConfirmed: 'balance_confirmed',
   Deleted: 'deleted',
   Restored: 'restored',
+  Comment: 'comment',
 } as const;
 
 // Timeline dot colors (antd Timeline item color).
@@ -32,6 +33,7 @@ export const LINE_BOOKING_EVENT_COLOR: Record<string, string> = {
   [LineBookingEvents.BalanceConfirmed]: 'green',
   [LineBookingEvents.Deleted]: 'red',
   [LineBookingEvents.Restored]: 'gray',
+  [LineBookingEvents.Comment]: 'purple',
 };
 
 // Labels of the fields an action may change (backend dealSnapshot keys, plus staffNote / lineContact).

@@ -50,8 +50,11 @@ type LineBookingCreateRequest struct {
 	CustomerName    string `json:"customerName"`
 	CustomerPhone   string `json:"customerPhone"`
 	CustomerAddress string `json:"customerAddress"`
-	SlipImage       string `json:"slipImage"` // R2 URL from /media/upload/liff
-	Note            string `json:"note"`
+	// SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
+	// older single-slip field, still accepted when SlipImages is empty.
+	SlipImages []string `json:"slipImages"`
+	SlipImage  string   `json:"slipImage"`
+	Note       string   `json:"note"`
 	// SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
 	SalesUserID string `json:"salesUserId"`
 	// LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.

@@ -82,6 +82,8 @@ Table: line_booking
 [65] balance_submitted_at    TIMESTAMPTZ  null: true   (sales recorded the balance from LIFF; waits for the owner)
 [66] balance_submitted_by    UUID         null: true   (FK app_user.id)
 [67] balance_confirmed_at    TIMESTAMPTZ  null: true   (the sales owner confirmed the balance; state 25, finance issues the RE)
+[68] slip_images             TEXT[]       null: false  default: '{}'  (every slip of the payment; slip_image = the first)
+[69] balance_slip_images     TEXT[]       null: false  default: '{}'  (every balance slip; balance_slip_image = the first)
 */
 
 // LineBookingCharge is one extra charge line (visa, taxes, options, ...): count x price.
@@ -166,6 +168,8 @@ type LineBooking struct {
 	BalanceSubmittedAt       null.Time           `bun:"balance_submitted_at"         json:"balanceSubmittedAt" swaggertype:"string"`        // [65] TIMESTAMPTZ
 	BalanceSubmittedBy       null.String         `bun:"balance_submitted_by"         json:"balanceSubmittedBy" swaggertype:"string"`        // [66] UUID
 	BalanceConfirmedAt       null.Time           `bun:"balance_confirmed_at"         json:"balanceConfirmedAt" swaggertype:"string"`        // [67] TIMESTAMPTZ
+	SlipImages               []string            `bun:"slip_images,array"            json:"slipImages"`                                     // [68] TEXT[]
+	BalanceSlipImages        []string            `bun:"balance_slip_images,array"    json:"balanceSlipImages"`                              // [69] TEXT[]
 
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
 	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
@@ -195,6 +199,26 @@ func (b *LineBooking) AwaitsBalance() bool {
 // BalancePending reports whether sales recorded the balance and it waits for the owner's confirm.
 func (b *LineBooking) BalancePending() bool {
 	return b.State == linebookingstate.DepositPaid && b.BalanceSubmittedAt.Valid && !b.BalanceConfirmedAt.Valid
+}
+
+// Slips returns every slip of the payment (rows written before slip_images: the single slip).
+func (b *LineBooking) Slips() []string {
+	return slipsOr(b.SlipImages, b.SlipImage)
+}
+
+// BalanceSlips returns every balance slip ([] = none recorded).
+func (b *LineBooking) BalanceSlips() []string {
+	return slipsOr(b.BalanceSlipImages, b.BalanceSlipImage)
+}
+
+func slipsOr(list []string, single string) []string {
+	if len(list) > 0 {
+		return list
+	}
+	if single != "" {
+		return []string{single}
+	}
+	return []string{}
 }
 
 // Travellers counts everyone on the booking, infants included.

@@ -31,6 +31,14 @@ type LineBookingEventDetail struct {
 	// Target names what the action pointed at: a finance user, a LINE chat, document codes.
 	Target string `json:"target,omitempty"`
 	Note   string `json:"note,omitempty"`
+	// Mentions are the users @mentioned in a comment, with their names at the time.
+	Mentions []LineBookingEventMention `json:"mentions,omitempty"`
+}
+
+// LineBookingEventMention is a user @mentioned in a comment.
+type LineBookingEventMention struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // LineBookingEvent is a row of line_booking_event: one action in a LINE booking's history.
