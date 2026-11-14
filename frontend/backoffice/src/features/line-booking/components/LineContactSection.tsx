@@ -1,11 +1,9 @@
-import { UserOutlined } from '@ant-design/icons';
-import { Alert, App, Avatar, Button, Select, Spin, Tag, Typography } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Alert, App, Button, Tag, Typography } from 'antd';
+import { useState } from 'react';
 import { lineBookingsApi } from '../../../api/lineBookings.ts';
-import { lineContactsApi } from '../../../api/lineContacts.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import { formatDateTime } from '../../../lib/format.ts';
-import type { LineBooking, LineContact } from '../../../types/lineBooking.ts';
+import type { LineBooking } from '../../../types/lineBooking.ts';
+import LineContactPicker, { ContactAvatar } from './LineContactPicker.tsx';
 
 type Props = {
   booking: LineBooking;
@@ -13,39 +11,12 @@ type Props = {
   onLinked: (updated: LineBooking) => void;
 };
 
-const SEARCH_DEBOUNCE_MS = 300;
-const PAGE_SIZE = 20;
-
-function ContactAvatar({ pictureUrl, size = 'default' }: { pictureUrl: string | null; size?: 'small' | 'default' }) {
-  return <Avatar size={size} src={pictureUrl ?? undefined} icon={<UserOutlined />} />;
-}
-
 // The customer's LINE OA chat for a booking. The receipt is pushed to this chat later, so staff pick
 // the chat the customer used; contacts appear here once they have messaged or followed the OA.
 export default function LineContactSection({ booking, editable, onLinked }: Props) {
   const { message } = App.useApp();
-  const [keyword, setKeyword] = useState('');
-  const [options, setOptions] = useState<LineContact[]>([]);
-  const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [open, setOpen] = useState(false);
-  const searchSeq = useRef(0);
   const contact = booking.lineContact;
-
-  // Search only while the dropdown is open, debounced; newest chat first.
-  useEffect(() => {
-    if (!open) return;
-    const seq = ++searchSeq.current;
-    const timer = setTimeout(() => {
-      setSearching(true);
-      lineContactsApi
-        .list({ keyword: keyword.trim() || undefined, page: 1, pageSize: PAGE_SIZE })
-        .then((res) => seq === searchSeq.current && setOptions(res.items))
-        .catch((err: unknown) => seq === searchSeq.current && message.error(errorMessage(err)))
-        .finally(() => seq === searchSeq.current && setSearching(false));
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [keyword, open, message]);
 
   const link = async (lineContactId: string | null) => {
     setSaving(true);
@@ -84,32 +55,13 @@ export default function LineContactSection({ booking, editable, onLinked }: Prop
           <Alert type="warning" showIcon title="ลูกค้าบล็อก OA หรือยังไม่ได้เพิ่มเพื่อน ระบบจะส่งข้อความทาง LINE ไม่ได้" />
         )}
         {editable && (
-          <Select<string>
-            className="w-full"
-            placeholder={contact ? 'เปลี่ยนแชท — พิมพ์ชื่อ LINE เพื่อค้นหา' : 'พิมพ์ชื่อ LINE ของลูกค้าเพื่อค้นหา (ไม่บังคับ)'}
-            value={null}
-            open={open}
-            onOpenChange={setOpen}
-            showSearch={{ filterOption: false, onSearch: setKeyword, searchValue: keyword }}
-            loading={searching || saving}
+          <LineContactPicker
+            placeholder={contact ? 'เปลี่ยนแชท — พิมพ์ชื่อ LINE ให้ตรงทั้งชื่อ' : 'พิมพ์ชื่อ LINE ของลูกค้าให้ตรงทั้งชื่อ (ไม่บังคับ)'}
+            loading={saving}
             disabled={saving}
-            notFoundContent={searching ? <Spin size="small" /> : 'ไม่พบแชท — ลูกค้าต้องทักแชท OA ก่อน'}
-            onChange={(id) => {
-              setOpen(false);
-              setKeyword('');
-              if (id !== contact?.id) void link(id);
+            onPick={(c) => {
+              if (c.id !== contact?.id) void link(c.id);
             }}
-            options={options.map((c) => ({
-              value: c.id,
-              label: (
-                <div className="flex items-center gap-2">
-                  <ContactAvatar pictureUrl={c.pictureUrl} size="small" />
-                  <span className="truncate">{c.displayName || '(ไม่มีชื่อ)'}</span>
-                  {!c.following && <Tag color="red" className="m-0">บล็อก</Tag>}
-                  {c.lastMessageAt && <span className="ml-auto text-xs text-ink-muted">{formatDateTime(c.lastMessageAt)}</span>}
-                </div>
-              ),
-            }))}
           />
         )}
       </div>

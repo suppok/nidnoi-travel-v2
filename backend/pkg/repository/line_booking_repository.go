@@ -58,7 +58,7 @@ func (r *lineBookingRepository) List(ctx context.Context, criteria repomodels.Li
 				WhereOr("lower(lb.customer_name) LIKE ?", pattern).
 				WhereOr("lb.customer_phone LIKE ?", pattern).
 				WhereOr("lower(lb.tour_code) LIKE ?", pattern).
-				WhereOr("lower(lb.line_display_name) LIKE ?", pattern)
+				WhereOr("lower(lb.line_display_name) = ?", strings.ToLower(kw)) // whole LINE name only
 		})
 	}
 	if criteria.State != 0 {

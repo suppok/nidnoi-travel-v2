@@ -10,7 +10,7 @@ import (
 )
 
 type LineContactListRequest struct {
-	Keyword   string `json:"keyword"`   // display name
+	Keyword   string `json:"keyword"`   // exact display name, case-insensitive
 	Following *bool  `json:"following"` // omitted = all
 	Page      int    `json:"page"`      // default 1
 	PageSize  int    `json:"pageSize"`  // default 20, max 100

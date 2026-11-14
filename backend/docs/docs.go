@@ -7513,7 +7513,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "keyword": {
-                    "description": "booking no, customer name, phone, tour code or LINE display name",
+                    "description": "booking no, customer name, phone, tour code (partial) or exact LINE display name",
                     "type": "string"
                 },
                 "ownedByMe": {
@@ -8132,7 +8132,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "keyword": {
-                    "description": "display name",
+                    "description": "exact display name, case-insensitive",
                     "type": "string"
                 },
                 "page": {
