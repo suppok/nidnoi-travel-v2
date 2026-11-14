@@ -20,6 +20,14 @@ type LineBookingUseCase interface {
 	ConfirmBalance(ctx context.Context, request *models.LineBookingConfirmBalanceRequest) (*models.LineBookingConfirmBalanceResponse, error)
 	// LIFFEvents returns the history of a booking reopened in LIFF, oldest first.
 	LIFFEvents(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingEventListResponse, error)
+	// Comment adds a comment (with @mentions) to the booking's history and notifies.
+	Comment(ctx context.Context, request *models.LineBookingCommentRequest) (*models.LineBookingCommentResponse, error)
+	// Mentionable lists who may be @mentioned on a booking.
+	Mentionable(ctx context.Context, request *models.LineBookingMentionableRequest) (*models.LineBookingMentionableResponse, error)
+	// Notifications lists the caller's comment notifications, newest first.
+	Notifications(ctx context.Context, request *models.LineBookingNotificationListRequest) (*models.LineBookingNotificationListResponse, error)
+	// NotificationsRead marks the caller's notifications on one booking read.
+	NotificationsRead(ctx context.Context, request *models.LineBookingNotificationReadRequest) error
 	// Events returns the booking's history, oldest first.
 	Events(ctx context.Context, request *models.LineBookingEventListRequest) (*models.LineBookingEventListResponse, error)
 	List(ctx context.Context, request *models.LineBookingListRequest) (*models.LineBookingListResponse, error)

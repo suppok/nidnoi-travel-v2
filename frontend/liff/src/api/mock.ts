@@ -103,9 +103,11 @@ const DEPOSIT_BOOKING: LineBookingItem = {
   bookingSource: SOURCES[0],
   salesUser: SALES.items[2],
   lineContact: { id: CONTACTS[0].id, displayName: CONTACTS[0].displayName, pictureUrl: null, following: true },
-  slipImage: 'https://placehold.co/400x600?text=deposit+slip',
+  slipImage: 'https://placehold.co/400x600?text=deposit+slip+1',
+  slipImages: ['https://placehold.co/400x600?text=deposit+slip+1', 'https://placehold.co/400x600?text=deposit+slip+2'],
   note: '',
   balanceSlipImage: '',
+  balanceSlipImages: [],
   balanceSubmittedAt: null,
   balanceConfirmedAt: null,
   financeUser: { id: '0b9c6a52-0000-4000-8000-000000000003', name: 'มานี บัญชีดี' },
@@ -127,6 +129,7 @@ const FULL_BOOKING: LineBookingItem = {
   fullDueDate: '2026-11-20',
   fullDueTime: '18:00',
   slipImage: 'https://placehold.co/400x600?text=full+payment+slip',
+  slipImages: ['https://placehold.co/400x600?text=full+payment+slip'],
 }
 
 // A deposit booking whose AI + IV finance hasn't sent yet: "26WAIT01".
@@ -159,6 +162,16 @@ const MOCK_HISTORY = [
     note: '',
     createDate: '2026-11-12T04:15:00Z',
     user: SOMJAI,
+  },
+  {
+    id: 'e6',
+    action: 'comment',
+    changes: [],
+    target: '',
+    note: '@สมใจ ขายเก่ง ลูกค้าแจ้งว่าจะโอนส่วนที่เหลือพรุ่งนี้',
+    mentions: [SOMJAI],
+    createDate: '2026-11-13T02:00:00Z',
+    user: MANEE,
   },
 ]
 
@@ -208,7 +221,7 @@ export async function mockSend(method: string, path: string, body: unknown): Pro
       const req = body as LineBookingLIFFUpdateRequest
       if (!EDITABLE.some((b) => b.bookingNo === req.bookingNo)) return failure(404, 'NOT_FOUND', 'Not found')
       console.info('[mock] PUT /liff/line-bookings', req)
-      return json({ bookingNo: req.bookingNo, totalPrice: mockTotal(req), balancePending: req.balanceSlipImage !== '' })
+      return json({ bookingNo: req.bookingNo, totalPrice: mockTotal(req), balancePending: req.balanceSlipImages.length > 0 })
     },
   }
   // GET /liff/line-bookings/:bookingNo — "26DEMO01" (deposit), "26FULL01" (paid in full) and

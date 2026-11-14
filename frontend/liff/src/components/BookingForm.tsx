@@ -44,14 +44,14 @@ export function BookingForm({ staffName }: Props) {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerAddress, setCustomerAddress] = useState('')
-  const [slipImage, setSlipImage] = useState('')
+  const [slipImages, setSlipImages] = useState<string[]>([])
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<SuccessData | null>(null)
   // A booking reopened by its booking no (edit mode), and the balance slip to record with it.
   const [editing, setEditing] = useState<LineBookingItem | null>(null)
-  const [balanceSlip, setBalanceSlip] = useState('')
+  const [balanceSlips, setBalanceSlips] = useState<string[]>([])
   // Prefill from a pasted sales-tool summary.
   const [pasteReport, setPasteReport] = useState<PasteReport | null>(null)
   const [autoPeriod, setAutoPeriod] = useState<{ startDate: string; endDate: string } | null>(null)
@@ -211,7 +211,7 @@ export function BookingForm({ staffName }: Props) {
     setCustomerPhone(b.customerPhone)
     setCustomerAddress(b.customerAddress)
     setNote(b.note)
-    setBalanceSlip('')
+    setBalanceSlips([])
     setError('')
     setConfirmingWarning(false)
     setPurpose(canRecordBalance(b) ? null : 'edit')
@@ -221,7 +221,7 @@ export function BookingForm({ staffName }: Props) {
   async function handleUpdate(b: LineBookingItem) {
     setError('')
     if (balanceMode) {
-      if (!balanceSlip) return setError('กรุณาอัพโหลดสลิปชำระส่วนที่เหลือ')
+      if (balanceSlips.length === 0) return setError('กรุณาอัพโหลดสลิปชำระส่วนที่เหลือ')
     } else {
       const invalid = dealError(deal)
       if (invalid) return setError(invalid)
@@ -244,7 +244,7 @@ export function BookingForm({ staffName }: Props) {
         customerPhone: customerPhone.trim(),
         customerAddress: customerAddress.trim(),
         note: note.trim(),
-        balanceSlipImage: balanceMode ? balanceSlip : '',
+        balanceSlipImages: balanceMode ? balanceSlips : [],
       })
       setSuccess({
         bookingNo: result.bookingNo,
@@ -270,7 +270,7 @@ export function BookingForm({ staffName }: Props) {
     if (invalid) return setError(invalid)
     if (!customerName.trim()) return setError('กรุณาระบุชื่อลูกค้า')
     if (!customerPhone.trim()) return setError('กรุณาระบุเบอร์โทรลูกค้า')
-    if (!slipImage) return setError('กรุณาอัพโหลดสลิปโอนเงิน')
+    if (slipImages.length === 0) return setError('กรุณาอัพโหลดสลิปโอนเงิน')
 
     setSubmitting(true)
     try {
@@ -286,7 +286,7 @@ export function BookingForm({ staffName }: Props) {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerAddress: customerAddress.trim(),
-        slipImage,
+        slipImages,
         note: note.trim(),
       })
       setSuccess(result)
@@ -308,7 +308,7 @@ export function BookingForm({ staffName }: Props) {
     setCustomerName('')
     setCustomerPhone('')
     setCustomerAddress('')
-    setSlipImage('')
+    setSlipImages([])
     setNote('')
     setError('')
     setSuccess(null)
@@ -316,7 +316,7 @@ export function BookingForm({ staffName }: Props) {
     setAutoPeriod(null)
     setPastedTotal(null)
     setEditing(null)
-    setBalanceSlip('')
+    setBalanceSlips([])
     setConfirmingWarning(false)
     setPurpose(null)
     keepDealRef.current = false
@@ -372,15 +372,17 @@ export function BookingForm({ staffName }: Props) {
 
         <section>
           <Label>สลิปชำระส่วนที่เหลือ</Label>
-          {editing.balanceSubmittedAt && !balanceSlip && (
+          {editing.balanceSubmittedAt && balanceSlips.length === 0 && (
             <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              มีสลิปส่วนที่เหลือรอเซลล์ยืนยันอยู่แล้ว อัพโหลดใหม่เพื่อแทนที่{' '}
-              <a href={editing.balanceSlipImage} target="_blank" rel="noreferrer" className="underline">
-                ดูสลิปเดิม
-              </a>
+              มีสลิปส่วนที่เหลือรอเซลล์ยืนยันอยู่แล้ว อัพโหลดใหม่เพื่อแทนที่ทั้งชุด{' '}
+              {editing.balanceSlipImages.map((url, i) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer" className="mr-1 underline">
+                  ดูสลิปเดิม{editing.balanceSlipImages.length > 1 ? ` ${i + 1}` : ''}
+                </a>
+              ))}
             </p>
           )}
-          <SlipUpload value={balanceSlip} onChange={setBalanceSlip} />
+          <SlipUpload value={balanceSlips} onChange={setBalanceSlips} />
           <p className="mt-1 text-xs text-gray-500">{editing.salesUser?.name ?? 'เซลล์เจ้าของการจอง'} จะตรวจสลิปและยืนยันในระบบหลังบ้าน</p>
         </section>
 
@@ -394,7 +396,7 @@ export function BookingForm({ staffName }: Props) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitting || !balanceSlip}
+          disabled={submitting || balanceSlips.length === 0}
           className="w-full rounded-lg bg-green-600 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
         >
           {submitting ? 'กำลังบันทึก...' : 'ส่งยอดคงเหลือให้เซลล์ยืนยัน'}
@@ -559,7 +561,7 @@ export function BookingForm({ staffName }: Props) {
       {!editing && (
         <section>
           <Label>สลิปโอนเงิน</Label>
-          <SlipUpload value={slipImage} onChange={setSlipImage} />
+          <SlipUpload value={slipImages} onChange={setSlipImages} />
         </section>
       )}
 
@@ -676,8 +678,13 @@ function EditingSummary({ booking, onCancel, onChangePurpose }: { booking: LineB
       </dl>
 
       <div className="flex flex-wrap gap-2 px-4 pb-3">
-        <SlipLink href={booking.slipImage} label={booking.isDeposit ? 'สลิปมัดจำ' : 'สลิปโอนเงิน'} />
-        {booking.balanceConfirmedAt && booking.balanceSlipImage && <SlipLink href={booking.balanceSlipImage} label="สลิปส่วนที่เหลือ" />}
+        {booking.slipImages.map((url, i, all) => (
+          <SlipLink key={url} href={url} label={`${booking.isDeposit ? 'สลิปมัดจำ' : 'สลิปโอนเงิน'}${all.length > 1 ? ` ${i + 1}` : ''}`} />
+        ))}
+        {booking.balanceConfirmedAt &&
+          booking.balanceSlipImages.map((url, i, all) => (
+            <SlipLink key={url} href={url} label={`สลิปส่วนที่เหลือ${all.length > 1 ? ` ${i + 1}` : ''}`} />
+          ))}
       </div>
 
       {!booking.documentsApprovedAt && (

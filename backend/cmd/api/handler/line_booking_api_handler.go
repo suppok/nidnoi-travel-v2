@@ -62,12 +62,16 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Put("/line-bookings/line-contact", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdateLineContact)
 	r.Put("/line-bookings/confirm", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingConfirm)
 	r.Put("/line-bookings/confirm-balance", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingConfirmBalance)
+	r.Post("/line-bookings/comments", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingComment)
+	r.Post("/line-booking-notifications/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingList), h.LineBookingNotificationList)
+	r.Put("/line-booking-notifications/read", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingList), h.LineBookingNotificationRead)
 	r.Put("/line-bookings/cancel", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingCancel)
 	r.Put("/line-bookings/documents", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingDocument), h.LineBookingDocuments)
 	r.Put("/line-bookings/documents/approve", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingDocumentsApprove)
 	r.Put("/line-bookings/documents/reject", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingDocumentsReject)
 	r.Post("/media/upload/line-booking", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingDocument), h.LineBookingDocumentUpload)
 	r.Put("/line-bookings/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingStatus), h.LineBookingUpdateStatus)
+	r.Get("/line-bookings/:id/mentionable", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingMentionable)
 	r.Get("/line-bookings/:id/events", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingEventList)
 	r.Get("/line-bookings/:id/finance-users", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingFinanceUserList)
 	r.Get("/line-bookings/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingGet)
@@ -117,7 +121,7 @@ func (h *LineBookingAPIHandler) LIFFLineBookingEventList(c *fiber.Ctx) error {
 // LIFFLineBookingUpdate godoc
 // @Summary     Edit a reopened LINE booking from LIFF, or record its balance
 // @Description The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
-// @Description stay). The total is quoted again. A balanceSlipImage records the balance, which then
+// @Description stay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then
 // @Description waits for the sales owner's PUT /line-bookings/confirm-balance.
 // @Tags        line-bookings
 // @Accept      json
@@ -368,6 +372,81 @@ func (h *LineBookingAPIHandler) LineBookingList(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.List(ctx, request)
+	})
+}
+
+// LineBookingComment godoc
+// @Summary     Comment on a LINE booking
+// @Description Adds a comment to the booking's history. Anyone who can see the booking may comment. The sales
+// @Description owner and the finance user get a "comment" notification, users in mentionUserIds (from
+// @Description GET /line-bookings/{id}/mentionable) a "mention" one; never the author.
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.LineBookingCommentRequest true "Comment"
+// @Success     200 {object} models.LineBookingCommentResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Router      /line-bookings/comments [post]
+func (h *LineBookingAPIHandler) LineBookingComment(c *fiber.Ctx) error {
+	request := &models.LineBookingCommentRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.Comment(ctx, request)
+	})
+}
+
+// LineBookingMentionable godoc
+// @Summary  Users who may be @mentioned on a LINE booking
+// @Description The people who can see it: its sales owner, its finance user and the admins.
+// @Tags     line-bookings
+// @Produce  json
+// @Security BearerAuth
+// @Param    id path string true "LINE Booking ID"
+// @Success  200 {object} models.LineBookingMentionableResponse
+// @Failure  404 {object} map[string]any "NOT_FOUND"
+// @Router   /line-bookings/{id}/mentionable [get]
+func (h *LineBookingAPIHandler) LineBookingMentionable(c *fiber.Ctx) error {
+	request := &models.LineBookingMentionableRequest{ID: c.Params("id")}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.Mentionable(ctx, request)
+	})
+}
+
+// LineBookingNotificationList godoc
+// @Summary  The caller's LINE booking comment notifications
+// @Tags     line-bookings
+// @Accept   json
+// @Produce  json
+// @Security BearerAuth
+// @Param    body body models.LineBookingNotificationListRequest true "Filter"
+// @Success  200 {object} models.LineBookingNotificationListResponse
+// @Router   /line-booking-notifications/list [post]
+func (h *LineBookingAPIHandler) LineBookingNotificationList(c *fiber.Ctx) error {
+	request := &models.LineBookingNotificationListRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.Notifications(ctx, request)
+	})
+}
+
+// LineBookingNotificationRead godoc
+// @Summary  Mark the caller's notifications on a LINE booking read
+// @Tags     line-bookings
+// @Accept   json
+// @Produce  json
+// @Security BearerAuth
+// @Param    body body models.LineBookingNotificationReadRequest true "Booking"
+// @Success  200 {object} map[string]any
+// @Failure  400 {object} map[string]any "VALIDATION"
+// @Router   /line-booking-notifications/read [put]
+func (h *LineBookingAPIHandler) LineBookingNotificationRead(c *fiber.Ctx) error {
+	request := &models.LineBookingNotificationReadRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return nil, h.lineBookingUseCase.NotificationsRead(ctx, request)
 	})
 }
 

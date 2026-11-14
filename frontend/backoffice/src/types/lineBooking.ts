@@ -26,7 +26,8 @@ export type LineBooking = {
   totalPrice: number;
   customerName: string;
   customerPhone: string;
-  slipImage: string;
+  slipImage: string; // the first of slipImages
+  slipImages: string[]; // every slip of the payment
   note: string;
   state: LineBookingState;
   staffNote: string;
@@ -75,7 +76,8 @@ export type LineBooking = {
   // The balance of a deposit booking, recorded from LIFF with a slip ('' / null = not yet); it waits
   // for the sales owner's confirm (balanceConfirmedAt), then the booking is paid in full and finance
   // issues the RE.
-  balanceSlipImage: string;
+  balanceSlipImage: string; // the first of balanceSlipImages
+  balanceSlipImages: string[];
   balanceSubmittedAt: string | null;
   balanceConfirmedAt: string | null;
   // The customer's LINE OA chat; null until staff link it.
@@ -148,7 +150,20 @@ export type LineBookingEvent = {
   action: string; // constants/lineBookingEvents.ts
   changes: LineBookingEventChange[];
   target: string; // a finance user, a LINE chat or document codes; '' = none
-  note: string;
+  note: string; // the fix request of documents_rejected, or a comment's text
+  mentions: { id: string; name: string }[]; // users @mentioned in a comment
   createDate: string;
   user: { id: string; name: string } | null;
+};
+
+// POST /line-booking-notifications/list — a comment the caller is told about.
+export type LineBookingNotification = {
+  id: string;
+  kind: 'mention' | 'comment'; // @mentioned, or a comment on a booking they own / handle as finance
+  lineBookingId: string;
+  bookingNo: string;
+  text: string;
+  author: { id: string; name: string } | null;
+  createDate: string;
+  readAt: string | null;
 };

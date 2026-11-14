@@ -17,4 +17,11 @@ const (
 	BalanceConfirmed  = "balance_confirmed"  // the sales owner confirmed the balance; target = finance user
 	Deleted           = "deleted"
 	Restored          = "restored"
+	Comment           = "comment" // a staff comment; note = the text, mentions = the @mentioned users
+)
+
+// Kinds of line_booking_notification.
+const (
+	NotifyMention = "mention" // the recipient was @mentioned
+	NotifyComment = "comment" // a comment on a booking the recipient owns or handles as finance
 )

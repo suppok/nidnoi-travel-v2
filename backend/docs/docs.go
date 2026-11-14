@@ -1527,7 +1527,7 @@ const docTemplate = `{
         },
         "/liff/line-bookings": {
             "put": {
-                "description": "The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner\nstay). The total is quoted again. A balanceSlipImage records the balance, which then\nwaits for the sales owner's PUT /line-bookings/confirm-balance.",
+                "description": "The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner\nstay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then\nwaits for the sales owner's PUT /line-bookings/confirm-balance.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1879,6 +1879,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/line-booking-notifications/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "The caller's LINE booking comment notifications",
+                "parameters": [
+                    {
+                        "description": "Filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/line-booking-notifications/read": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Mark the caller's notifications on a LINE booking read",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationReadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/line-bookings": {
             "put": {
                 "security": [
@@ -2057,6 +2141,59 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "LINE_BOOKING_NOT_NEW",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/comments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a comment to the booking's history. Anyone who can see the booking may comment. The sales\nowner and the finance user get a \"comment\" notification, users in mentionUserIds (from\nGET /line-bookings/{id}/mentionable) a \"mention\" one; never the author.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Comment on a LINE booking",
+                "parameters": [
+                    {
+                        "description": "Comment",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingCommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -2661,6 +2798,47 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingFinanceUserListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/{id}/mentionable": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The people who can see it: its sales owner, its finance user and the admins.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Users who may be @mentioned on a LINE booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "LINE Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingMentionableResponse"
                         }
                     },
                     "404": {
@@ -6007,6 +6185,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -6172,7 +6356,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -6239,6 +6430,72 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingCommentRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "the booking",
+                    "type": "string"
+                },
+                "mentionUserIds": {
+                    "description": "MentionUserIDs are users @mentioned in the text; each must be one of\nGET /line-bookings/:id/mentionable. They get a \"mention\" notification.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "text": {
+                    "description": "1 to 2000 characters",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingCommentResponse": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action is one of pkg/constants/linebookingevent.",
+                    "type": "string",
+                    "example": "edited"
+                },
+                "changes": {
+                    "description": "Changes are the fields the action changed, as display strings (edits, LINE chat, staff note).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingEventChange"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mentions": {
+                    "description": "Mentions are the users @mentioned in a comment ([] otherwise).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                    }
+                },
+                "note": {
+                    "description": "Note is the fix request of documents_rejected or the text of a comment (\"\" = none).",
+                    "type": "string"
+                },
+                "target": {
+                    "description": "Target names what the action pointed at: a finance user, a LINE chat, document codes (\"\" = none).",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "User did it; null if the user row is gone.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest": {
             "type": "object",
             "properties": {
@@ -6275,6 +6532,12 @@ const docTemplate = `{
                 "balanceSlipImage": {
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
+                },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "balanceSubmittedAt": {
                     "type": "string"
@@ -6441,7 +6704,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -6523,6 +6793,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -6688,7 +6964,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -6867,8 +7150,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "slipImage": {
-                    "description": "R2 URL from /media/upload/liff",
                     "type": "string"
+                },
+                "slipImages": {
+                    "description": "SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the\nolder single-slip field, still accepted when SlipImages is empty.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "tourCode": {
                     "type": "string"
@@ -6924,6 +7213,12 @@ const docTemplate = `{
                 "balanceSlipImage": {
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
+                },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "balanceSubmittedAt": {
                     "type": "string"
@@ -7090,7 +7385,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -7172,6 +7474,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -7337,7 +7645,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -7424,6 +7739,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -7589,7 +7910,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -7651,8 +7979,15 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "mentions": {
+                    "description": "Mentions are the users @mentioned in a comment ([] otherwise).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                    }
+                },
                 "note": {
-                    "description": "Note is the fix request of documents_rejected (\"\" = none).",
+                    "description": "Note is the fix request of documents_rejected or the text of a comment (\"\" = none).",
                     "type": "string"
                 },
                 "target": {
@@ -7726,6 +8061,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -7891,7 +8232,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -7961,6 +8309,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -8126,7 +8480,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -8196,6 +8557,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -8361,7 +8728,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -8422,6 +8796,13 @@ const docTemplate = `{
                 "balanceSlipImage": {
                     "description": "BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/liff); \"\" = no balance\npaid yet. Only for a deposit booking not paid in full (state 20) whose deposit\ndocuments were approved; sending one makes the booking\nwait for the sales owner to confirm the balance.",
                     "type": "string"
+                },
+                "balanceSlipImages": {
+                    "description": "BalanceSlipImages are several balance slips (1 to 10); takes over BalanceSlipImage when set.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "bookingNo": {
                     "type": "string",
@@ -8530,8 +8911,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "slipImage": {
-                    "description": "R2 URL from /media/upload/liff",
                     "type": "string"
+                },
+                "slipImages": {
+                    "description": "SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the\nolder single-slip field, still accepted when SlipImages is empty.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "tourCode": {
                     "type": "string"
@@ -8624,6 +9011,97 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingMentionableResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items are the users who can see the booking: its sales owner, its finance user and admins.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingNotificationItem": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                },
+                "bookingNo": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "Kind is \"mention\" (the caller was @mentioned) or \"comment\" (on a booking they own / handle).",
+                    "type": "string",
+                    "enum": [
+                        "mention",
+                        "comment"
+                    ]
+                },
+                "lineBookingId": {
+                    "type": "string"
+                },
+                "readAt": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingNotificationListRequest": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "description": "default 1",
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "description": "default 20, max 100",
+                    "type": "integer"
+                },
+                "unread": {
+                    "description": "only unread ones",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingNotificationListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingNotificationReadRequest": {
+            "type": "object",
+            "properties": {
+                "lineBookingId": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse": {
             "type": "object",
             "properties": {
@@ -8708,6 +9186,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -8873,7 +9357,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"
@@ -8954,6 +9445,12 @@ const docTemplate = `{
                     "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
                     "type": "string"
                 },
+                "balanceSlipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "balanceSubmittedAt": {
                     "type": "string"
                 },
@@ -9119,7 +9616,14 @@ const docTemplate = `{
                     ]
                 },
                 "slipImage": {
+                    "description": "the first of slipImages",
                     "type": "string"
+                },
+                "slipImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "staffNote": {
                     "type": "string"

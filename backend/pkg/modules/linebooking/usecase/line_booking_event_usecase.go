@@ -183,6 +183,7 @@ func (u *lineBookingUseCase) eventList(ctx context.Context, bookingID string) (*
 			Changes:    e.Detail.Changes,
 			Target:     e.Detail.Target,
 			Note:       e.Detail.Note,
+			Mentions:   mentionItems(e.Detail.Mentions),
 			CreateDate: e.CreateDate,
 		}
 		if items[i].Changes == nil {

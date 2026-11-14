@@ -1216,6 +1216,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -1332,7 +1336,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -1379,6 +1388,56 @@ definitions:
       price:
         type: integer
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingCommentRequest:
+    properties:
+      id:
+        description: the booking
+        type: string
+      mentionUserIds:
+        description: |-
+          MentionUserIDs are users @mentioned in the text; each must be one of
+          GET /line-bookings/:id/mentionable. They get a "mention" notification.
+        items:
+          type: string
+        type: array
+      text:
+        description: 1 to 2000 characters
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingCommentResponse:
+    properties:
+      action:
+        description: Action is one of pkg/constants/linebookingevent.
+        example: edited
+        type: string
+      changes:
+        description: Changes are the fields the action changed, as display strings
+          (edits, LINE chat, staff note).
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingEventChange'
+        type: array
+      createDate:
+        type: string
+      id:
+        type: string
+      mentions:
+        description: Mentions are the users @mentioned in a comment ([] otherwise).
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        type: array
+      note:
+        description: Note is the fix request of documents_rejected or the text of
+          a comment ("" = none).
+        type: string
+      target:
+        description: 'Target names what the action pointed at: a finance user, a LINE
+          chat, document codes ("" = none).'
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: User did it; null if the user row is gone.
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest:
     properties:
       id:
@@ -1408,6 +1467,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -1524,7 +1587,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -1586,6 +1654,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -1702,7 +1774,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -1833,8 +1910,14 @@ definitions:
       singleSupplement:
         type: integer
       slipImage:
-        description: R2 URL from /media/upload/liff
         type: string
+      slipImages:
+        description: |-
+          SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
+          older single-slip field, still accepted when SlipImages is empty.
+        items:
+          type: string
+        type: array
       tourCode:
         type: string
     type: object
@@ -1876,6 +1959,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -1992,7 +2079,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2052,6 +2144,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -2168,7 +2264,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2231,6 +2332,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -2347,7 +2452,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2391,8 +2501,14 @@ definitions:
         type: string
       id:
         type: string
+      mentions:
+        description: Mentions are the users @mentioned in a comment ([] otherwise).
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        type: array
       note:
-        description: Note is the fix request of documents_rejected ("" = none).
+        description: Note is the fix request of documents_rejected or the text of
+          a comment ("" = none).
         type: string
       target:
         description: 'Target names what the action pointed at: a finance user, a LINE
@@ -2449,6 +2565,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -2565,7 +2685,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2617,6 +2742,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -2733,7 +2862,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2785,6 +2919,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -2901,7 +3039,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -2950,6 +3093,12 @@ definitions:
           documents were approved; sending one makes the booking
           wait for the sales owner to confirm the balance.
         type: string
+      balanceSlipImages:
+        description: BalanceSlipImages are several balance slips (1 to 10); takes
+          over BalanceSlipImage when set.
+        items:
+          type: string
+        type: array
       bookingNo:
         example: 26X8K9AQ
         type: string
@@ -3029,8 +3178,14 @@ definitions:
       singleSupplement:
         type: integer
       slipImage:
-        description: R2 URL from /media/upload/liff
         type: string
+      slipImages:
+        description: |-
+          SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
+          older single-slip field, still accepted when SlipImages is empty.
+        items:
+          type: string
+        type: array
       tourCode:
         type: string
     type: object
@@ -3102,6 +3257,69 @@ definitions:
       total:
         type: integer
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingMentionableResponse:
+    properties:
+      items:
+        description: 'Items are the users who can see the booking: its sales owner,
+          its finance user and admins.'
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        type: array
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingNotificationItem:
+    properties:
+      author:
+        $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+      bookingNo:
+        type: string
+      createDate:
+        type: string
+      id:
+        type: string
+      kind:
+        description: Kind is "mention" (the caller was @mentioned) or "comment" (on
+          a booking they own / handle).
+        enum:
+        - mention
+        - comment
+        type: string
+      lineBookingId:
+        type: string
+      readAt:
+        type: string
+      text:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingNotificationListRequest:
+    properties:
+      page:
+        description: default 1
+        type: integer
+      pageSize:
+        description: default 20, max 100
+        type: integer
+      unread:
+        description: only unread ones
+        type: boolean
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingNotificationListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingNotificationReadRequest:
+    properties:
+      lineBookingId:
+        type: string
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse:
     properties:
       defaultId:
@@ -3164,6 +3382,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -3280,7 +3502,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -3339,6 +3566,10 @@ definitions:
           The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
       balanceSubmittedAt:
         type: string
       bookingNo:
@@ -3455,7 +3686,12 @@ definitions:
         description: SalesUser owns the booking; null on bookings made before it was
           recorded.
       slipImage:
+        description: the first of slipImages
         type: string
+      slipImages:
+        items:
+          type: string
+        type: array
       staffNote:
         type: string
       startDate:
@@ -5948,7 +6184,7 @@ paths:
       - application/json
       description: |-
         The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
-        stay). The total is quoted again. A balanceSlipImage records the balance, which then
+        stay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then
         waits for the sales owner's PUT /line-bookings/confirm-balance.
       parameters:
       - description: Booking
@@ -6195,6 +6431,58 @@ paths:
       summary: Sales owner options for the LIFF booking form
       tags:
       - liff
+  /line-booking-notifications/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationListResponse'
+      security:
+      - BearerAuth: []
+      summary: The caller's LINE booking comment notifications
+      tags:
+      - line-bookings
+  /line-booking-notifications/read:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingNotificationReadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark the caller's notifications on a LINE booking read
+      tags:
+      - line-bookings
   /line-bookings:
     post:
       consumes:
@@ -6365,6 +6653,33 @@ paths:
       summary: Finance users a LINE booking can be sent to on confirm
       tags:
       - line-bookings
+  /line-bookings/{id}/mentionable:
+    get:
+      description: 'The people who can see it: its sales owner, its finance user and
+        the admins.'
+      parameters:
+      - description: LINE Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingMentionableResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Users who may be @mentioned on a LINE booking
+      tags:
+      - line-bookings
   /line-bookings/cancel:
     put:
       consumes:
@@ -6401,6 +6716,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Cancel a new LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/comments:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Adds a comment to the booking's history. Anyone who can see the booking may comment. The sales
+        owner and the finance user get a "comment" notification, users in mentionUserIds (from
+        GET /line-bookings/{id}/mentionable) a "mention" one; never the author.
+      parameters:
+      - description: Comment
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingCommentResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Comment on a LINE booking
       tags:
       - line-bookings
   /line-bookings/confirm:

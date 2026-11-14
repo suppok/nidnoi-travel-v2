@@ -22,7 +22,7 @@ src/
     Select.tsx         — styled dropdown (native <select> popups can't be styled); use it instead of <select>
     TourSelector.tsx   — search tours via public API
     PeriodSelector.tsx — load periods for selected tour
-    SlipUpload.tsx     — upload slip image to /media/upload/liff
+    SlipUpload.tsx     — upload one or more slip images (max 10, `MAX_SLIPS`) to /media/upload/liff; thumbnails with remove
     SuccessView.tsx    — booking confirmed, show booking_no
     SummaryPaste.tsx   — paste a backoffice "สรุปยอดโอน" text to prefill the form
     OpenBooking.tsx    — reopen an earlier deposit booking by booking no (edit / balance)
@@ -57,6 +57,7 @@ Sales can paste the text from the backoffice sales tool **สรุปยอด�
 Under the paste box on the first screen, **แก้ไขใบจองเดิม / ลูกค้าชำระส่วนที่เหลือ** takes a booking no (`GET /liff/line-bookings/:bookingNo`). Any paid booking (deposit or in full) opens (`LINE_BOOKING_NOT_EDITABLE` for new or cancelled ones); any sales user may open it. While its documents aren't approved yet (finance still issuing them, or waiting for the owner's review) the summary box shows a warning and saving asks for a second confirm ("ยืนยันบันทึก"), since the documents may not match the new amounts.
 
 - **ประวัติ:** the summary box has a collapsible history (`BookingHistory`, `GET /liff/line-bookings/:bookingNo/events`, newest first, with "field: from → to" lines). Labels copy the backoffice's `constants/lineBookingEvents.ts` (no shared code) — keep both in step with the backend actions and `dealSnapshot` keys.
+- Comments show in that history (read-only in LIFF; staff comment from the backoffice).
 - **Choose first:** when the booking can take a balance (deposit, state 20, deposit documents approved) the app asks **ลูกค้าชำระส่วนที่เหลือ** or **แก้ไขข้อมูลใบจอง** (`PurposeChoice`); otherwise it goes straight to editing. "เปลี่ยนสิ่งที่ต้องการทำ" in the summary box returns to the choice.
 - **Balance:** its own short screen — the amount still due (`computeTotals().remaining`) and due date, a **required** balance slip and the note; the deal is sent back unchanged. Saved through the same `PUT /liff/line-bookings` with `balanceSlipImage`.
 - **Edit:** the form opens prefilled (`dealFromBooking` maps the backend's room types back to the summary rows). Tour, period, sales owner, slips and the payment plan are fixed and shown in a summary box; the full/deposit choice is hidden (`PaymentSection depositLocked`).

@@ -20,7 +20,10 @@ import (
 	"backend/pkg/repository"
 )
 
-const maxSlipURLRunes = 1000
+const (
+	maxSlipURLRunes = 1000
+	maxSlips        = 10 // slips per payment (a deposit, a full payment or the balance)
+)
 
 // findEditable loads a booking reopened in LIFF by its booking no: NOT_FOUND when there is no such
 // active booking, LINE_BOOKING_NOT_EDITABLE unless it is paid (deposit or in full).
@@ -60,7 +63,8 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 	if info == nil || info.LineUserID == "" {
 		return nil, cerrors.Unauthenticated()
 	}
-	request.BalanceSlipImage = strings.TrimSpace(request.BalanceSlipImage)
+	request.BalanceSlipImages = normalizeSlips(request.BalanceSlipImages, request.BalanceSlipImage)
+	balance := len(request.BalanceSlipImages) > 0
 
 	var updated *domain.LineBooking
 	err := u.coreRegistry.DBTx.WithTx(ctx, func(ctx context.Context, appDB query.AppIDB) error {
@@ -72,7 +76,7 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 
 		// What stays fixed is taken from the booking, so the create rules validate the rest.
 		r := &request.LineBookingCreateRequest
-		r.TourCode, r.PeriodID, r.SlipImage = b.TourCode, b.TourProgramPeriodID, b.SlipImage
+		r.TourCode, r.PeriodID, r.SlipImage, r.SlipImages = b.TourCode, b.TourProgramPeriodID, b.SlipImage, b.Slips()
 		r.SalesUserID = b.SalesUserID.String
 		if !b.SalesUserID.Valid {
 			r.SalesUserID = info.UserID // validation only; the owner isn't changed
@@ -82,11 +86,11 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 		if err := u.CreateValidate(r); err != nil {
 			return cerrors.Validation(err)
 		}
-		if err := validation.Validate(request.BalanceSlipImage, validation.RuneLength(0, maxSlipURLRunes)); err != nil {
-			return cerrors.Validation(validation.Errors{"balanceSlipImage": err})
+		if err := validation.Validate(request.BalanceSlipImages, validation.Length(0, maxSlips), validation.Each(validation.RuneLength(1, maxSlipURLRunes))); err != nil {
+			return cerrors.Validation(validation.Errors{"balanceSlipImages": err})
 		}
-		if request.BalanceSlipImage != "" && !b.AwaitsBalance() {
-			return cerrors.FieldError("balanceSlipImage", "only a deposit booking whose deposit documents were sent, not yet paid in full, takes a balance slip")
+		if balance && !b.AwaitsBalance() {
+			return cerrors.FieldError("balanceSlipImages", "only a deposit booking whose deposit documents were sent, not yet paid in full, takes a balance slip")
 		}
 
 		period, err := u.repositoryRegistry.TourProgramPeriodRepository.WithTx(appDB).FindByID(ctx, b.TourProgramPeriodID)
@@ -163,11 +167,11 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 			"customer_name", "customer_phone", "customer_address", "ref_name", "ref_booking_no",
 			"booking_source_id", "line_contact_id", "note", "update_date", "update_by",
 		}
-		if request.BalanceSlipImage != "" {
-			b.BalanceSlipImage = request.BalanceSlipImage
+		if balance {
+			b.BalanceSlipImage, b.BalanceSlipImages = request.BalanceSlipImages[0], request.BalanceSlipImages
 			b.BalanceSubmittedAt = null.TimeFrom(now)
 			b.BalanceSubmittedBy = null.StringFrom(info.UserID)
-			columns = append(columns, "balance_slip_image", "balance_submitted_at", "balance_submitted_by")
+			columns = append(columns, "balance_slip_image", "balance_slip_images", "balance_submitted_at", "balance_submitted_by")
 		}
 		if _, err := repo.Update(ctx, b, columns...); err != nil {
 			return err
@@ -177,7 +181,7 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 				return err
 			}
 		}
-		if request.BalanceSlipImage != "" {
+		if balance {
 			if err := u.logEvent(ctx, appDB, b.ID, linebookingevent.BalanceSubmitted, info.UserID, domain.LineBookingEventDetail{}); err != nil {
 				return err
 			}
@@ -191,7 +195,7 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 
 	u.coreRegistry.Logger.Info("line booking edited from LIFF",
 		zap.String("bookingNo", updated.BookingNo),
-		zap.Bool("balance", request.BalanceSlipImage != ""),
+		zap.Int("balanceSlips", len(request.BalanceSlipImages)),
 		zap.String("userId", info.UserID))
 	return &models.LineBookingLIFFUpdateResponse{BookingNo: updated.BookingNo, TotalPrice: updated.TotalPrice, BalancePending: updated.BalancePending()}, nil
 }

@@ -29,6 +29,8 @@ type LineBookingLIFFUpdateRequest struct {
 	// documents were approved; sending one makes the booking
 	// wait for the sales owner to confirm the balance.
 	BalanceSlipImage string `json:"balanceSlipImage"`
+	// BalanceSlipImages are several balance slips (1 to 10); takes over BalanceSlipImage when set.
+	BalanceSlipImages []string `json:"balanceSlipImages"`
 }
 
 type LineBookingLIFFUpdateResponse struct {

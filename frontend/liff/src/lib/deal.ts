@@ -198,7 +198,7 @@ export function dealError(deal: Deal): string | null {
 export function dealRequest(deal: Deal): Omit<
   LineBookingCreateRequest,
   | 'salesUserId' | 'lineContactId' | 'bookingSourceId' | 'refName' | 'refBookingNo' | 'tourCode' | 'periodId'
-  | 'customerName' | 'customerPhone' | 'customerAddress' | 'slipImage' | 'note'
+  | 'customerName' | 'customerPhone' | 'customerAddress' | 'slipImages' | 'note'
 > {
   const adults = n(deal.adult.count)
   const single = Math.min(n(deal.singleRoom.count), adults)

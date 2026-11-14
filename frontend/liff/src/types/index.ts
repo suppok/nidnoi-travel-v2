@@ -99,7 +99,7 @@ export type LineBookingCreateRequest = {
   customerName: string
   customerPhone: string
   customerAddress: string
-  slipImage: string
+  slipImages: string[] // 1 to 10 slip URLs
   note: string
 }
 
@@ -156,9 +156,11 @@ export type LineBookingItem = {
   salesUser: SalesUser | null
   lineContact: { id: string; displayName: string; pictureUrl: string | null; following: boolean } | null
   slipImage: string
+  slipImages: string[]
   note: string
   // The balance recorded earlier, still waiting for the sales owner (null = none yet).
   balanceSlipImage: string
+  balanceSlipImages: string[]
   balanceSubmittedAt: string | null
   balanceConfirmedAt: string | null
   // The finance documents of the current round: sent by finance (documentsAt) and approved by the
@@ -170,10 +172,10 @@ export type LineBookingItem = {
 
 // PUT /liff/line-bookings — the whole deal again; tour, period, first slip, sales owner and the
 // payment plan stay.
-export type LineBookingLIFFUpdateRequest = Omit<LineBookingCreateRequest, 'salesUserId' | 'tourCode' | 'periodId' | 'slipImage'> & {
+export type LineBookingLIFFUpdateRequest = Omit<LineBookingCreateRequest, 'salesUserId' | 'tourCode' | 'periodId' | 'slipImages'> & {
   bookingNo: string
-  // The balance slip, only for a deposit booking in state 20; '' = none.
-  balanceSlipImage: string
+  // The balance slips, only for a deposit booking in state 20; [] = none.
+  balanceSlipImages: string[]
 }
 
 export type LineBookingLIFFUpdateResponse = {
@@ -189,7 +191,8 @@ export type LineBookingEvent = {
   action: string // backend pkg/constants/linebookingevent
   changes: { field: string; from: string; to: string }[]
   target: string
-  note: string
+  note: string // a fix request, or a comment's text
+  mentions?: { id: string; name: string }[]
   createDate: string
   user: { id: string; name: string } | null
 }
