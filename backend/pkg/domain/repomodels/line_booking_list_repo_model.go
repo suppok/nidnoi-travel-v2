@@ -25,6 +25,8 @@ type LineBookingListCriteria struct {
 	DocumentsDone *bool
 	// DocumentsApproved: true = the sales owner approved them, false = not (yet), nil = any.
 	DocumentsApproved *bool
-	Page              int
-	PageSize          int
+	// BalancePending: true = sales recorded the balance and it waits for the owner's confirm, false = not, nil = any.
+	BalancePending *bool
+	Page           int
+	PageSize       int
 }

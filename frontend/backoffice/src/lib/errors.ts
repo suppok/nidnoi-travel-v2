@@ -29,6 +29,7 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.LineQuotaExceeded]: 'LINE OA ส่งข้อความครบโควตาของเดือนนี้แล้ว กรุณาติดต่อผู้ดูแลระบบ',
   [ErrorCodes.LineBookingNotNew]: 'ใบจองนี้ถูกยืนยันหรือยกเลิกไปแล้ว',
   [ErrorCodes.LineBookingDocumentsNotReady]: 'เอกสารนี้ไม่ได้รอตรวจแล้ว (อาจถูกยืนยันหรือส่งกลับไปแล้ว)',
+  [ErrorCodes.LineBookingBalanceNotPending]: 'ไม่มียอดคงเหลือรอยืนยันแล้ว (อาจถูกยืนยันไปแล้ว)',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

@@ -18,6 +18,8 @@ type LineBookingRepository interface {
 	Update(ctx context.Context, obj *domain.LineBooking, columns ...string) (*domain.LineBooking, error)
 	// FindByID loads the booking with its LineContact, SalesUser, FinanceUser and BookingSource.
 	FindByID(ctx context.Context, id string) (*domain.LineBooking, error)
+	// FindByBookingNo is FindByID by the booking no (exact, upper case).
+	FindByBookingNo(ctx context.Context, bookingNo string) (*domain.LineBooking, error)
 	// List returns LINE bookings newest first (newest confirmation first with Paid), with their
 	// LineContact, SalesUser, FinanceUser and BookingSource.
 	List(ctx context.Context, criteria repomodels.LineBookingListCriteria) ([]domain.LineBooking, int, error)
@@ -44,6 +46,12 @@ func (r *lineBookingRepository) Update(ctx context.Context, obj *domain.LineBook
 func (r *lineBookingRepository) FindByID(ctx context.Context, id string) (*domain.LineBooking, error) {
 	obj := new(domain.LineBooking)
 	err := r.query.NewSelect().Model(obj).Relation("LineContact").Relation("SalesUser").Relation("FinanceUser").Relation("BookingSource").Where("lb.id = ?", id).Limit(1).Scan(ctx)
+	return query.NotFoundAsNil(obj, err)
+}
+
+func (r *lineBookingRepository) FindByBookingNo(ctx context.Context, bookingNo string) (*domain.LineBooking, error) {
+	obj := new(domain.LineBooking)
+	err := r.query.NewSelect().Model(obj).Relation("LineContact").Relation("SalesUser").Relation("FinanceUser").Relation("BookingSource").Where("lb.booking_no = ?", bookingNo).Limit(1).Scan(ctx)
 	return query.NotFoundAsNil(obj, err)
 }
 
@@ -104,11 +112,20 @@ func (r *lineBookingRepository) List(ctx context.Context, criteria repomodels.Li
 		}
 	}
 
+	if p := criteria.BalancePending; p != nil {
+		pending := "lb.state = ? AND lb.balance_submitted_at IS NOT NULL AND lb.balance_confirmed_at IS NULL"
+		if *p {
+			q = q.Where(pending, linebookingstate.DepositPaid)
+		} else {
+			q = q.Where("NOT ("+pending+")", linebookingstate.DepositPaid)
+		}
+	}
+
 	order := "lb.create_date DESC, lb.id ASC"
 	switch {
 	// Waiting for finance: newest confirmation or fix request first.
 	case criteria.DocumentsDone != nil && !*criteria.DocumentsDone && criteria.Paid:
-		order = "GREATEST(lb.confirmed_at, lb.fix_requested_at) DESC NULLS LAST, lb.id ASC"
+		order = "GREATEST(lb.confirmed_at, lb.fix_requested_at, lb.balance_confirmed_at) DESC NULLS LAST, lb.id ASC"
 	case criteria.DocumentsDone != nil && *criteria.DocumentsDone:
 		order = "lb.documents_at DESC, lb.id ASC"
 	case criteria.Paid:

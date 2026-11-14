@@ -25,6 +25,7 @@ src/
     SlipUpload.tsx     — upload slip image to /media/upload/liff
     SuccessView.tsx    — booking confirmed, show booking_no
     SummaryPaste.tsx   — paste a backoffice "สรุปยอดโอน" text to prefill the form
+    OpenBooking.tsx    — reopen an earlier deposit booking by booking no (edit / balance)
   lib/parseSummary.ts  — parser for that text
   lib/deal.ts          — deal state, totals and defaults (mirrors summary.ts and the backend quote)
   config/env.ts        — VITE_APP_ENV, VITE_API_BASE_URL, VITE_LIFF_ID
@@ -50,6 +51,14 @@ Sales can paste the text from the backoffice sales tool **สรุปยอด�
 - The pasted rows map one to one (`dealFromSummary`); adults = travellers − children − infants.
 - Payment sentences ("กรุณาชำระเงินมัดจำ…", "…ส่วนเหลือ…", "…เต็มจำนวน…") are read separately from the `•` label lines. When the form's total differs from the summary's "รวมเป็นเงิน", a hint shows under the payment box.
 - Nothing is submitted automatically; the slip is still uploaded by hand. The report under the paste box lists what was filled and what to check.
+
+## Reopen a booking / balance payment
+
+Under the paste box on the first screen, **แก้ไขใบจองเดิม / ลูกค้าชำระส่วนที่เหลือ** takes a booking no (`GET /liff/line-bookings/:bookingNo`). Any paid booking (deposit or in full) opens (`LINE_BOOKING_NOT_EDITABLE` for new or cancelled ones); any sales user may open it. While its documents aren't approved yet (finance still issuing them, or waiting for the owner's review) the summary box shows a warning and saving asks for a second confirm ("ยืนยันบันทึก"), since the documents may not match the new amounts.
+
+- The form opens in edit mode prefilled (`dealFromBooking` maps the backend's room types back to the summary rows). Tour, period, sales owner, slips and the payment plan are fixed and shown in a summary box; the full/deposit choice is hidden (`PaymentSection depositLocked`).
+- "สลิปชำระส่วนที่เหลือ" shows only on a deposit booking not yet paid in full (state 20) whose deposit documents were sent, and is optional: without it the save only changes the deal (`PUT /liff/line-bookings`, total recomputed). With it the balance waits for the sales owner to confirm it in the backoffice, then finance issues the RE.
+- Mock: `26DEMO01` (deposit), `26FULL01` (paid in full) and `26WAIT01` (waiting for finance — warns) open; `26NEW001` answers `LINE_BOOKING_NOT_EDITABLE`.
 
 ## Environment Variables
 
@@ -87,6 +96,7 @@ LIFF login only works on the HTTPS endpoint registered for a LIFF app, so plain 
 - `POST /liff/line-contacts/list` — customer chat picker (`CustomerChatPicker`, optional; sent as `lineContactId`)
 - `POST /media/upload/liff` — upload slip image (`purpose=booking-slip` only)
 - `POST /line-bookings` — create booking; the backend records the staff user as `create_by`
+- `GET /liff/line-bookings/:bookingNo`, `PUT /liff/line-bookings` — reopen a deposit booking, save edits and the balance slip
 
 ## CORS
 

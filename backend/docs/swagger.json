@@ -1517,6 +1517,132 @@
                 }
             }
         },
+        "/liff/line-bookings": {
+            "put": {
+                "description": "The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner\nstay). The total is quoted again. A balanceSlipImage records the balance, which then\nwaits for the sales owner's PUT /line-bookings/confirm-balance.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Edit a reopened LINE booking from LIFF, or record its balance",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/liff/line-bookings/{bookingNo}": {
+            "get": {
+                "description": "Only a paid booking (state 20 or 25), also while its documents wait for finance.\nAny staff user with line-booking:create may open it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Reopen a LINE booking in LIFF by booking no",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking no",
+                        "name": "bookingNo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_NOT_EDITABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/liff/line-contacts/list": {
             "post": {
                 "description": "Same as POST /line-contacts/list. Authorization: Bearer \u003cLIFF access token\u003e of a linked\nstaff user with line-contact:list.",
@@ -1933,6 +2059,73 @@
                     },
                     "409": {
                         "description": "LINE_BOOKING_NOT_NEW",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/confirm-balance": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The sales owner (or an admin) checked the balance slip recorded from LIFF. The state becomes\n25 (paid in full) and the booking goes back to its finance user for the RE.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Confirm the balance of a deposit LINE booking",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED (not the sales owner)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "LINE_BOOKING_BALANCE_NOT_PENDING",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -5683,7 +5876,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -5915,6 +6118,249 @@
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingConfirmBalanceResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingConfirmRequest": {
             "type": "object",
             "properties": {
@@ -5946,7 +6392,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -6338,7 +6794,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -6575,7 +7041,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -6817,7 +7293,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -7058,7 +7544,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -7283,7 +7779,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -7489,11 +7995,403 @@
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse": {
+            "type": "object",
+            "properties": {
+                "adultPriceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "adultSingleCount": {
+                    "type": "integer"
+                },
+                "adultSinglePrice": {
+                    "type": "integer"
+                },
+                "adultTwinCount": {
+                    "type": "integer"
+                },
+                "adultTwinPrice": {
+                    "type": "integer"
+                },
+                "aiFile": {
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSource": {
+                    "description": "BookingSource is where the customer booked; null when not given.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource"
+                        }
+                    ]
+                },
+                "cardFee": {
+                    "type": "integer"
+                },
+                "charges": {
+                    "description": "Charges are the extra lines (visa, taxes, options, ...); [] on older bookings.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.LineBookingCharge"
+                    }
+                },
+                "childNoBedCount": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedCount": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "confirmedAt": {
+                    "type": "string"
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "creditFeePercent": {
+                    "type": "number"
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "customerSentAt": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "depositDueTime": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "type": "integer"
+                },
+                "documentsApprovedAt": {
+                    "description": "DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the\ncustomer's LINE chat (null = approved without sending).",
+                    "type": "string"
+                },
+                "documentsAt": {
+                    "description": "DocumentsAt is when finance sent them; null on a confirmed booking = waiting for finance.",
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "financeUser": {
+                    "description": "FinanceUser issues the receipt; set when the sales owner confirms (null before).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "fixNote": {
+                    "description": "FixNote is the latest fix request from sales to finance (\"\" = none).",
+                    "type": "string"
+                },
+                "fixRequestedAt": {
+                    "type": "string"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "infantCount": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "ivFile": {
+                    "type": "string"
+                },
+                "lineContact": {
+                    "description": "LineContact is the customer's LINE OA chat picked by staff; null until linked.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact"
+                        }
+                    ]
+                },
+                "lineDisplayName": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "reFile": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "type": "string"
+                },
+                "refName": {
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "description": "SalesUser owns the booking; null on bookings made before it was recorded.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
+                "slipImage": {
+                    "type": "string"
+                },
+                "staffNote": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        25,
+                        30
+                    ]
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                },
+                "tourProgramPeriodId": {
+                    "type": "string"
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "adultPrice": {
+                    "description": "Unit prices agreed with the customer (whole baht). Null = the period's price. AdultPrice is per\nadult; an adult in a single room pays AdultPrice + SingleSupplement.",
+                    "type": "integer"
+                },
+                "adultPriceBeforeDiscount": {
+                    "description": "AdultPriceBeforeDiscount is shown as \"(จาก …)\"; display only.",
+                    "type": "integer"
+                },
+                "adultSingle": {
+                    "type": "integer"
+                },
+                "adultTwin": {
+                    "type": "integer"
+                },
+                "balanceSlipImage": {
+                    "description": "BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/liff); \"\" = no balance\npaid yet. Only for a deposit booking not paid in full (state 20) whose deposit\ndocuments were approved; sending one makes the booking\nwait for the sales owner to confirm the balance.",
+                    "type": "string"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "bookingSourceId": {
+                    "description": "BookingSourceID is where the customer booked (GET /liff/booking-sources); optional.",
+                    "type": "string"
+                },
+                "charges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq"
+                    }
+                },
+                "childNoBed": {
+                    "type": "integer"
+                },
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBed": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "creditFeePercent": {
+                    "description": "credit only, up to 2 decimals",
+                    "type": "number",
+                    "example": 3
+                },
+                "customerAddress": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "depositDueDate": {
+                    "description": "Dates are YYYY-MM-DD, times HH:mm; all optional.",
+                    "type": "string"
+                },
+                "depositDueTime": {
+                    "type": "string"
+                },
+                "depositPerPerson": {
+                    "type": "integer"
+                },
+                "discountPerPerson": {
+                    "description": "DiscountPerPerson comes off every traveller's price, infants included.",
+                    "type": "integer"
+                },
+                "fullDueDate": {
+                    "type": "string"
+                },
+                "fullDueTime": {
+                    "type": "string"
+                },
+                "infant": {
+                    "type": "integer"
+                },
+                "infantPrice": {
+                    "description": "required when Infant \u003e 0",
+                    "type": "integer"
+                },
+                "isDeposit": {
+                    "type": "boolean"
+                },
+                "lineContactId": {
+                    "description": "LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.",
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "description": "\"\" = transfer",
+                    "type": "string",
+                    "enum": [
+                        "transfer",
+                        "credit"
+                    ]
+                },
+                "periodId": {
+                    "type": "string"
+                },
+                "refBookingNo": {
+                    "description": "the booking number on that source",
+                    "type": "string"
+                },
+                "refName": {
+                    "description": "the customer's name on that source",
+                    "type": "string"
+                },
+                "remainingDueDate": {
+                    "type": "string"
+                },
+                "salesUserId": {
+                    "description": "SalesUserID is the sales person who owns the booking (GET /liff/sales-users).",
+                    "type": "string"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "slipImage": {
+                    "description": "R2 URL from /media/upload/liff",
+                    "type": "string"
+                },
+                "tourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "balancePending": {
+                    "description": "BalancePending: the balance waits for the sales owner's confirm.",
+                    "type": "boolean"
+                },
+                "bookingNo": {
+                    "type": "string",
+                    "example": "26X8K9AQ"
+                },
+                "totalPrice": {
+                    "description": "TotalPrice is the new grand total, card fee included.",
+                    "type": "integer"
+                }
+            }
+        },
         "backend_pkg_modules_linebooking_models.LineBookingListRequest": {
             "type": "object",
             "properties": {
                 "assignedToMe": {
                     "description": "AssignedToMe lists only bookings sent to the caller as finance (the finance alert).",
+                    "type": "boolean"
+                },
+                "balancePending": {
+                    "description": "BalancePending: true = sales recorded the balance from LIFF and it waits for the owner's confirm.",
                     "type": "boolean"
                 },
                 "documentsApproved": {
@@ -7628,7 +8526,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {
@@ -7864,7 +8772,17 @@
                     "type": "integer"
                 },
                 "aiFile": {
-                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment → reFile.",
+                    "description": "Finance documents (PDF URLs, \"\" = none): deposit → aiFile + ivFile, full payment (or a confirmed\nbalance) → reFile.",
+                    "type": "string"
+                },
+                "balanceConfirmedAt": {
+                    "type": "string"
+                },
+                "balanceSlipImage": {
+                    "description": "The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when\nthe sales owner confirmed it (state 25; finance then issues the RE).",
+                    "type": "string"
+                },
+                "balanceSubmittedAt": {
                     "type": "string"
                 },
                 "bookingNo": {

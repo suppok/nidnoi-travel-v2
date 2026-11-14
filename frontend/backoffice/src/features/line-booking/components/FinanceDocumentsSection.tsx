@@ -8,7 +8,7 @@ import { errorMessage } from '../../../lib/errors.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { LineBooking, LineBookingDocumentKey } from '../../../types/lineBooking.ts';
 import { fileNameFromUrl } from '../../tour-program/components/mediaUpload.ts';
-import { requiredDocuments } from '../lib/lineBookingFormat.ts';
+import { depositDocuments, requiredDocuments } from '../lib/lineBookingFormat.ts';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -23,8 +23,9 @@ type Props = {
 
 type Files = Record<LineBookingDocumentKey, string>;
 
-// "เอกสารการเงิน" of a confirmed booking: deposit → AI + IV, full payment → RE (PDF only). Sending
-// the first time alerts the sales owner.
+// "เอกสารการเงิน" of a confirmed booking: deposit → AI + IV, full payment → RE (PDF only); after a
+// confirmed balance the RE is new and the deposit's AI + IV show read-only. Sending the first time
+// alerts the sales owner.
 export default function FinanceDocumentsSection({ booking, canSend, onSent, onReview }: Props) {
   const { message } = App.useApp();
   const docs = requiredDocuments(booking);
@@ -156,6 +157,14 @@ export default function FinanceDocumentsSection({ booking, canSend, onSent, onRe
             </Descriptions.Item>
           );
         })}
+        {depositDocuments(booking).map((d) => (
+          <Descriptions.Item key={d.key} label={`${d.code} · ${d.label} (มัดจำ)`}>
+            <a href={booking[d.key]} target="_blank" rel="noreferrer" className="inline-flex max-w-[300px] items-center gap-2">
+              <FilePdfOutlined className="text-red-600" />
+              <span className="truncate">{fileNameFromUrl(booking[d.key])}</span>
+            </a>
+          </Descriptions.Item>
+        ))}
         {booking.documentsAt && <Descriptions.Item label="ส่งเอกสารเมื่อ">{formatDateTime(booking.documentsAt)}</Descriptions.Item>}
       </Descriptions>
       {editable && (changed || !booking.documentsAt) && (

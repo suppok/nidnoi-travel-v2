@@ -12,6 +12,12 @@ type LineBookingUseCase interface {
 	SalesUserList(ctx context.Context, request *models.LineBookingSalesUserListRequest) (*models.LineBookingSalesUserListResponse, error)
 	// SourceList returns the booking source options for the LIFF booking form.
 	SourceList(ctx context.Context, request *models.LineBookingSourceListRequest) (*models.LineBookingSourceListResponse, error)
+	// LIFFGet reopens a deposit booking in LIFF by its booking no.
+	LIFFGet(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingLIFFGetResponse, error)
+	// LIFFUpdate edits a reopened booking's deal and/or records the balance slip.
+	LIFFUpdate(ctx context.Context, request *models.LineBookingLIFFUpdateRequest) (*models.LineBookingLIFFUpdateResponse, error)
+	// ConfirmBalance confirms the balance recorded from LIFF: paid in full, finance issues the RE.
+	ConfirmBalance(ctx context.Context, request *models.LineBookingConfirmBalanceRequest) (*models.LineBookingConfirmBalanceResponse, error)
 	List(ctx context.Context, request *models.LineBookingListRequest) (*models.LineBookingListResponse, error)
 	Get(ctx context.Context, request *models.LineBookingGetRequest) (*models.LineBookingGetResponse, error)
 	// Update saves the staff note.

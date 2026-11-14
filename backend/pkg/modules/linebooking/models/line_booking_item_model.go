@@ -66,7 +66,8 @@ type LineBookingItem struct {
 	// FinanceUser issues the receipt; set when the sales owner confirms (null before).
 	FinanceUser *LineBookingUser `json:"financeUser"`
 	ConfirmedAt null.Time        `json:"confirmedAt" swaggertype:"string"`
-	// Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment → reFile.
+	// Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+	// balance) → reFile.
 	AIFile string `json:"aiFile"`
 	IVFile string `json:"ivFile"`
 	REFile string `json:"reFile"`
@@ -81,6 +82,11 @@ type LineBookingItem struct {
 	FixRequestedAt null.Time `json:"fixRequestedAt" swaggertype:"string"`
 	// LineContact is the customer's LINE OA chat picked by staff; null until linked.
 	LineContact *LineBookingContact `json:"lineContact"`
+	// The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+	// the sales owner confirmed it (state 25; finance then issues the RE).
+	BalanceSlipImage   string    `json:"balanceSlipImage"`
+	BalanceSubmittedAt null.Time `json:"balanceSubmittedAt" swaggertype:"string"`
+	BalanceConfirmedAt null.Time `json:"balanceConfirmedAt" swaggertype:"string"`
 }
 
 // LineBookingUser is a staff user referenced by a booking.
@@ -158,6 +164,7 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 	item.AIFile, item.IVFile, item.REFile, item.DocumentsAt = b.AIFile, b.IVFile, b.REFile, b.DocumentsAt
 	item.DocumentsApprovedAt, item.CustomerSentAt = b.DocumentsApprovedAt, b.CustomerSentAt
 	item.FixNote, item.FixRequestedAt = b.FixNote, b.FixRequestedAt
+	item.BalanceSlipImage, item.BalanceSubmittedAt, item.BalanceConfirmedAt = b.BalanceSlipImage, b.BalanceSubmittedAt, b.BalanceConfirmedAt
 	if f := b.FinanceUser; f != nil {
 		item.FinanceUser = &LineBookingUser{ID: f.ID, Name: f.Name}
 	}

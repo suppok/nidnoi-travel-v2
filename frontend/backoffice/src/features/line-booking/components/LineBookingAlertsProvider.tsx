@@ -38,7 +38,7 @@ const STREAMS = {
     key: 'line-booking-documents-waiting',
     request: { paid: true, assignedToMe: true, documentsDone: false, status: true, page: 1, pageSize: 1 },
     // A fix request from sales brings the booking back, newer than its confirmation.
-    at: (b) => latest(b.confirmedAt, b.fixRequestedAt),
+    at: (b) => latest(latest(b.confirmedAt, b.fixRequestedAt), b.balanceConfirmedAt),
     title: 'มีใบจอง LINE รอออกเอกสาร',
     describe: (b) =>
       b.fixRequestedAt && b.fixNote
@@ -58,6 +58,16 @@ const STREAMS = {
       `${b.bookingNo} · ${b.customerName} · ${requiredDocuments(b)
         .map((d) => d.code)
         .join(' + ')} จาก ${b.financeUser?.name ?? 'ฝ่ายการเงิน'} — เปิดเพื่อตรวจและส่งให้ลูกค้า`,
+    path: (b) => `/line-bookings?open=${b.id}`,
+  },
+  // Sales: the balance of my deposit booking was recorded from LIFF; waiting for my confirm.
+  balancePending: {
+    key: 'line-booking-balance-pending',
+    request: { ownedByMe: true, balancePending: true, status: true, page: 1, pageSize: 1 },
+    at: (b) => b.balanceSubmittedAt,
+    title: 'ลูกค้าชำระส่วนที่เหลือแล้ว',
+    describe: (b, total) =>
+      `${b.bookingNo} · ${b.customerName} — เปิดเพื่อตรวจสลิปและยืนยันยอดคงเหลือ${total > 1 ? ` (รอยืนยันทั้งหมด ${total} รายการ)` : ''}`,
     path: (b) => `/line-bookings?open=${b.id}`,
   },
 } satisfies Record<string, Stream>;
@@ -123,7 +133,10 @@ export default function LineBookingAlertsProvider({ children }: { children: Reac
     if (!enabled) return;
     check('newBooking', setNewCount);
     if (isFinance) check('waitingDocuments', setWaitingCount);
-    if (isSales) check('documentsReady');
+    if (isSales) {
+      check('documentsReady');
+      check('balancePending');
+    }
   }, [check, enabled, isFinance, isSales]);
 
   useEffect(() => {

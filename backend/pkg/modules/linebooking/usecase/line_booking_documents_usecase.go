@@ -49,10 +49,15 @@ func (u *lineBookingUseCase) DocumentsValidate(request *models.LineBookingDocume
 }
 
 // documentsForPlan checks the files match the payment plan: a deposit needs AI + IV, a full
-// payment needs RE, and nothing else.
+// payment needs RE, and nothing else. After a confirmed balance the deposit's AI + IV stay and
+// only the RE is new.
 func documentsForPlan(b *domain.LineBooking, r *models.LineBookingDocumentsRequest) error {
 	errs := validation.Errors{}
-	if b.IsDeposit {
+	if b.BalanceConfirmedAt.Valid {
+		if r.REFile == "" {
+			errs["reFile"] = errors.New("required for the balance")
+		}
+	} else if b.IsDeposit {
 		if r.AIFile == "" {
 			errs["aiFile"] = errors.New("required for a deposit")
 		}
@@ -114,6 +119,9 @@ func (u *lineBookingUseCase) Documents(ctx context.Context, request *models.Line
 		}
 
 		now := time.Now()
+		if target.BalanceConfirmedAt.Valid {
+			request.AIFile, request.IVFile = target.AIFile, target.IVFile // the deposit's, kept
+		}
 		target.AIFile, target.IVFile, target.REFile = request.AIFile, request.IVFile, request.REFile
 		columns := []string{"ai_file", "iv_file", "re_file", "update_date", "update_by"}
 		if !target.DocumentsAt.Valid {

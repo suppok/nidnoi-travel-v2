@@ -18,6 +18,8 @@ export const lineBookingsApi = {
   update: (body: LineBookingUpdateRequest) => request<LineBooking>('PUT', '/line-bookings', body),
   updateLineContact: (body: LineBookingUpdateLineContactRequest) => request<LineBooking>('PUT', '/line-bookings/line-contact', body),
   confirm: (body: LineBookingConfirmRequest) => request<LineBooking>('PUT', '/line-bookings/confirm', body),
+  // The sales owner confirms the balance recorded from LIFF: paid in full, back to finance for the RE.
+  confirmBalance: (id: string) => request<LineBooking>('PUT', '/line-bookings/confirm-balance', { id }),
   cancel: (id: string) => request<LineBooking>('PUT', '/line-bookings/cancel', { id }),
   documents: (body: LineBookingDocumentsRequest) => request<LineBooking>('PUT', '/line-bookings/documents', body),
   // Sales review: approve (pushes the card to the customer's LINE chat when linked) or send back.

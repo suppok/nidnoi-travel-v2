@@ -6,7 +6,7 @@
 // Rows follow the summary (adult, child, infant, single room per room); `dealRequest` maps them to
 // the backend's room types: adults in single rooms = rooms, single supplement = the room price,
 // children = "with bed".
-import type { ChargeKind, LineBookingCharge, LineBookingCreateRequest, PaymentMethod, TourPeriodItem } from '../types/index.ts'
+import type { ChargeKind, LineBookingCharge, LineBookingCreateRequest, LineBookingItem, PaymentMethod, TourPeriodItem } from '../types/index.ts'
 import type { ParsedSummary, PricedLine } from './parseSummary.ts'
 
 // A count or price; null = not entered.
@@ -264,6 +264,49 @@ export function dealFromSummary(s: ParsedSummary): Deal {
       remainingDueDate: s.remainingDueDate ?? '',
       fullDueDate: s.fullDueDate ?? '',
       fullDueTime: s.fullDueTime ?? '',
+    },
+  }
+}
+
+// The deal of a reopened booking: the backend's room types back to the summary rows (the reverse of
+// dealRequest). Adults = twin + single, single room price = the supplement, children = with + no bed.
+// The payment plan (full or deposit) is kept.
+export function dealFromBooking(b: LineBookingItem): Deal {
+  const base = emptyDeal()
+  const adults = b.adultTwinCount + b.adultSingleCount
+  const children = b.childWithBedCount + b.childNoBedCount
+  const adultPrice = b.adultTwinPrice
+  const supplement = b.adultSinglePrice !== null ? b.adultSinglePrice - adultPrice : null
+  const charge = (kind: FixedChargeKind): Line => {
+    const c = b.charges.find((x) => x.kind === kind)
+    return c ? { count: c.count, price: c.price } : emptyLine()
+  }
+  return {
+    adult: { count: adults || null, price: adultPrice },
+    child: { count: children || null, price: b.childWithBedPrice ?? b.childNoBedPrice ?? (children > 0 ? adultPrice : null) },
+    infant: { count: b.infantCount || null, price: b.infantPrice },
+    singleRoom: { count: b.adultSingleCount || null, price: supplement },
+    adultPriceBeforeDiscount: b.adultPriceBeforeDiscount,
+    discountPerPerson: b.discountPerPerson || null,
+    charges: {
+      visa: charge('visa'),
+      foreignPassport: charge('foreignPassport'),
+      joinLand: charge('joinLand'),
+      fuelTax: charge('fuelTax'),
+      airportTax: charge('airportTax'),
+    },
+    options: b.charges.filter((c) => c.kind === 'option').map((c) => ({ name: c.name, count: c.count, price: c.price })),
+    payment: {
+      ...base.payment,
+      method: b.paymentMethod,
+      creditFeePercent: b.paymentMethod === 'credit' ? b.creditFeePercent : base.payment.creditFeePercent,
+      isDeposit: b.isDeposit,
+      depositPerPerson: b.depositPerPerson || null,
+      depositDueDate: b.depositDueDate ?? '',
+      depositDueTime: b.depositDueTime,
+      remainingDueDate: b.remainingDueDate ?? '',
+      fullDueDate: b.fullDueDate ?? '',
+      fullDueTime: b.fullDueTime,
     },
   }
 }

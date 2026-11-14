@@ -111,3 +111,74 @@ export type LineBookingCreateResponse = {
 export type MediaUploadResponse = {
   url: string
 }
+
+// GET /liff/line-bookings/:bookingNo — a paid booking (deposit or in full) reopened by its booking no.
+// Room types are the backend's; dealFromBooking maps them back.
+export type LineBookingItem = {
+  id: string
+  bookingNo: string
+  state: number // 20 deposit paid (the balance may still be recorded), 25 paid in full
+  tourCode: string
+  tourName: string
+  tourProgramPeriodId: string
+  startDate: string
+  endDate: string
+  adultTwinCount: number
+  adultTwinPrice: number
+  adultSingleCount: number
+  adultSinglePrice: number | null
+  childWithBedCount: number
+  childWithBedPrice: number | null
+  childNoBedCount: number
+  childNoBedPrice: number | null
+  infantCount: number
+  infantPrice: number | null
+  adultPriceBeforeDiscount: number | null
+  discountPerPerson: number
+  charges: LineBookingCharge[]
+  paymentMethod: PaymentMethod
+  creditFeePercent: number
+  cardFee: number
+  isDeposit: boolean
+  depositPerPerson: number
+  depositDueDate: string | null
+  depositDueTime: string
+  remainingDueDate: string | null
+  fullDueDate: string | null
+  fullDueTime: string
+  totalPrice: number
+  customerName: string
+  customerPhone: string
+  customerAddress: string
+  refName: string
+  refBookingNo: string
+  bookingSource: BookingSource | null
+  salesUser: SalesUser | null
+  lineContact: { id: string; displayName: string; pictureUrl: string | null; following: boolean } | null
+  slipImage: string
+  note: string
+  // The balance recorded earlier, still waiting for the sales owner (null = none yet).
+  balanceSlipImage: string
+  balanceSubmittedAt: string | null
+  balanceConfirmedAt: string | null
+  // The finance documents of the current round: sent by finance (documentsAt) and approved by the
+  // sales owner (documentsApprovedAt). Not approved yet = finance still works on them.
+  financeUser: SalesUser | null
+  documentsAt: string | null
+  documentsApprovedAt: string | null
+}
+
+// PUT /liff/line-bookings — the whole deal again; tour, period, first slip, sales owner and the
+// payment plan stay.
+export type LineBookingLIFFUpdateRequest = Omit<LineBookingCreateRequest, 'salesUserId' | 'tourCode' | 'periodId' | 'slipImage'> & {
+  bookingNo: string
+  // The balance slip, only for a deposit booking in state 20; '' = none.
+  balanceSlipImage: string
+}
+
+export type LineBookingLIFFUpdateResponse = {
+  bookingNo: string
+  totalPrice: number
+  // The balance waits for the sales owner to confirm it in the backoffice.
+  balancePending: boolean
+}

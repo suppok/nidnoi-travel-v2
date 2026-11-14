@@ -62,14 +62,21 @@ export type PaymentPlan = { deposit: number; depositToPay: number; remaining: nu
 // The deposit split, as told to the customer: the card fee is on the deposit only.
 export type RequiredDocument = { key: LineBookingDocumentKey; code: string; label: string };
 
-// The finance documents a confirmed booking needs: deposit → AI + IV, full payment → RE.
-export function requiredDocuments(b: Pick<LineBooking, 'isDeposit'>): RequiredDocument[] {
-  return b.isDeposit
-    ? [
-        { key: 'aiFile', code: 'AI', label: 'ใบรับเงินมัดจำ' },
-        { key: 'ivFile', code: 'IV', label: 'ใบแจ้งหนี้' },
-      ]
-    : [{ key: 'reFile', code: 'RE', label: 'ใบเสร็จรับเงิน' }];
+const DEPOSIT_DOCUMENTS: RequiredDocument[] = [
+  { key: 'aiFile', code: 'AI', label: 'ใบรับเงินมัดจำ' },
+  { key: 'ivFile', code: 'IV', label: 'ใบแจ้งหนี้' },
+];
+
+// The finance documents to issue now: deposit → AI + IV, full payment or a confirmed balance → RE
+// (after the balance the deposit's AI + IV stay on the booking, see depositDocuments).
+export function requiredDocuments(b: Pick<LineBooking, 'isDeposit' | 'balanceConfirmedAt'>): RequiredDocument[] {
+  return b.isDeposit && !b.balanceConfirmedAt ? DEPOSIT_DOCUMENTS : [{ key: 'reFile', code: 'RE', label: 'ใบเสร็จรับเงิน' }];
+}
+
+// The deposit round's documents still on a booking whose balance was confirmed.
+export function depositDocuments(b: Pick<LineBooking, 'isDeposit' | 'balanceConfirmedAt' | 'aiFile' | 'ivFile' | 'reFile'>): RequiredDocument[] {
+  if (!b.isDeposit || !b.balanceConfirmedAt) return [];
+  return DEPOSIT_DOCUMENTS.filter((d) => b[d.key]);
 }
 
 export function paymentPlan(b: LineBooking): PaymentPlan | null {

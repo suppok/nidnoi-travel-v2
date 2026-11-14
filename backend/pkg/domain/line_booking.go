@@ -1,10 +1,13 @@
 package domain
 
 import (
+	"slices"
 	"time"
 
 	"github.com/guregu/null/v5"
 	"github.com/uptrace/bun"
+
+	"backend/pkg/constants/linebookingstate"
 )
 
 /*
@@ -75,6 +78,10 @@ Table: line_booking
 [61] customer_sent_contact_id UUID        null: true   (FK line_contact.id, the chat it was pushed to)
 [62] fix_note                TEXT         null: false  default: ''  (latest fix request from sales to finance)
 [63] fix_requested_at        TIMESTAMPTZ  null: true
+[64] balance_slip_image      TEXT         null: false  default: ''  (R2 URL, slip of the balance after a deposit)
+[65] balance_submitted_at    TIMESTAMPTZ  null: true   (sales recorded the balance from LIFF; waits for the owner)
+[66] balance_submitted_by    UUID         null: true   (FK app_user.id)
+[67] balance_confirmed_at    TIMESTAMPTZ  null: true   (the sales owner confirmed the balance; state 25, finance issues the RE)
 */
 
 // LineBookingCharge is one extra charge line (visa, taxes, options, ...): count x price.
@@ -155,12 +162,39 @@ type LineBooking struct {
 	CustomerSentContactID    null.String         `bun:"customer_sent_contact_id"     json:"customerSentContactId" swaggertype:"string"`     // [61] UUID
 	FixNote                  string              `bun:"fix_note"                     json:"fixNote"`                                        // [62] TEXT
 	FixRequestedAt           null.Time           `bun:"fix_requested_at"             json:"fixRequestedAt" swaggertype:"string"`            // [63] TIMESTAMPTZ
+	BalanceSlipImage         string              `bun:"balance_slip_image"           json:"balanceSlipImage"`                               // [64] TEXT
+	BalanceSubmittedAt       null.Time           `bun:"balance_submitted_at"         json:"balanceSubmittedAt" swaggertype:"string"`        // [65] TIMESTAMPTZ
+	BalanceSubmittedBy       null.String         `bun:"balance_submitted_by"         json:"balanceSubmittedBy" swaggertype:"string"`        // [66] UUID
+	BalanceConfirmedAt       null.Time           `bun:"balance_confirmed_at"         json:"balanceConfirmedAt" swaggertype:"string"`        // [67] TIMESTAMPTZ
 
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
 	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
 	FinanceUser *AppUser     `bun:"rel:belongs-to,join:finance_user_id=id" json:"financeUser,omitempty"`
 	// BookingSource is where the customer booked (LINE OA, Facebook, ...).
 	BookingSource *BookingSource `bun:"rel:belongs-to,join:booking_source_id=id" json:"bookingSource,omitempty"`
+}
+
+// NeedsReceipt reports whether finance issues the RE (full payment, or a deposit booking whose
+// balance the sales owner confirmed) rather than AI + IV.
+func (b *LineBooking) NeedsReceipt() bool {
+	return !b.IsDeposit || b.BalanceConfirmedAt.Valid
+}
+
+// EditableFromLIFF reports whether sales may reopen b in LIFF by its booking no: a paid booking
+// (deposit or in full), also while its documents still wait for finance (the LIFF app warns).
+func (b *LineBooking) EditableFromLIFF() bool {
+	return b.Status && slices.Contains(linebookingstate.Paid, b.State)
+}
+
+// AwaitsBalance reports whether a balance slip may be recorded for b: a deposit booking not paid in
+// full whose deposit documents (AI + IV) were already approved, so the balance round only adds the RE.
+func (b *LineBooking) AwaitsBalance() bool {
+	return b.IsDeposit && b.State == linebookingstate.DepositPaid && b.DocumentsApprovedAt.Valid
+}
+
+// BalancePending reports whether sales recorded the balance and it waits for the owner's confirm.
+func (b *LineBooking) BalancePending() bool {
+	return b.State == linebookingstate.DepositPaid && b.BalanceSubmittedAt.Valid && !b.BalanceConfirmedAt.Valid
 }
 
 // Travellers counts everyone on the booking, infants included.
