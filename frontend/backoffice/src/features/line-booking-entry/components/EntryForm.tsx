@@ -12,6 +12,7 @@ import type { LineBooking, LineBookingContact } from '../../../types/lineBooking
 import type { TourProgramListItem, TourProgramPeriod } from '../../../types/tourProgram.ts';
 import type { SalesUserListResponse } from '../../../types/user.ts';
 import LineContactPicker from '../../line-booking/components/LineContactPicker.tsx';
+import OpenChatLink from '../../line-booking/components/OpenChatLink.tsx';
 import { refNameLabel } from '../../sales-tool/booking-summary/summary.ts';
 import TourPicker from '../../sales-tool/booking-summary/TourPicker.tsx';
 import { type DealValues, dealError, dealFromBooking, dealFromSummary, dealRequest, dealTotals, EMPTY_DEAL, financeWarning, periodPatch } from '../lib/deal.ts';
@@ -32,6 +33,7 @@ type FormValues = DealValues & {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  chatUrl: string;
   slipImages: string[];
   note: string;
 };
@@ -64,6 +66,7 @@ function initialValues(booking: LineBooking | null, defaultSalesId: string | und
       customerName: '',
       customerPhone: '',
       customerAddress: '',
+      chatUrl: '',
       slipImages: [],
       note: '',
     };
@@ -76,6 +79,7 @@ function initialValues(booking: LineBooking | null, defaultSalesId: string | und
     customerName: booking.customerName,
     customerPhone: booking.customerPhone,
     customerAddress: booking.customerAddress,
+    chatUrl: booking.lineContact?.chatUrl ?? '',
     slipImages: [],
     note: booking.note,
   };
@@ -116,6 +120,12 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
   const sources = lookups.sources;
   const sourceOptions = booking?.bookingSource && !sources.some((s) => s.id === booking.bookingSource?.id) ? [...sources, booking.bookingSource] : sources;
   const source = sourceOptions.find((s) => s.id === values.bookingSourceId) ?? null;
+
+  // A picked chat brings the OA Manager link saved on it (if any).
+  const pickContact = (c: LineBookingContact | null) => {
+    setLineContact(c);
+    patch({ chatUrl: c?.chatUrl ?? '' });
+  };
 
   // setFieldsValue doesn't fire onValuesChange, so sync the totals by hand after it.
   const patch = (next: Partial<FormValues>) => {
@@ -234,6 +244,7 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
   const save = async (v: FormValues) => {
     const common = {
       lineContactId: lineContact?.id ?? null,
+      chatUrl: lineContact ? (v.chatUrl ?? '').trim() : '',
       bookingSourceId: v.bookingSourceId ?? null,
       refName: v.refName.trim(),
       refBookingNo: v.refBookingNo.trim(),
@@ -487,16 +498,27 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
           >
             <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
-                <LineContactPicker value={lineContact} onPick={setLineContact} />
+                <LineContactPicker value={lineContact} onPick={pickContact} />
               </div>
+              {lineContact && <OpenChatLink url={values.chatUrl} />}
               {lineContact && (
-                <Button type="link" onClick={() => setLineContact(null)}>
+                <Button type="link" onClick={() => pickContact(null)}>
                   ไม่ผูกแชท
                 </Button>
               )}
             </div>
             {lineContact && !lineContact.following && <span className="text-xs text-red-600">ลูกค้าบล็อก OA — ส่งข้อความทาง LINE ไม่ได้</span>}
           </Form.Item>
+          {lineContact && (
+            <Form.Item
+              label="ลิงก์แชทใน LINE OA Manager (ไม่บังคับ)"
+              name="chatUrl"
+              extra="เปิดแชทของลูกค้าใน chat.line.biz แล้วคัดลอกลิงก์จากแถบที่อยู่มาวาง ระบบจะจำไว้กับแชทนี้ เพื่อให้กด “เปิดแชท” จากใบจองได้"
+              rules={[{ pattern: /^https:\/\/chat\.line\.biz\/\S+$/, message: 'ลิงก์ต้องขึ้นต้นด้วย https://chat.line.biz/' }]}
+            >
+              <Input autoComplete="off" placeholder="https://chat.line.biz/U…/chat/U…" />
+            </Form.Item>
+          )}
           <div className="grid gap-x-4 sm:grid-cols-2">
             <Form.Item label="ชื่อลูกค้า" name="customerName" rules={[{ required: true, whitespace: true, message: 'กรุณาระบุชื่อลูกค้า' }]}>
               <Input autoComplete="off" placeholder="ชื่อ-นามสกุล" />
@@ -530,7 +552,25 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
         </Card>
       </Form>
 
-      <aside className="flex flex-col gap-3 lg:sticky lg:top-6">
+      {/* Phone: the total and the save button stay on a bar at the bottom of the screen. */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-6px_16px_-10px_rgba(29,43,79,0.3)] lg:hidden">
+        {error && <Alert type="error" showIcon className="mb-2" title={error} />}
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1 leading-tight">
+            <div className="text-xs text-ink-muted">
+              {travellers} ท่าน
+              {values.isDeposit && ` · มัดจำ ${formatBaht(totals.depositToPay)}`}
+            </div>
+            <div className="text-lg font-semibold">{formatBaht(totals.grandTotal)}</div>
+          </div>
+          <Button type="primary" size="large" loading={submitting} onClick={() => void submit()}>
+            {editing ? 'บันทึกการแก้ไข' : 'บันทึกการจอง'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop: the summary card stays in view below the page header. */}
+      <aside className="flex flex-col gap-3 max-lg:pb-24 lg:sticky lg:top-[72px]">
         <Card title="สรุปยอด" size="small">
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <Stat label="ผู้เดินทาง" value={`${travellers} ท่าน`} />
@@ -542,8 +582,8 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
           {pastedTotal !== null && pastedTotal !== totals.grandTotal && (
             <Alert type="warning" showIcon className="mt-3" title={`ข้อความสรุป ${formatBaht(pastedTotal)} ไม่ตรงกับยอดในฟอร์ม ตรวจสอบราคาอีกครั้ง`} />
           )}
-          {error && <Alert type="error" showIcon className="mt-3" title={error} />}
-          <Button type="primary" size="large" block className="mt-4" loading={submitting} onClick={() => void submit()}>
+          {error && <Alert type="error" showIcon className="mt-3 max-lg:hidden" title={error} />}
+          <Button type="primary" size="large" block className="mt-4 max-lg:hidden" loading={submitting} onClick={() => void submit()}>
             {editing ? 'บันทึกการแก้ไข' : 'บันทึกการจอง'}
           </Button>
           {editing && (

@@ -107,6 +107,7 @@ func normalizeCreate(r *models.LineBookingCreateRequest) {
 	r.RefName = strings.TrimSpace(r.RefName)
 	r.RefBookingNo = strings.TrimSpace(r.RefBookingNo)
 	r.LineContactID = trimNull(r.LineContactID)
+	r.ChatURL = strings.TrimSpace(r.ChatURL)
 	r.BookingSourceID = trimNull(r.BookingSourceID)
 	r.DepositDueDate = trimNull(r.DepositDueDate)
 	r.RemainingDueDate = trimNull(r.RemainingDueDate)
@@ -157,9 +158,13 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 		validation.Field(&request.RefBookingNo, validation.RuneLength(0, maxRefRunes)),
 		validation.Field(&request.SlipImages, validation.Required, validation.Length(1, maxSlips), validation.Each(validation.RuneLength(1, maxSlipURLRunes))),
 		validation.Field(&request.Note, validation.RuneLength(0, maxNoteRunes)),
+		validation.Field(&request.ChatURL, validation.RuneLength(0, maxChatURLRunes), validation.Match(chatURLPattern)),
 	)
 	if err != nil {
 		return err
+	}
+	if request.ChatURL != "" && !request.LineContactID.Valid {
+		return validation.Errors{"chatUrl": errors.New("needs lineContactId")}
 	}
 	for field, v := range map[string]null.String{"lineContactId": request.LineContactID, "bookingSourceId": request.BookingSourceID} {
 		if v.Valid {
@@ -415,6 +420,9 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 			if contact == nil || !contact.Status {
 				return cerrors.FieldError("lineContactId", "no such LINE contact")
 			}
+			if err := u.saveChatURL(ctx, appDB, contact, request.ChatURL, info.UserID); err != nil {
+				return err
+			}
 			b.LineContactID = request.LineContactID
 		}
 		if request.BookingSourceID.Valid {
@@ -457,6 +465,8 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 			b.FullDueTime = request.FullDueTime
 		}
 		b.SlipImage, b.SlipImages = request.SlipImage, request.SlipImages
+		// No balance yet: an empty array, not nil (Bun writes nil as NULL into a NOT NULL column).
+		b.BalanceSlipImages = []string{}
 		b.Note = request.Note
 		b.State = linebookingstate.New
 		b.Status = true

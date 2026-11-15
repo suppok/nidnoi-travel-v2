@@ -154,6 +154,9 @@ type LineBookingUpdateLineContactRequest struct {
 	ID string `json:"id"`
 	// LineContactID is a line_contact id from POST /line-contacts/list; null unlinks.
 	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
+	// ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact;
+	// optional, needs lineContactId. "" keeps the saved one.
+	ChatURL string `json:"chatUrl"`
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }

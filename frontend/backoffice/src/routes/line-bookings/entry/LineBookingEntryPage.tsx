@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { bookingSourcesApi } from '../../../api/bookingSources.ts';
 import { usersApi } from '../../../api/users.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
-import BrandMark from '../../../components/BrandMark.tsx';
+import logoUrl from '../../../assets/logo.png';
 import { env } from '../../../config/env.ts';
 import BalancePanel from '../../../features/line-booking-entry/components/BalancePanel.tsx';
 import EntryForm, { type EntryLookups, type SavedResult } from '../../../features/line-booking-entry/components/EntryForm.tsx';
@@ -85,12 +85,12 @@ export default function LineBookingEntryPage() {
   return (
     <div className="min-h-full bg-page">
       <header className="sticky top-0 z-10 border-b border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1180px] items-center gap-3 px-4 py-2.5">
-          <Link to="/line-bookings" className="no-underline" aria-label="ไปหน้าใบจอง LINE">
-            <BrandMark />
+        <div className="mx-auto flex h-14 max-w-[1180px] items-center gap-3 px-4">
+          <Link to="/line-bookings" className="flex shrink-0" aria-label="ไปหน้าใบจอง LINE">
+            <img src={logoUrl} alt="nidnoi travel" className="h-9 w-9 rounded-lg" />
           </Link>
-          <div className="min-w-0 flex-1">
-            <h1 className="m-0 truncate font-display text-lg font-normal">{title}</h1>
+          <div className="min-w-0 flex-1 leading-tight">
+            <h1 className="m-0 truncate font-display text-base font-normal">{title}</h1>
             <p className="m-0 truncate text-xs text-ink-muted">โดย {user?.name}</p>
           </div>
           {env.APP_ENV !== 'prd' && <Tag color="orange">{env.APP_ENV.toUpperCase()}</Tag>}

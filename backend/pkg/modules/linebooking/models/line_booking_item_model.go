@@ -99,11 +99,15 @@ type LineBookingUser struct {
 
 // LineBookingContact is the customer's LINE OA chat linked to a booking.
 type LineBookingContact struct {
-	ID          string      `json:"id"`
+	ID string `json:"id"`
+	// LineUserID is the customer's LINE user ID; the backoffice links to their chat in OA Manager.
+	LineUserID  string      `json:"lineUserId"`
 	DisplayName string      `json:"displayName"`
 	PictureURL  null.String `json:"pictureUrl" swaggertype:"string"`
 	// Following is false once the customer blocks the OA: a push would not reach them.
 	Following bool `json:"following"`
+	// ChatURL opens the chat in LINE OA Manager; "" until sales paste it.
+	ChatURL string `json:"chatUrl"`
 }
 
 func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
@@ -175,7 +179,7 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 		item.SalesUser = &LineBookingUser{ID: s.ID, Name: s.Name}
 	}
 	if c := b.LineContact; c != nil {
-		item.LineContact = &LineBookingContact{ID: c.ID, DisplayName: c.DisplayName, PictureURL: c.PictureURL, Following: c.Following}
+		item.LineContact = &LineBookingContact{ID: c.ID, LineUserID: c.LineUserID, DisplayName: c.DisplayName, PictureURL: c.PictureURL, Following: c.Following, ChatURL: c.ChatURL}
 	}
 	return item
 }

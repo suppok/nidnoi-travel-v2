@@ -92,7 +92,7 @@ function base(id: number, bookingNo: string, hoursAgo: number, state: LineBookin
     balanceSlipImages: [],
     balanceSubmittedAt: null,
     balanceConfirmedAt: null,
-    lineContact: { id: 'c1000000-0000-4000-8000-000000000001', displayName: 'Somchai', pictureUrl: null, following: true },
+    lineContact: { id: 'c1000000-0000-4000-8000-000000000001', lineUserId: 'U1', displayName: 'Somchai', pictureUrl: null, following: true, chatUrl: '' },
   };
 }
 
@@ -267,7 +267,12 @@ function findEditable(req: Parameters<MockHandler>[0], route: string, bookingNo:
 }
 
 const SOMCHAI = 'c1000000-0000-4000-8000-000000000001';
-const contactOf = (id: string | null) => (id === SOMCHAI ? { id, displayName: 'Somchai', pictureUrl: null, following: true } : null);
+let somchaiChatUrl = '';
+const contactOf = (id: string | null, chatUrl = '') => {
+  if (id !== SOMCHAI) return null;
+  if (chatUrl) somchaiChatUrl = chatUrl;
+  return { id, lineUserId: 'U1', displayName: 'Somchai', pictureUrl: null, following: true, chatUrl: somchaiChatUrl };
+};
 
 export const lineBookingRoutes: Record<string, MockHandler> = {
   'POST /line-bookings': (req) => {
@@ -294,7 +299,7 @@ export const lineBookingRoutes: Record<string, MockHandler> = {
       slipImage: body.slipImages[0],
       slipImages: body.slipImages,
       salesUser: { id: owner.id, name: owner.name },
-      lineContact: contactOf(body.lineContactId),
+      lineContact: contactOf(body.lineContactId, body.chatUrl),
     };
     bookings.unshift(b);
     history[b.id] = [event(crypto.randomUUID(), E.Created, 0, { id: user.id, name: user.name })];
@@ -331,7 +336,7 @@ export const lineBookingRoutes: Record<string, MockHandler> = {
       customerPhone: body.customerPhone,
       customerAddress: body.customerAddress,
       note: body.note,
-      lineContact: contactOf(body.lineContactId) ?? b.lineContact,
+      lineContact: contactOf(body.lineContactId, body.chatUrl) ?? b.lineContact,
       updateDate: new Date().toISOString(),
       ...(balance ? { balanceSlipImages: body.balanceSlipImages, balanceSlipImage: body.balanceSlipImages[0], balanceSubmittedAt: new Date().toISOString() } : {}),
     });
@@ -395,7 +400,7 @@ export const lineBookingRoutes: Record<string, MockHandler> = {
   'POST /line-contacts/list': (req) => {
     authorize(req, 'POST /line-contacts/list', Permissions.LineContactList);
     const keyword = str(asRecord(req.body).keyword).trim().toLowerCase();
-    const contacts = [{ id: 'c1000000-0000-4000-8000-000000000001', lineUserId: 'U1', displayName: 'Somchai', pictureUrl: null, following: true, lastMessageAt: ago(1) }];
+    const contacts = [{ id: 'c1000000-0000-4000-8000-000000000001', lineUserId: 'U1', displayName: 'Somchai', pictureUrl: null, following: true, lastMessageAt: ago(1), chatUrl: somchaiChatUrl }];
     const items = contacts.filter((c) => !keyword || c.displayName.toLowerCase() === keyword);
     return ok({ items, total: items.length, page: 1, pageSize: 20 });
   },

@@ -43,6 +43,7 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
   const docs = requiredDocuments(booking);
   const chat = picked ?? booking.lineContact;
   const relink = chat !== null && chat.id !== booking.lineContact?.id;
+  const chatUrl = chat?.chatUrl || null;
   const canPush = chat !== null && chat.following;
 
   const approve = async () => {
@@ -129,11 +130,13 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
       {fixing ? (
         <>
           <p className="mb-2">สิ่งที่ต้องแก้ไข</p>
+          {/* showCount draws the counter below the box outside the layout: mb-6 keeps room for it. */}
           <Input.TextArea
             autoFocus
             rows={4}
             maxLength={1000}
             showCount
+            className="mb-6"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="เช่น ชื่อลูกค้าในใบรับเงินมัดจำสะกดผิด / ยอดในใบแจ้งหนี้ไม่ตรง"
@@ -150,25 +153,22 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
       ) : (
         <div className="flex flex-col gap-2">
           {chat && (
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => setPicking(true)}
-              title="กดเพื่อเลือกแชทอื่น"
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-line bg-transparent px-3 py-2 text-left hover:border-brand-line disabled:cursor-not-allowed"
-            >
-              <ContactAvatar pictureUrl={chat.pictureUrl} />
-              <div className="flex min-w-0 flex-col">
-                <span className="text-xs text-ink-muted">
-                  {canPush ? 'จะส่งทางแชท LINE ของลูกค้า' : 'แชท LINE ของลูกค้า'}
-                  {relink && ' (เปลี่ยนจากแชทเดิมของใบจอง)'}
-                </span>
-                <span className="truncate font-medium">{chat.displayName || '(ไม่มีชื่อ)'}</span>
-              </div>
-              <span className="ml-auto shrink-0 text-xs text-ink-muted">
-                <SwapOutlined /> เปลี่ยนแชท
-              </span>
-            </button>
+            <div className="flex w-full items-center gap-3 rounded-lg border border-line px-3 py-2">
+              {chatUrl ? (
+                <a href={chatUrl} target="_blank" rel="noopener" title="เปิดแชทใน LINE OA Manager" className="flex min-w-0 flex-1 items-center gap-3 text-inherit no-underline hover:text-brand-dark">
+                  <ContactAvatar pictureUrl={chat.pictureUrl} />
+                  <ChatLabel chat={chat} canPush={canPush} relink={relink} link />
+                </a>
+              ) : (
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <ContactAvatar pictureUrl={chat.pictureUrl} />
+                  <ChatLabel chat={chat} canPush={canPush} relink={relink} />
+                </div>
+              )}
+              <Button type="text" size="small" icon={<SwapOutlined />} disabled={busy !== null} onClick={() => setPicking(true)} className="shrink-0 text-xs text-ink-muted">
+                เปลี่ยนแชท
+              </Button>
+            </div>
           )}
           {!canPush && (
             <Alert
@@ -188,5 +188,21 @@ export default function DocumentsReviewModal({ booking, onClose, onDone }: Props
         </div>
       )}
     </Modal>
+  );
+}
+
+// Who the documents go to; "เปิดแชท" hints the name opens the chat in OA Manager.
+function ChatLabel({ chat, canPush, relink, link }: { chat: LineBookingContact; canPush: boolean; relink: boolean; link?: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-col">
+      <span className="text-xs text-ink-muted">
+        {canPush ? 'จะส่งทางแชท LINE ของลูกค้า' : 'แชท LINE ของลูกค้า'}
+        {relink && ' (เปลี่ยนจากแชทเดิมของใบจอง)'}
+      </span>
+      <span className="truncate font-medium">
+        {chat.displayName || '(ไม่มีชื่อ)'}
+        {link && <span className="ml-2 text-xs font-normal text-brand-dark">เปิดแชท ↗</span>}
+      </span>
+    </div>
   );
 }

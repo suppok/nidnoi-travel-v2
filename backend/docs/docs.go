@@ -6978,6 +6978,10 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingContact": {
             "type": "object",
             "properties": {
+                "chatUrl": {
+                    "description": "ChatURL opens the chat in LINE OA Manager; \"\" until sales paste it.",
+                    "type": "string"
+                },
                 "displayName": {
                     "type": "string"
                 },
@@ -6986,6 +6990,10 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "lineUserId": {
+                    "description": "LineUserID is the customer's LINE user ID; the backoffice links to their chat in OA Manager.",
                     "type": "string"
                 },
                 "pictureUrl": {
@@ -7019,6 +7027,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq"
                     }
+                },
+                "chatUrl": {
+                    "description": "ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact so\nstaff can open it; optional, needs lineContactId. \"\" keeps the one already saved.",
+                    "type": "string"
                 },
                 "childNoBed": {
                     "type": "integer"
@@ -7181,6 +7193,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq"
                     }
+                },
+                "chatUrl": {
+                    "description": "ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact so\nstaff can open it; optional, needs lineContactId. \"\" keeps the one already saved.",
+                    "type": "string"
                 },
                 "childNoBed": {
                     "type": "integer"
@@ -9103,6 +9119,10 @@ const docTemplate = `{
         "backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest": {
             "type": "object",
             "properties": {
+                "chatUrl": {
+                    "description": "ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact;\noptional, needs lineContactId. \"\" keeps the saved one.",
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -9645,6 +9665,10 @@ const docTemplate = `{
         "backend_pkg_modules_linecontact_models.LineContactItem": {
             "type": "object",
             "properties": {
+                "chatUrl": {
+                    "description": "the chat in LINE OA Manager; \"\" until sales paste it",
+                    "type": "string"
+                },
                 "displayName": {
                     "type": "string"
                 },
