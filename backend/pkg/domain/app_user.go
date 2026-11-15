@@ -50,5 +50,9 @@ type AppUser struct {
 	LineUserID         null.String `bun:"line_user_id"              json:"-"`                                    // [12] TEXT
 	LineDisplayName    null.String `bun:"line_display_name"         json:"lineDisplayName" swaggertype:"string"` // [13] TEXT
 	LineLinkedAt       null.Time   `bun:"line_linked_at"            json:"lineLinkedAt" swaggertype:"string"`    // [14] TIMESTAMPTZ
-	Phone              string      `bun:"phone"                     json:"phone"`                                // [17] TEXT
+	// Unused, but kept until a migration drops the columns: Update scans RETURNING * into this
+	// struct, and Bun rejects columns the struct doesn't have.
+	LineLinkCodeHash      null.String `bun:"line_link_code_hash"       json:"-"`     // [15] TEXT
+	LineLinkCodeExpiresAt null.Time   `bun:"line_link_code_expires_at" json:"-"`     // [16] TIMESTAMPTZ
+	Phone                 string      `bun:"phone"                     json:"phone"` // [17] TEXT
 }
