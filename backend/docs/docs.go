@@ -1602,6 +1602,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/dashboard/summary": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Totals, chart buckets and breakdowns for the last ` + "`" + `days` + "`" + ` days (Thailand time), with the\nprevious period of the same length for deltas. Sections: tours (tour-program:list),\ncustomer booking requests (booking:list) and LINE bookings (line-booking:list, limited\nto the caller's own like the list). A section the caller may not see is null.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Backoffice dashboard figures",
+                "parameters": [
+                    {
+                        "description": "Period",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardSummaryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardSummaryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "produces": [
@@ -6108,6 +6154,427 @@ const docTemplate = `{
                 "status": {
                     "description": "false = soft delete",
                     "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardBookings": {
+            "type": "object",
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardBucket"
+                    }
+                },
+                "byState": {
+                    "description": "created in the range",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount"
+                    }
+                },
+                "newCount": {
+                    "description": "still new, any create date",
+                    "type": "integer"
+                },
+                "previousTotal": {
+                    "description": "created in the previous range",
+                    "type": "integer"
+                },
+                "total": {
+                    "description": "created in the range",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardBucket": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "first day of the bucket, YYYY-MM-DD",
+                    "type": "string"
+                },
+                "revenue": {
+                    "description": "LINE bookings: paid bookings' total; customer bookings: 0",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardCountryTour": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "countryId": {
+                    "type": "string"
+                },
+                "nameTh": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardDeparture": {
+            "type": "object",
+            "properties": {
+                "bookingNo": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "salesUser": {
+                    "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardUser"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "integer"
+                },
+                "totalPrice": {
+                    "type": "integer"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "travellers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardLineBookings": {
+            "type": "object",
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardBucket"
+                    }
+                },
+                "bySales": {
+                    "description": "top 8; [] unless ScopeAll",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup"
+                    }
+                },
+                "bySource": {
+                    "description": "top 8",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup"
+                    }
+                },
+                "byState": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount"
+                    }
+                },
+                "byTour": {
+                    "description": "top 8",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup"
+                    }
+                },
+                "departures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardDeparture"
+                    }
+                },
+                "departuresDays": {
+                    "description": "Departures are the paid bookings departing in the next DeparturesDays days (max 10).",
+                    "type": "integer"
+                },
+                "pipeline": {
+                    "description": "any create date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLinePipeline"
+                        }
+                    ]
+                },
+                "previous": {
+                    "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineTotals"
+                },
+                "scopeAll": {
+                    "description": "ScopeAll: the caller sees every booking (admins); otherwise their own (sales) / sent to them (finance).",
+                    "type": "boolean"
+                },
+                "totals": {
+                    "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineTotals"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardLineGroup": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "key": {
+                    "description": "booking source id, tour code or user id; \"\" = not set",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "\"\" = not set",
+                    "type": "string"
+                },
+                "paidCount": {
+                    "type": "integer"
+                },
+                "revenue": {
+                    "type": "integer"
+                },
+                "travellers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardLinePipeline": {
+            "type": "object",
+            "properties": {
+                "balancePending": {
+                    "type": "integer"
+                },
+                "waitingConfirm": {
+                    "type": "integer"
+                },
+                "waitingDocuments": {
+                    "type": "integer"
+                },
+                "waitingReview": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardLineTotals": {
+            "type": "object",
+            "properties": {
+                "averageValue": {
+                    "description": "Revenue / PaidCount, rounded",
+                    "type": "integer"
+                },
+                "cancelled": {
+                    "type": "integer"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "paidCount": {
+                    "type": "integer"
+                },
+                "revenue": {
+                    "type": "integer"
+                },
+                "travellers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardPeriod": {
+            "type": "object",
+            "properties": {
+                "endDate": {
+                    "type": "string"
+                },
+                "periodId": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "tourCode": {
+                    "type": "string"
+                },
+                "tourName": {
+                    "type": "string"
+                },
+                "tourProgramId": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardRange": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "description": "as requested",
+                    "type": "integer"
+                },
+                "from": {
+                    "description": "YYYY-MM-DD, inclusive",
+                    "type": "string"
+                },
+                "previousFrom": {
+                    "description": "PreviousFrom / PreviousTo is the period of the same length just before, for the deltas.",
+                    "type": "string"
+                },
+                "previousTo": {
+                    "type": "string"
+                },
+                "to": {
+                    "description": "YYYY-MM-DD, inclusive (today)",
+                    "type": "string"
+                },
+                "unit": {
+                    "description": "Unit is the chart bucket: day (7, 30 days), week (90, weeks start Monday) or month (365).",
+                    "type": "string",
+                    "enum": [
+                        "day",
+                        "week",
+                        "month"
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardSeats": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer"
+                },
+                "lowSeats": {
+                    "type": "integer"
+                },
+                "lowSeatsThreshold": {
+                    "type": "integer"
+                },
+                "periods": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "soldOut": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardStateCount": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardSummaryRequest": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "description": "Days is the period to summarise, ending today (Thailand time): 7, 30, 90 or 365; default 30.",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "bookings": {
+                    "description": "booking:list",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardBookings"
+                        }
+                    ]
+                },
+                "generatedAt": {
+                    "type": "string"
+                },
+                "lineBookings": {
+                    "description": "line-booking:list, scoped like the list",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardLineBookings"
+                        }
+                    ]
+                },
+                "range": {
+                    "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardRange"
+                },
+                "tours": {
+                    "description": "Each section is null when the caller lacks its list permission.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardTours"
+                        }
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardTours": {
+            "type": "object",
+            "properties": {
+                "byCountry": {
+                    "description": "public tours per country, top 8",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardCountryTour"
+                    }
+                },
+                "byState": {
+                    "description": "active tours, any update date",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount"
+                    }
+                },
+                "lowSeatPeriods": {
+                    "description": "LowSeatPeriods are those departures with seats left, fewest first (max 8).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardPeriod"
+                    }
+                },
+                "seats": {
+                    "description": "Seats covers the departures of public tours in the next Seats.Days days.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_dashboard_models.DashboardSeats"
+                        }
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_dashboard_models.DashboardUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

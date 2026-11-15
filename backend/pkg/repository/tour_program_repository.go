@@ -43,6 +43,13 @@ type TourProgramRepository interface {
 	// CountPublicByCountry / CountPublicByCity count public tours linked to the country/city.
 	CountPublicByCountry(ctx context.Context, countryID string) (int, error)
 	CountPublicByCity(ctx context.Context, cityID string) (int, error)
+
+	// --- Dashboard aggregates ---
+
+	// CountByState counts the active (not deleted) tours per state.
+	CountByState(ctx context.Context) ([]repomodels.StateCount, error)
+	// CountPublicPerCountry counts the public tours per country, most first; at most limit rows.
+	CountPublicPerCountry(ctx context.Context, limit int) ([]repomodels.CountryTourCount, error)
 }
 
 type tourProgramRepository struct {
@@ -261,4 +268,34 @@ func (r *tourProgramRepository) CountPublicByCity(ctx context.Context, cityID st
 		Where("EXISTS (SELECT 1 FROM tour_program_city x WHERE x.tour_program_id = tp.id AND x.city_id = ?)", cityID).
 		Count(ctx)
 	return int(n), err
+}
+
+func (r *tourProgramRepository) CountByState(ctx context.Context) ([]repomodels.StateCount, error) {
+	var rows []repomodels.StateCount
+	err := r.query.NewSelect().
+		ColumnExpr("tp.state AS state").
+		ColumnExpr("count(*) AS count").
+		Where("tp.status = TRUE").
+		GroupExpr("tp.state").
+		OrderExpr("tp.state").
+		Scan(ctx, &rows)
+	return rows, err
+}
+
+func (r *tourProgramRepository) CountPublicPerCountry(ctx context.Context, limit int) ([]repomodels.CountryTourCount, error) {
+	var rows []repomodels.CountryTourCount
+	err := r.db.NewSelect().
+		TableExpr("tour_program AS tp").
+		Join("JOIN tour_program_country AS x ON x.tour_program_id = tp.id").
+		Join("JOIN country AS co ON co.id = x.country_id").
+		ColumnExpr("co.id AS country_id").
+		ColumnExpr("co.name_th AS name_th").
+		ColumnExpr("count(DISTINCT tp.id) AS count").
+		Where("tp.status = TRUE").
+		Where("tp.state IN (?)", bun.In(tourprogramstate.Public)).
+		GroupExpr("co.id, co.name_th, co.sort_order").
+		OrderExpr("count DESC, co.sort_order ASC, co.name_th ASC").
+		Limit(int64(limit)).
+		Scan(ctx, &rows)
+	return rows, err
 }
