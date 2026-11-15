@@ -130,6 +130,13 @@ export async function getEditableBooking(bookingNo: string): Promise<LineBooking
   return parse<LineBookingItem>(await send('GET', `/liff/line-bookings/${encodeURIComponent(bookingNo)}`, undefined))
 }
 
+// The paid bookings linked to one customer chat (the ones getEditableBooking would open), newest
+// confirmation first.
+export async function listBookingsByChat(lineContactId: string): Promise<LineBookingItem[]> {
+  const res = await send('POST', '/liff/line-bookings/list', { lineContactId })
+  return (await parse<{ items: LineBookingItem[] }>(res)).items
+}
+
 // The history of a reopened booking, oldest first.
 export async function getBookingHistory(bookingNo: string): Promise<LineBookingEvent[]> {
   const res = await send('GET', `/liff/line-bookings/${encodeURIComponent(bookingNo)}/events`, undefined)

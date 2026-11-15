@@ -16,6 +16,21 @@ type LineBookingLIFFGetResponse struct {
 	LineBookingItem
 }
 
+// --- POST /liff/line-bookings/list: the bookings LIFF may reopen for one customer chat ---
+
+type LineBookingLIFFListRequest struct {
+	// LineContactID is the customer's chat (POST /liff/line-contacts/list).
+	LineContactID string `json:"lineContactId"`
+
+	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
+}
+
+// LineBookingLIFFListResponse lists the chat's active paid bookings (deposit or in full), newest
+// confirmation first, at most liffListLimit.
+type LineBookingLIFFListResponse struct {
+	Items []LineBookingItem `json:"items"`
+}
+
 // --- PUT /liff/line-bookings: edit the deal of a reopened booking and/or record the balance ---
 
 // LineBookingLIFFUpdateRequest carries the whole deal again, like POST /line-bookings. The tour,

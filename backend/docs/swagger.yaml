@@ -3098,6 +3098,19 @@ definitions:
       updateDate:
         type: string
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest:
+    properties:
+      lineContactId:
+        description: LineContactID is the customer's chat (POST /liff/line-contacts/list).
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingItem'
+        type: array
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest:
     properties:
       adultPrice:
@@ -6395,6 +6408,45 @@ paths:
             additionalProperties: true
             type: object
       summary: History of a LINE booking reopened in LIFF
+      tags:
+      - line-bookings
+  /liff/line-bookings/list:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.
+        Any staff user with line-booking:create may list them (sales share bookings).
+      parameters:
+      - description: Customer chat
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_TOKEN
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+      summary: LINE bookings of one customer chat, for reopening in LIFF
       tags:
       - line-bookings
   /liff/line-contacts/list:

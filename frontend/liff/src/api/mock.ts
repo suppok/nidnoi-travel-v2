@@ -217,6 +217,11 @@ export async function mockSend(method: string, path: string, body: unknown): Pro
       console.info('[mock] POST /line-bookings', req)
       return json({ bookingNo, totalPrice: total })
     },
+    // Bookings of one chat: the mock deposit booking is linked to Somchai.
+    'POST /liff/line-bookings/list': () => {
+      const id = String((body as { lineContactId?: string })?.lineContactId ?? '')
+      return json({ items: EDITABLE.filter((b) => b.lineContact?.id === id) })
+    },
     'PUT /liff/line-bookings': () => {
       const req = body as LineBookingLIFFUpdateRequest
       if (!EDITABLE.some((b) => b.bookingNo === req.bookingNo)) return failure(404, 'NOT_FOUND', 'Not found')
