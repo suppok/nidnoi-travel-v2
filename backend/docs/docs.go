@@ -1682,6 +1682,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/liff/line-bookings/list": {
+            "post": {
+                "description": "The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.\nAny staff user with line-booking:create may list them (sales share bookings).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "LINE bookings of one customer chat, for reopening in LIFF",
+                "parameters": [
+                    {
+                        "description": "Customer chat",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_LINE_TOKEN",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "LINE_NOT_LINKED, PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/liff/line-bookings/{bookingNo}": {
             "get": {
                 "description": "Only a paid booking (state 20 or 25), also while its documents wait for finance.\nAny staff user with line-booking:create may open it.",
@@ -8895,6 +8950,26 @@ const docTemplate = `{
                 },
                 "updateDate": {
                     "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest": {
+            "type": "object",
+            "properties": {
+                "lineContactId": {
+                    "description": "LineContactID is the customer's chat (POST /liff/line-contacts/list).",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingItem"
+                    }
                 }
             }
         },

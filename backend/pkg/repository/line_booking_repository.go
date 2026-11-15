@@ -96,6 +96,9 @@ func (r *lineBookingRepository) List(ctx context.Context, criteria repomodels.Li
 	if criteria.SalesUserID != "" {
 		q = q.Where("lb.sales_user_id = ?", criteria.SalesUserID)
 	}
+	if criteria.LineContactID != "" {
+		q = q.Where("lb.line_contact_id = ?", criteria.LineContactID)
+	}
 	if d := criteria.DocumentsDone; d != nil {
 		if *d {
 			q = q.Where("lb.documents_at IS NOT NULL")

@@ -54,7 +54,7 @@ Sales can paste the text from the backoffice sales tool **สรุปยอด�
 
 ## Reopen a booking / balance payment
 
-Under the paste box on the first screen, **แก้ไขใบจองเดิม / ลูกค้าชำระส่วนที่เหลือ** takes a booking no (`GET /liff/line-bookings/:bookingNo`). Any paid booking (deposit or in full) opens (`LINE_BOOKING_NOT_EDITABLE` for new or cancelled ones); any sales user may open it. While its documents aren't approved yet (finance still issuing them, or waiting for the owner's review) the summary box shows a warning and saving asks for a second confirm ("ยืนยันบันทึก"), since the documents may not match the new amounts.
+Under the paste box on the first screen, **แก้ไขใบจองเดิม / ลูกค้าชำระส่วนที่เหลือ** takes a booking no (`GET /liff/line-bookings/:bookingNo`), or a customer chat picked with `CustomerChatPicker` ("หรือค้นหาจากแชทลูกค้า"): `POST /liff/line-bookings/list {lineContactId}` lists that chat's paid bookings and tapping one opens it. Only bookings linked to the chat (picked at create, or set in the backoffice) appear. Any paid booking (deposit or in full) opens (`LINE_BOOKING_NOT_EDITABLE` for new or cancelled ones); any sales user may open it. While its documents aren't approved yet (finance still issuing them, or waiting for the owner's review) the summary box shows a warning and saving asks for a second confirm ("ยืนยันบันทึก"), since the documents may not match the new amounts.
 
 - **ประวัติ:** the summary box has a collapsible history (`BookingHistory`, `GET /liff/line-bookings/:bookingNo/events`, newest first, with "field: from → to" lines). Labels copy the backoffice's `constants/lineBookingEvents.ts` (no shared code) — keep both in step with the backend actions and `dealSnapshot` keys.
 - Comments show in that history (read-only in LIFF; staff comment from the backoffice).
@@ -77,7 +77,7 @@ All `VITE_*` — shipped to the browser, no secrets.
 
 ### Local preview without LINE (`VITE_LIFF_MOCK=true`)
 
-LIFF login only works on the HTTPS endpoint registered for a LIFF app, so plain `localhost` can't log in. With the mock flag, `useLiff` skips `liff.init` and `client.ts` lazy-loads `src/api/mock.ts`, which fakes only the endpoints that need a LIFF token (`/liff/me`, `/liff/line-link`, `/liff/sales-users`, `/liff/booking-sources` (LINE OA, Facebook, Walk-in), `/liff/line-contacts/list`, `/media/upload/liff` → `blob:` URL, `POST /line-bookings` → random booking no, logged to the console). **Public tour/period endpoints still hit the real backend**, so run `task run-api` too. Mock sales users have the backoffice mock names (สมใจ ขายเก่ง, …). For real LINE login, tunnel the dev server (ngrok) to a separate local LIFF app.
+LIFF login only works on the HTTPS endpoint registered for a LIFF app, so plain `localhost` can't log in. With the mock flag, `useLiff` skips `liff.init` and `client.ts` lazy-loads `src/api/mock.ts`, which fakes only the endpoints that need a LIFF token (`/liff/me`, `/liff/line-link`, `/liff/sales-users`, `/liff/booking-sources` (LINE OA, Facebook, Walk-in), `/liff/line-contacts/list`, `/liff/line-bookings/list` (Somchai has `26DEMO01`), `/media/upload/liff` → `blob:` URL, `POST /line-bookings` → random booking no, logged to the console). **Public tour/period endpoints still hit the real backend**, so run `task run-api` too. Mock sales users have the backoffice mock names (สมใจ ขายเก่ง, …). For real LINE login, tunnel the dev server (ngrok) to a separate local LIFF app.
 
 ## Auth Flow
 
@@ -100,6 +100,7 @@ LIFF login only works on the HTTPS endpoint registered for a LIFF app, so plain 
 - `POST /liff/line-contacts/list` — customer chat picker (`CustomerChatPicker`, optional; sent as `lineContactId`)
 - `POST /media/upload/liff` — upload slip image (`purpose=booking-slip` only)
 - `POST /line-bookings` — create booking; the backend records the staff user as `create_by`
+- `POST /liff/line-bookings/list` — paid bookings of one customer chat (`{lineContactId}`)
 - `GET /liff/line-bookings/:bookingNo`, `PUT /liff/line-bookings` — reopen a paid booking, save edits and the balance slip
 - `GET /liff/line-bookings/:bookingNo/events` — its history
 

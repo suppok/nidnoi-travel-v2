@@ -52,6 +52,7 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
 	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
 	r.Get("/liff/booking-sources", append(liff, h.LIFFBookingSourceList)...)
+	r.Post("/liff/line-bookings/list", append(liff, h.LIFFLineBookingList)...)
 	r.Get("/liff/line-bookings/:bookingNo/events", append(liff, h.LIFFLineBookingEventList)...)
 	r.Get("/liff/line-bookings/:bookingNo", append(liff, h.LIFFLineBookingGet)...)
 	r.Put("/liff/line-bookings", append(liff, h.LIFFLineBookingUpdate)...)
@@ -95,6 +96,27 @@ func (h *LineBookingAPIHandler) LIFFLineBookingGet(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.LIFFGet(ctx, request)
+	})
+}
+
+// LIFFLineBookingList godoc
+// @Summary     LINE bookings of one customer chat, for reopening in LIFF
+// @Description The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.
+// @Description Any staff user with line-booking:create may list them (sales share bookings).
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Param       body body models.LineBookingLIFFListRequest true "Customer chat"
+// @Success     200 {object} models.LineBookingLIFFListResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
+// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Router      /liff/line-bookings/list [post]
+func (h *LineBookingAPIHandler) LIFFLineBookingList(c *fiber.Ctx) error {
+	request := &models.LineBookingLIFFListRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.LIFFList(ctx, request)
 	})
 }
 

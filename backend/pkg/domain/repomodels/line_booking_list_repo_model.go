@@ -27,6 +27,8 @@ type LineBookingListCriteria struct {
 	DocumentsApproved *bool
 	// BalancePending: true = sales recorded the balance and it waits for the owner's confirm, false = not, nil = any.
 	BalancePending *bool
-	Page           int
-	PageSize       int
+	// LineContactID limits the list to bookings linked to this customer chat; "" = any.
+	LineContactID string
+	Page          int
+	PageSize      int
 }
