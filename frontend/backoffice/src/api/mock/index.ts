@@ -6,6 +6,7 @@ import { airlineRoutes } from './airlines.ts';
 import { authRoutes } from './auth.ts';
 import { bookingRoutes } from './bookings.ts';
 import { bookingSourceRoutes } from './bookingSources.ts';
+import { dashboardRoutes } from './dashboard.ts';
 import { fail, type MockHandler, MockFail } from './http.ts';
 import { lineBookingRoutes } from './lineBookings.ts';
 import { mediaRoutes } from './media.ts';
@@ -29,6 +30,7 @@ const routes: Record<string, MockHandler> = {
   ...bookingRoutes,
   ...salesFinanceRoutes,
   ...lineBookingRoutes,
+  ...dashboardRoutes,
 };
 
 const LATENCY_MS = 300;

@@ -465,6 +465,17 @@ Booking requests from the customer site (`pkg/modules/booking`, table `booking`)
 
 ---
 
+## Dashboard
+
+`POST /dashboard/summary {days}` (`pkg/modules/dashboard`, JWT only — no permission code of its own) feeds the backoffice dashboard. `days` is 7, 30, 90 or 365 (default 30). The period ends today in Thailand time and is widened back to the start of its first bucket (`day` ≤ 31 days, `week` ≤ 120 — Monday, like `date_trunc` — else `month`); the previous period of the same length gives the deltas (`usecase/dashboard_range.go`, tested).
+
+Each section is filled only when the caller's roles allow its list permission (`coreRegistry.Permissions.Allowed`), else `null`:
+- `tours` (`tour-program:list`): active tours per state, public tours per country, seat totals and the fewest-seats departures of public tours in the next 30 days (from tomorrow).
+- `bookings` (`booking:list`): requests created in the period per state and per bucket, previous total, and the count still new.
+- `lineBookings` (`line-booking:list`): scoped by `services/linebookingscope` (shared with the LINE booking module — admins all, sales own, finance sent to them). Totals (revenue / travellers / average = **paid** states only), buckets, states, top sources/tours and sales (admins only), the pipeline (waiting confirm, documents, review, balance — any create date) and paid departures in the next 14 days.
+
+Aggregates live on each table's repository (`Stats*`, `Pipeline`, `ListDepartures`, `CountByState`, `CountPublicPerCountry`, `SeatStats`, `ListUpcoming`); rows created by `create_date` in `Asia/Bangkok`, deleted rows (`status = false`) excluded. Missing buckets are filled with zeros in Go.
+
 ## Customer site rebuild (Revalidator)
 
 The customer site is fully static on Cloudflare Workers. When published content changes, the backend triggers a rebuild through a Cloudflare **Deploy Hook**. Frontends never call the hook.

@@ -38,6 +38,7 @@ import (
 	bookingsourceusecase "backend/pkg/modules/bookingsource/usecase"
 	cityusecase "backend/pkg/modules/city/usecase"
 	countryusecase "backend/pkg/modules/country/usecase"
+	dashboardusecase "backend/pkg/modules/dashboard/usecase"
 	linebookingusecase "backend/pkg/modules/linebooking/usecase"
 	linecontactusecase "backend/pkg/modules/linecontact/usecase"
 	mediausecase "backend/pkg/modules/media/usecase"
@@ -134,6 +135,7 @@ func New(ctx context.Context) (*App, error) {
 	bookingUseCase := bookingusecase.NewBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineBookingUseCase := linebookingusecase.NewLineBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineContactUseCase := linecontactusecase.NewLineContactUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	dashboardUseCase := dashboardusecase.NewDashboardUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 
 	// HTTP
 	response := api.NewApiResponseHandler(log)
@@ -180,6 +182,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
 	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
+	handler.NewDashboardAPIHandler(v1, apiHandler, dashboardUseCase).Init(jwtAuth)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
 }

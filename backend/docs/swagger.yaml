@@ -1197,6 +1197,290 @@ definitions:
         description: false = soft delete
         type: boolean
     type: object
+  backend_pkg_modules_dashboard_models.DashboardBookings:
+    properties:
+      buckets:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardBucket'
+        type: array
+      byState:
+        description: created in the range
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount'
+        type: array
+      newCount:
+        description: still new, any create date
+        type: integer
+      previousTotal:
+        description: created in the previous range
+        type: integer
+      total:
+        description: created in the range
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardBucket:
+    properties:
+      count:
+        type: integer
+      date:
+        description: first day of the bucket, YYYY-MM-DD
+        type: string
+      revenue:
+        description: 'LINE bookings: paid bookings'' total; customer bookings: 0'
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardCountryTour:
+    properties:
+      count:
+        type: integer
+      countryId:
+        type: string
+      nameTh:
+        type: string
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardDeparture:
+    properties:
+      bookingNo:
+        type: string
+      customerName:
+        type: string
+      endDate:
+        type: string
+      id:
+        type: string
+      salesUser:
+        $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardUser'
+      startDate:
+        type: string
+      state:
+        type: integer
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      travellers:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardLineBookings:
+    properties:
+      buckets:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardBucket'
+        type: array
+      bySales:
+        description: top 8; [] unless ScopeAll
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup'
+        type: array
+      bySource:
+        description: top 8
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup'
+        type: array
+      byState:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount'
+        type: array
+      byTour:
+        description: top 8
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineGroup'
+        type: array
+      departures:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardDeparture'
+        type: array
+      departuresDays:
+        description: Departures are the paid bookings departing in the next DeparturesDays
+          days (max 10).
+        type: integer
+      pipeline:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLinePipeline'
+        description: any create date
+      previous:
+        $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineTotals'
+      scopeAll:
+        description: 'ScopeAll: the caller sees every booking (admins); otherwise
+          their own (sales) / sent to them (finance).'
+        type: boolean
+      totals:
+        $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineTotals'
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardLineGroup:
+    properties:
+      count:
+        type: integer
+      key:
+        description: booking source id, tour code or user id; "" = not set
+        type: string
+      label:
+        description: '"" = not set'
+        type: string
+      paidCount:
+        type: integer
+      revenue:
+        type: integer
+      travellers:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardLinePipeline:
+    properties:
+      balancePending:
+        type: integer
+      waitingConfirm:
+        type: integer
+      waitingDocuments:
+        type: integer
+      waitingReview:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardLineTotals:
+    properties:
+      averageValue:
+        description: Revenue / PaidCount, rounded
+        type: integer
+      cancelled:
+        type: integer
+      count:
+        type: integer
+      paidCount:
+        type: integer
+      revenue:
+        type: integer
+      travellers:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardPeriod:
+    properties:
+      endDate:
+        type: string
+      periodId:
+        type: string
+      price:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      startDate:
+        type: string
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardRange:
+    properties:
+      days:
+        description: as requested
+        type: integer
+      from:
+        description: YYYY-MM-DD, inclusive
+        type: string
+      previousFrom:
+        description: PreviousFrom / PreviousTo is the period of the same length just
+          before, for the deltas.
+        type: string
+      previousTo:
+        type: string
+      to:
+        description: YYYY-MM-DD, inclusive (today)
+        type: string
+      unit:
+        description: 'Unit is the chart bucket: day (7, 30 days), week (90, weeks
+          start Monday) or month (365).'
+        enum:
+        - day
+        - week
+        - month
+        type: string
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardSeats:
+    properties:
+      days:
+        type: integer
+      lowSeats:
+        type: integer
+      lowSeatsThreshold:
+        type: integer
+      periods:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      soldOut:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardStateCount:
+    properties:
+      count:
+        type: integer
+      state:
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardSummaryRequest:
+    properties:
+      days:
+        description: 'Days is the period to summarise, ending today (Thailand time):
+          7, 30, 90 or 365; default 30.'
+        type: integer
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardSummaryResponse:
+    properties:
+      bookings:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardBookings'
+        description: booking:list
+      generatedAt:
+        type: string
+      lineBookings:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardLineBookings'
+        description: line-booking:list, scoped like the list
+      range:
+        $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardRange'
+      tours:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardTours'
+        description: Each section is null when the caller lacks its list permission.
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardTours:
+    properties:
+      byCountry:
+        description: public tours per country, top 8
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardCountryTour'
+        type: array
+      byState:
+        description: active tours, any update date
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardStateCount'
+        type: array
+      lowSeatPeriods:
+        description: LowSeatPeriods are those departures with seats left, fewest first
+          (max 8).
+        items:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardPeriod'
+        type: array
+      seats:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardSeats'
+        description: Seats covers the departures of public tours in the next Seats.Days
+          days.
+    type: object
+  backend_pkg_modules_dashboard_models.DashboardUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingCancelRequest:
     properties:
       id:
@@ -6317,6 +6601,39 @@ paths:
       summary: Soft-delete or restore a country
       tags:
       - countries
+  /dashboard/summary:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Totals, chart buckets and breakdowns for the last `days` days (Thailand time), with the
+        previous period of the same length for deltas. Sections: tours (tour-program:list),
+        customer booking requests (booking:list) and LINE bookings (line-booking:list, limited
+        to the caller's own like the list). A section the caller may not see is null.
+      parameters:
+      - description: Period
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardSummaryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_dashboard_models.DashboardSummaryResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Backoffice dashboard figures
+      tags:
+      - dashboard
   /health:
     get:
       produces:
