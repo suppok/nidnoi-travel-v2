@@ -15,7 +15,7 @@ import DocumentsReviewModal from './DocumentsReviewModal.tsx';
 import FinanceDocumentsSection from './FinanceDocumentsSection.tsx';
 import LineBookingHistory from './LineBookingHistory.tsx';
 import LineContactSection from './LineContactSection.tsx';
-import { dueDate, lineBookingLines, type Line, paymentPlan, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
+import { dueDate, enteredBy, lineBookingLines, type Line, paymentPlan, travellerSummary, tripDates } from '../lib/lineBookingFormat.ts';
 
 type Props = {
   bookingId: string | null;
@@ -231,7 +231,7 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
             <Typography.Title level={5}>ข้อมูลจาก LINE</Typography.Title>
             <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
               <Descriptions.Item label="เซลล์เจ้าของ">{booking.salesUser?.name ?? <span className="text-ink-muted">-</span>}</Descriptions.Item>
-              <Descriptions.Item label="บันทึกโดย">{booking.lineDisplayName}</Descriptions.Item>
+              <Descriptions.Item label="บันทึกโดย">{enteredBy(booking)}</Descriptions.Item>
               <Descriptions.Item label="ชื่อลูกค้า">{booking.customerName}</Descriptions.Item>
               <Descriptions.Item label="เบอร์โทร">
                 <a href={`tel:${booking.customerPhone.replace(/[^\d+]/g, '')}`}>

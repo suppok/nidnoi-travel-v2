@@ -64,6 +64,8 @@ type LineBookingItem struct {
 	BookingSource *LineBookingSource `json:"bookingSource"`
 	// SalesUser owns the booking; null on bookings made before it was recorded.
 	SalesUser *LineBookingUser `json:"salesUser"`
+	// CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).
+	CreatedBy *LineBookingUser `json:"createdBy"`
 	// FinanceUser issues the receipt; set when the sales owner confirms (null before).
 	FinanceUser *LineBookingUser `json:"financeUser"`
 	ConfirmedAt null.Time        `json:"confirmedAt" swaggertype:"string"`
@@ -174,6 +176,9 @@ func NewLineBookingItem(b *domain.LineBooking) LineBookingItem {
 	item.SlipImages, item.BalanceSlipImages = b.Slips(), b.BalanceSlips()
 	if f := b.FinanceUser; f != nil {
 		item.FinanceUser = &LineBookingUser{ID: f.ID, Name: f.Name}
+	}
+	if c := b.CreateUser; c != nil {
+		item.CreatedBy = &LineBookingUser{ID: c.ID, Name: c.Name}
 	}
 	if s := b.SalesUser; s != nil {
 		item.SalesUser = &LineBookingUser{ID: s.ID, Name: s.Name}

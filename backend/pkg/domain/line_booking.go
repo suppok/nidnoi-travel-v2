@@ -174,6 +174,8 @@ type LineBooking struct {
 	LineContact *LineContact `bun:"rel:belongs-to,join:line_contact_id=id" json:"lineContact,omitempty"`
 	SalesUser   *AppUser     `bun:"rel:belongs-to,join:sales_user_id=id"   json:"salesUser,omitempty"`
 	FinanceUser *AppUser     `bun:"rel:belongs-to,join:finance_user_id=id" json:"financeUser,omitempty"`
+	// CreateUser is the staff user who entered the booking (create_by).
+	CreateUser *AppUser `bun:"rel:belongs-to,join:create_by=id" json:"createUser,omitempty"`
 	// BookingSource is where the customer booked (LINE OA, Facebook, ...).
 	BookingSource *BookingSource `bun:"rel:belongs-to,join:booking_source_id=id" json:"bookingSource,omitempty"`
 }

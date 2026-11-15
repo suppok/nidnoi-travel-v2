@@ -7,7 +7,7 @@ import { FINANCE_LINE_BOOKINGS_PATH, LineBookingStates, lineBookingStateInfo } f
 import { Permissions } from '../../../constants/permissions.ts';
 import { Roles, worksAs } from '../../../constants/roles.ts';
 import type { LineBooking, LineBookingListRequest } from '../../../types/lineBooking.ts';
-import { requiredDocuments } from '../lib/lineBookingFormat.ts';
+import { enteredBy, requiredDocuments } from '../lib/lineBookingFormat.ts';
 import { LineBookingAlertsContext } from '../hooks/useLineBookingAlerts.ts';
 
 const POLL_MS = 60_000;
@@ -30,7 +30,7 @@ const STREAMS = {
     request: { state: LineBookingStates.New, status: true, page: 1, pageSize: 1 },
     at: (b) => b.createDate,
     title: 'มีใบจอง LINE ใหม่',
-    describe: (b, total) => `${b.bookingNo} · ${b.lineDisplayName} · ${b.tourCode}${total > 1 ? ` (รอตรวจสอบทั้งหมด ${total} รายการ)` : ''}`,
+    describe: (b, total) => `${b.bookingNo} · ${enteredBy(b)} · ${b.tourCode}${total > 1 ? ` (รอตรวจสอบทั้งหมด ${total} รายการ)` : ''}`,
     path: (b) => `/line-bookings?state=${LineBookingStates.New}&open=${b.id}`,
   },
   // Finance: a sales owner confirmed a booking and sent it to me; waiting for my documents.
