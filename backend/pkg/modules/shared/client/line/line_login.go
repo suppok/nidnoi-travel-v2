@@ -30,10 +30,10 @@ type idTokenClaims struct {
 	Nonce string `json:"nonce"`
 }
 
-func (c *client) LoginConfigured() bool { return c.liffChannelID != "" && c.loginChannelSecret != "" }
+func (c *client) LoginConfigured() bool { return c.loginChannelID != "" && c.loginChannelSecret != "" }
 
 // LoginChannelID is the LINE Login channel the backoffice's authorize URL uses (public).
-func (c *client) LoginChannelID() string { return c.liffChannelID }
+func (c *client) LoginChannelID() string { return c.loginChannelID }
 
 // ExchangeLoginCode trades an authorization code for the LINE user: it redeems the code (with the
 // PKCE verifier and the channel secret), then has LINE verify the ID token for our channel and the
@@ -48,7 +48,7 @@ func (c *client) ExchangeLoginCode(ctx context.Context, code, redirectURI, codeV
 		"grant_type":    {"authorization_code"},
 		"code":          {code},
 		"redirect_uri":  {redirectURI},
-		"client_id":     {c.liffChannelID},
+		"client_id":     {c.loginChannelID},
 		"client_secret": {c.loginChannelSecret},
 		"code_verifier": {codeVerifier},
 	}, &token); err != nil {
@@ -61,7 +61,7 @@ func (c *client) ExchangeLoginCode(ctx context.Context, code, redirectURI, codeV
 	var claims idTokenClaims
 	if err := c.postForm(ctx, verifyURL, url.Values{
 		"id_token":  {token.IDToken},
-		"client_id": {c.liffChannelID},
+		"client_id": {c.loginChannelID},
 		"nonce":     {nonce},
 	}, &claims); err != nil {
 		return nil, err

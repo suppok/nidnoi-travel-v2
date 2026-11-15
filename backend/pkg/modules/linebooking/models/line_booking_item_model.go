@@ -83,7 +83,7 @@ type LineBookingItem struct {
 	FixRequestedAt null.Time `json:"fixRequestedAt" swaggertype:"string"`
 	// LineContact is the customer's LINE OA chat picked by staff; null until linked.
 	LineContact *LineBookingContact `json:"lineContact"`
-	// The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+	// The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
 	// the sales owner confirmed it (state 25; finance then issues the RE).
 	BalanceSlipImage   string    `json:"balanceSlipImage"` // the first of balanceSlipImages
 	BalanceSlipImages  []string  `json:"balanceSlipImages"`

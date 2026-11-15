@@ -111,8 +111,8 @@ func New(ctx context.Context) (*App, error) {
 	if !deployHook.Configured() {
 		log.Warn("CLOUDFLARE_DEPLOY_HOOK_URL is not set: customer-site rebuilds are logged and skipped")
 	}
-	if !lineClient.Configured() {
-		log.Warn("LINE is not configured: LIFF endpoints return LINE_NOT_CONFIGURED until LINE_LIFF_CHANNEL_ID is set")
+	if !lineClient.LoginConfigured() {
+		log.Warn("LINE Login is not configured: \"ล็อกอินด้วย LINE\" and \"เชื่อมบัญชี LINE\" are off until LINE_LOGIN_CHANNEL_ID and LINE_LOGIN_CHANNEL_SECRET are set")
 	}
 	if !lineClient.WebhookConfigured() {
 		log.Warn("LINE_CHANNEL_SECRET is not set: the LINE webhook returns LINE_NOT_CONFIGURED")
@@ -162,11 +162,10 @@ func New(ctx context.Context) (*App, error) {
 	apiHandler := api.NewApiHandler(response, cfg.Server.ClientIPHeader)
 	jwtAuth := middleware.NewAuth(coreRegistry.JWT, authUseCase)
 	authPermissions := middleware.NewAuthPermissions(permissions)
-	liffAuth := middleware.NewLIFFAuth(authUseCase)
 
 	v1 := f.Group("/api/v1")
 	handler.NewHealthAPIHandler(v1, apiHandler).Init()
-	handler.NewAuthAPIHandler(v1, apiHandler, cfg, authUseCase).Init(jwtAuth, liffAuth, authPermissions)
+	handler.NewAuthAPIHandler(v1, apiHandler, cfg, authUseCase).Init(jwtAuth)
 	handler.NewUserAPIHandler(v1, apiHandler, userUseCase).Init(jwtAuth, authPermissions)
 	handler.NewCountryAPIHandler(v1, apiHandler, countryUseCase).Init(jwtAuth, authPermissions)
 	handler.NewCityAPIHandler(v1, apiHandler, cityUseCase).Init(jwtAuth, authPermissions)
@@ -179,8 +178,8 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
-	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, liffAuth, authPermissions)
-	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, liffAuth, authPermissions)
+	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
+	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
 
 	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
 }

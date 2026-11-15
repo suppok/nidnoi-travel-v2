@@ -45,7 +45,7 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
   // The sales owner (or an admin) confirms or cancels a new booking; the backend re-checks.
   const decidable = editable && booking?.state === LineBookingStates.New && (isOwner || seesAll);
   const [confirming, setConfirming] = useState(false);
-  // A balance recorded from LIFF waits for the sales owner (or an admin) to check the slip.
+  // A recorded balance waits for the sales owner (or an admin) to check the slip.
   const balancePending =
     booking?.state === LineBookingStates.DepositPaid && !!booking.balanceSubmittedAt && !booking.balanceConfirmedAt;
   const confirmsBalance = editable && balancePending && (isOwner || seesAll);
@@ -231,7 +231,7 @@ export default function LineBookingDrawer({ bookingId, onClose, onChanged }: Pro
             <Typography.Title level={5}>ข้อมูลจาก LINE</Typography.Title>
             <Descriptions column={1} size="small" bordered styles={DESCRIPTION_STYLES}>
               <Descriptions.Item label="เซลล์เจ้าของ">{booking.salesUser?.name ?? <span className="text-ink-muted">-</span>}</Descriptions.Item>
-              <Descriptions.Item label="ส่งโดย (LINE)">{booking.lineDisplayName}</Descriptions.Item>
+              <Descriptions.Item label="บันทึกโดย">{booking.lineDisplayName}</Descriptions.Item>
               <Descriptions.Item label="ชื่อลูกค้า">{booking.customerName}</Descriptions.Item>
               <Descriptions.Item label="เบอร์โทร">
                 <a href={`tel:${booking.customerPhone.replace(/[^\d+]/g, '')}`}>

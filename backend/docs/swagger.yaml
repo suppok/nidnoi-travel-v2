@@ -185,15 +185,24 @@ definitions:
       linkedAt:
         type: string
     type: object
-  backend_pkg_modules_auth_models.AuthLineLinkCreateResponse:
+  backend_pkg_modules_auth_models.AuthLineLinkRequest:
     properties:
-      expiresAt:
+      code:
         type: string
-      url:
-        description: URL opens the LIFF app with the one-time code; the backoffice
-          shows it as a QR code.
-        example: https://liff.line.me/1234567890-AbCdEfGh?lineLink=...
+      codeVerifier:
+        description: PKCE
         type: string
+      nonce:
+        type: string
+      redirectUri:
+        description: RedirectURI is <backoffice origin>/login/line/callback, the origin
+          one of CORS_ALLOWED_ORIGINS.
+        type: string
+    type: object
+  backend_pkg_modules_auth_models.AuthLineLinkResponse:
+    properties:
+      line:
+        $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineAccount'
     type: object
   backend_pkg_modules_auth_models.AuthLineLoginConfigResponse:
     properties:
@@ -247,8 +256,8 @@ definitions:
       line:
         allOf:
         - $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineAccount'
-        description: Line is the user's own linked LINE account (for the LIFF app);
-          null until linked.
+        description: Line is the user's own linked LINE account (for "ล็อกอินด้วย
+          LINE"); null until linked.
       mustChangePassword:
         type: boolean
       name:
@@ -270,31 +279,6 @@ definitions:
       expiresIn:
         description: seconds
         type: integer
-    type: object
-  backend_pkg_modules_auth_models.LIFFLineLinkRequest:
-    properties:
-      code:
-        type: string
-    type: object
-  backend_pkg_modules_auth_models.LIFFLineLinkResponse:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-    type: object
-  backend_pkg_modules_auth_models.LIFFMeResponse:
-    properties:
-      email:
-        type: string
-      lineDisplayName:
-        type: string
-      name:
-        type: string
-      roles:
-        items:
-          type: string
-        type: array
     type: object
   backend_pkg_modules_booking_models.BookingGetResponse:
     properties:
@@ -1239,7 +1223,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -1490,7 +1474,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -1677,7 +1661,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -1861,7 +1845,7 @@ definitions:
       adultTwin:
         type: integer
       bookingSourceId:
-        description: BookingSourceID is where the customer booked (GET /liff/booking-sources);
+        description: BookingSourceID is where the customer booked (POST /booking-sources/list);
           optional.
         type: string
       charges:
@@ -1909,7 +1893,7 @@ definitions:
       isDeposit:
         type: boolean
       lineContactId:
-        description: LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list);
+        description: LineContactID is the customer's LINE OA chat (POST /line-contacts/list);
           optional.
         type: string
       note:
@@ -1931,7 +1915,7 @@ definitions:
       remainingDueDate:
         type: string
       salesUserId:
-        description: SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
+        description: SalesUserID is the sales person who owns the booking (GET /users/sales).
         type: string
       singleSupplement:
         type: integer
@@ -1939,7 +1923,7 @@ definitions:
         type: string
       slipImages:
         description: |-
-          SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
+          SlipImages are the payment's slips (R2 URLs from /media/upload/line-booking-slip), 1 to 10. SlipImage is the
           older single-slip field, still accepted when SlipImages is empty.
         items:
           type: string
@@ -1954,6 +1938,135 @@ definitions:
         type: string
       totalPrice:
         description: TotalPrice is the grand total, card fee included.
+        type: integer
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDealUpdateRequest:
+    properties:
+      adultPrice:
+        description: |-
+          Unit prices agreed with the customer (whole baht). Null = the period's price. AdultPrice is per
+          adult; an adult in a single room pays AdultPrice + SingleSupplement.
+        type: integer
+      adultPriceBeforeDiscount:
+        description: AdultPriceBeforeDiscount is shown as "(จาก …)"; display only.
+        type: integer
+      adultSingle:
+        type: integer
+      adultTwin:
+        type: integer
+      balanceSlipImage:
+        description: |-
+          BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/line-booking-slip); "" = no balance
+          paid yet. Only for a deposit booking not paid in full (state 20) whose deposit
+          documents were approved; sending one makes the booking
+          wait for the sales owner to confirm the balance.
+        type: string
+      balanceSlipImages:
+        description: BalanceSlipImages are several balance slips (1 to 10); takes
+          over BalanceSlipImage when set.
+        items:
+          type: string
+        type: array
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSourceId:
+        description: BookingSourceID is where the customer booked (POST /booking-sources/list);
+          optional.
+        type: string
+      charges:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq'
+        type: array
+      childNoBed:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBed:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      creditFeePercent:
+        description: credit only, up to 2 decimals
+        example: 3
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      depositDueDate:
+        description: Dates are YYYY-MM-DD, times HH:mm; all optional.
+        type: string
+      depositDueTime:
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        description: DiscountPerPerson comes off every traveller's price, infants
+          included.
+        type: integer
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      infant:
+        type: integer
+      infantPrice:
+        description: required when Infant > 0
+        type: integer
+      isDeposit:
+        type: boolean
+      lineContactId:
+        description: LineContactID is the customer's LINE OA chat (POST /line-contacts/list);
+          optional.
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        description: '"" = transfer'
+        enum:
+        - transfer
+        - credit
+        type: string
+      periodId:
+        type: string
+      refBookingNo:
+        description: the booking number on that source
+        type: string
+      refName:
+        description: the customer's name on that source
+        type: string
+      remainingDueDate:
+        type: string
+      salesUserId:
+        description: SalesUserID is the sales person who owns the booking (GET /users/sales).
+        type: string
+      singleSupplement:
+        type: integer
+      slipImage:
+        type: string
+      slipImages:
+        description: |-
+          SlipImages are the payment's slips (R2 URLs from /media/upload/line-booking-slip), 1 to 10. SlipImage is the
+          older single-slip field, still accepted when SlipImages is empty.
+        items:
+          type: string
+        type: array
+      tourCode:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingDealUpdateResponse:
+    properties:
+      balancePending:
+        description: 'BalancePending: the balance waits for the sales owner''s confirm.'
+        type: boolean
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      totalPrice:
+        description: TotalPrice is the new grand total, card fee included.
         type: integer
     type: object
   backend_pkg_modules_linebooking_models.LineBookingDocumentsApproveRequest:
@@ -1982,7 +2095,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -2167,7 +2280,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -2355,7 +2468,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -2511,6 +2624,196 @@ definitions:
       updateDate:
         type: string
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingEditableGetResponse:
+    properties:
+      adultPriceBeforeDiscount:
+        type: integer
+      adultSingleCount:
+        type: integer
+      adultSinglePrice:
+        type: integer
+      adultTwinCount:
+        type: integer
+      adultTwinPrice:
+        type: integer
+      aiFile:
+        description: |-
+          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
+          balance) → reFile.
+        type: string
+      balanceConfirmedAt:
+        type: string
+      balanceSlipImage:
+        description: |-
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
+          the sales owner confirmed it (state 25; finance then issues the RE).
+        type: string
+      balanceSlipImages:
+        items:
+          type: string
+        type: array
+      balanceSubmittedAt:
+        type: string
+      bookingNo:
+        example: 26X8K9AQ
+        type: string
+      bookingSource:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
+        description: BookingSource is where the customer booked; null when not given.
+      cardFee:
+        type: integer
+      charges:
+        description: Charges are the extra lines (visa, taxes, options, ...); [] on
+          older bookings.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
+        type: array
+      childNoBedCount:
+        type: integer
+      childNoBedPrice:
+        type: integer
+      childWithBedCount:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      confirmedAt:
+        type: string
+      createDate:
+        type: string
+      creditFeePercent:
+        type: number
+      customerAddress:
+        type: string
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      customerSentAt:
+        type: string
+      depositDueDate:
+        example: "2026-12-01"
+        type: string
+      depositDueTime:
+        example: "18:00"
+        type: string
+      depositPerPerson:
+        type: integer
+      discountPerPerson:
+        type: integer
+      documentsApprovedAt:
+        description: |-
+          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
+          customer's LINE chat (null = approved without sending).
+        type: string
+      documentsAt:
+        description: DocumentsAt is when finance sent them; null on a confirmed booking
+          = waiting for finance.
+        type: string
+      endDate:
+        example: "2026-12-05"
+        type: string
+      financeUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: FinanceUser issues the receipt; set when the sales owner confirms
+          (null before).
+      fixNote:
+        description: FixNote is the latest fix request from sales to finance ("" =
+          none).
+        type: string
+      fixRequestedAt:
+        type: string
+      fullDueDate:
+        type: string
+      fullDueTime:
+        type: string
+      id:
+        type: string
+      infantCount:
+        type: integer
+      infantPrice:
+        type: integer
+      isDeposit:
+        type: boolean
+      ivFile:
+        type: string
+      lineContact:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
+        description: LineContact is the customer's LINE OA chat picked by staff; null
+          until linked.
+      lineDisplayName:
+        type: string
+      lineUserId:
+        type: string
+      note:
+        type: string
+      paymentMethod:
+        enum:
+        - transfer
+        - credit
+        type: string
+      reFile:
+        type: string
+      refBookingNo:
+        type: string
+      refName:
+        type: string
+      remainingDueDate:
+        type: string
+      salesUser:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: SalesUser owns the booking; null on bookings made before it was
+          recorded.
+      slipImage:
+        description: the first of slipImages
+        type: string
+      slipImages:
+        items:
+          type: string
+        type: array
+      staffNote:
+        type: string
+      startDate:
+        example: "2026-12-01"
+        type: string
+      state:
+        enum:
+        - 10
+        - 20
+        - 25
+        - 30
+        type: integer
+      status:
+        type: boolean
+      totalPrice:
+        type: integer
+      tourCode:
+        type: string
+      tourName:
+        type: string
+      tourProgramId:
+        type: string
+      tourProgramPeriodId:
+        type: string
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingEditableListRequest:
+    properties:
+      lineContactId:
+        description: LineContactID is the customer's chat (POST /line-contacts/list).
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingEditableListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingItem'
+        type: array
+    type: object
   backend_pkg_modules_linebooking_models.LineBookingEventItem:
     properties:
       action:
@@ -2588,7 +2891,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -2765,7 +3068,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -2920,325 +3223,6 @@ definitions:
         type: string
       updateDate:
         type: string
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse:
-    properties:
-      adultPriceBeforeDiscount:
-        type: integer
-      adultSingleCount:
-        type: integer
-      adultSinglePrice:
-        type: integer
-      adultTwinCount:
-        type: integer
-      adultTwinPrice:
-        type: integer
-      aiFile:
-        description: |-
-          Finance documents (PDF URLs, "" = none): deposit → aiFile + ivFile, full payment (or a confirmed
-          balance) → reFile.
-        type: string
-      balanceConfirmedAt:
-        type: string
-      balanceSlipImage:
-        description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
-          the sales owner confirmed it (state 25; finance then issues the RE).
-        type: string
-      balanceSlipImages:
-        items:
-          type: string
-        type: array
-      balanceSubmittedAt:
-        type: string
-      bookingNo:
-        example: 26X8K9AQ
-        type: string
-      bookingSource:
-        allOf:
-        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
-        description: BookingSource is where the customer booked; null when not given.
-      cardFee:
-        type: integer
-      charges:
-        description: Charges are the extra lines (visa, taxes, options, ...); [] on
-          older bookings.
-        items:
-          $ref: '#/definitions/backend_pkg_domain.LineBookingCharge'
-        type: array
-      childNoBedCount:
-        type: integer
-      childNoBedPrice:
-        type: integer
-      childWithBedCount:
-        type: integer
-      childWithBedPrice:
-        type: integer
-      confirmedAt:
-        type: string
-      createDate:
-        type: string
-      creditFeePercent:
-        type: number
-      customerAddress:
-        type: string
-      customerName:
-        type: string
-      customerPhone:
-        type: string
-      customerSentAt:
-        type: string
-      depositDueDate:
-        example: "2026-12-01"
-        type: string
-      depositDueTime:
-        example: "18:00"
-        type: string
-      depositPerPerson:
-        type: integer
-      discountPerPerson:
-        type: integer
-      documentsApprovedAt:
-        description: |-
-          DocumentsApprovedAt: the sales owner approved them; CustomerSentAt: the card was pushed to the
-          customer's LINE chat (null = approved without sending).
-        type: string
-      documentsAt:
-        description: DocumentsAt is when finance sent them; null on a confirmed booking
-          = waiting for finance.
-        type: string
-      endDate:
-        example: "2026-12-05"
-        type: string
-      financeUser:
-        allOf:
-        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
-        description: FinanceUser issues the receipt; set when the sales owner confirms
-          (null before).
-      fixNote:
-        description: FixNote is the latest fix request from sales to finance ("" =
-          none).
-        type: string
-      fixRequestedAt:
-        type: string
-      fullDueDate:
-        type: string
-      fullDueTime:
-        type: string
-      id:
-        type: string
-      infantCount:
-        type: integer
-      infantPrice:
-        type: integer
-      isDeposit:
-        type: boolean
-      ivFile:
-        type: string
-      lineContact:
-        allOf:
-        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingContact'
-        description: LineContact is the customer's LINE OA chat picked by staff; null
-          until linked.
-      lineDisplayName:
-        type: string
-      lineUserId:
-        type: string
-      note:
-        type: string
-      paymentMethod:
-        enum:
-        - transfer
-        - credit
-        type: string
-      reFile:
-        type: string
-      refBookingNo:
-        type: string
-      refName:
-        type: string
-      remainingDueDate:
-        type: string
-      salesUser:
-        allOf:
-        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
-        description: SalesUser owns the booking; null on bookings made before it was
-          recorded.
-      slipImage:
-        description: the first of slipImages
-        type: string
-      slipImages:
-        items:
-          type: string
-        type: array
-      staffNote:
-        type: string
-      startDate:
-        example: "2026-12-01"
-        type: string
-      state:
-        enum:
-        - 10
-        - 20
-        - 25
-        - 30
-        type: integer
-      status:
-        type: boolean
-      totalPrice:
-        type: integer
-      tourCode:
-        type: string
-      tourName:
-        type: string
-      tourProgramId:
-        type: string
-      tourProgramPeriodId:
-        type: string
-      updateDate:
-        type: string
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest:
-    properties:
-      lineContactId:
-        description: LineContactID is the customer's chat (POST /liff/line-contacts/list).
-        type: string
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingItem'
-        type: array
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest:
-    properties:
-      adultPrice:
-        description: |-
-          Unit prices agreed with the customer (whole baht). Null = the period's price. AdultPrice is per
-          adult; an adult in a single room pays AdultPrice + SingleSupplement.
-        type: integer
-      adultPriceBeforeDiscount:
-        description: AdultPriceBeforeDiscount is shown as "(จาก …)"; display only.
-        type: integer
-      adultSingle:
-        type: integer
-      adultTwin:
-        type: integer
-      balanceSlipImage:
-        description: |-
-          BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/liff); "" = no balance
-          paid yet. Only for a deposit booking not paid in full (state 20) whose deposit
-          documents were approved; sending one makes the booking
-          wait for the sales owner to confirm the balance.
-        type: string
-      balanceSlipImages:
-        description: BalanceSlipImages are several balance slips (1 to 10); takes
-          over BalanceSlipImage when set.
-        items:
-          type: string
-        type: array
-      bookingNo:
-        example: 26X8K9AQ
-        type: string
-      bookingSourceId:
-        description: BookingSourceID is where the customer booked (GET /liff/booking-sources);
-          optional.
-        type: string
-      charges:
-        items:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq'
-        type: array
-      childNoBed:
-        type: integer
-      childNoBedPrice:
-        type: integer
-      childWithBed:
-        type: integer
-      childWithBedPrice:
-        type: integer
-      creditFeePercent:
-        description: credit only, up to 2 decimals
-        example: 3
-        type: number
-      customerAddress:
-        type: string
-      customerName:
-        type: string
-      customerPhone:
-        type: string
-      depositDueDate:
-        description: Dates are YYYY-MM-DD, times HH:mm; all optional.
-        type: string
-      depositDueTime:
-        type: string
-      depositPerPerson:
-        type: integer
-      discountPerPerson:
-        description: DiscountPerPerson comes off every traveller's price, infants
-          included.
-        type: integer
-      fullDueDate:
-        type: string
-      fullDueTime:
-        type: string
-      infant:
-        type: integer
-      infantPrice:
-        description: required when Infant > 0
-        type: integer
-      isDeposit:
-        type: boolean
-      lineContactId:
-        description: LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list);
-          optional.
-        type: string
-      note:
-        type: string
-      paymentMethod:
-        description: '"" = transfer'
-        enum:
-        - transfer
-        - credit
-        type: string
-      periodId:
-        type: string
-      refBookingNo:
-        description: the booking number on that source
-        type: string
-      refName:
-        description: the customer's name on that source
-        type: string
-      remainingDueDate:
-        type: string
-      salesUserId:
-        description: SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
-        type: string
-      singleSupplement:
-        type: integer
-      slipImage:
-        type: string
-      slipImages:
-        description: |-
-          SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
-          older single-slip field, still accepted when SlipImages is empty.
-        items:
-          type: string
-        type: array
-      tourCode:
-        type: string
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse:
-    properties:
-      balancePending:
-        description: 'BalancePending: the balance waits for the sales owner''s confirm.'
-        type: boolean
-      bookingNo:
-        example: 26X8K9AQ
-        type: string
-      totalPrice:
-        description: TotalPrice is the new grand total, card fee included.
-        type: integer
     type: object
   backend_pkg_modules_linebooking_models.LineBookingListRequest:
     properties:
@@ -3247,8 +3231,8 @@ definitions:
           (the finance alert).
         type: boolean
       balancePending:
-        description: 'BalancePending: true = sales recorded the balance from LIFF
-          and it waits for the owner''s confirm.'
+        description: 'BalancePending: true = sales recorded the balance and it waits
+          for the owner''s confirm.'
         type: boolean
       documentsApproved:
         description: 'DocumentsApproved: true = the sales owner approved the documents,
@@ -3359,17 +3343,6 @@ definitions:
       lineBookingId:
         type: string
     type: object
-  backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse:
-    properties:
-      defaultId:
-        description: DefaultID is the caller when they are in Items, otherwise "".
-        type: string
-      items:
-        description: Items are active users with the sales role, by name.
-        items:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
-        type: array
-    type: object
   backend_pkg_modules_linebooking_models.LineBookingSource:
     properties:
       id:
@@ -3379,14 +3352,6 @@ definitions:
       shortName:
         description: label of the reference name ("ชื่อ <shortName>"); "" = none
         type: string
-    type: object
-  backend_pkg_modules_linebooking_models.LineBookingSourceListResponse:
-    properties:
-      items:
-        description: Items are the active booking sources, in their sort order.
-        items:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSource'
-        type: array
     type: object
   backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest:
     properties:
@@ -3418,7 +3383,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -3602,7 +3567,7 @@ definitions:
         type: string
       balanceSlipImage:
         description: |-
-          The balance of a deposit booking: slip and time recorded from LIFF (null = not yet), and when
+          The balance of a deposit booking: slip and time sales recorded (null = not yet), and when
           the sales owner confirmed it (state 25; finance then issues the RE).
         type: string
       balanceSlipImages:
@@ -4846,8 +4811,8 @@ definitions:
       lastLoginAt:
         type: string
       lineDisplayName:
-        description: LineDisplayName is the LINE account the user linked for the LIFF
-          app; null when not linked.
+        description: LineDisplayName is the LINE account the user linked (LINE login);
+          null when not linked.
         type: string
       mustChangePassword:
         type: boolean
@@ -4876,8 +4841,8 @@ definitions:
       lastLoginAt:
         type: string
       lineDisplayName:
-        description: LineDisplayName is the LINE account the user linked for the LIFF
-          app; null when not linked.
+        description: LineDisplayName is the LINE account the user linked (LINE login);
+          null when not linked.
         type: string
       mustChangePassword:
         type: boolean
@@ -4906,8 +4871,8 @@ definitions:
       lastLoginAt:
         type: string
       lineDisplayName:
-        description: LineDisplayName is the LINE account the user linked for the LIFF
-          app; null when not linked.
+        description: LineDisplayName is the LINE account the user linked (LINE login);
+          null when not linked.
         type: string
       mustChangePassword:
         type: boolean
@@ -5012,8 +4977,8 @@ definitions:
       lastLoginAt:
         type: string
       lineDisplayName:
-        description: LineDisplayName is the LINE account the user linked for the LIFF
-          app; null when not linked.
+        description: LineDisplayName is the LINE account the user linked (LINE login);
+          null when not linked.
         type: string
       mustChangePassword:
         type: boolean
@@ -5391,16 +5356,40 @@ paths:
       - airlines
   /auth/line-link:
     post:
+      consumes:
+      - application/json
       description: |-
-        Returns a one-time LIFF URL (valid 10 minutes) that the backoffice shows as a QR code.
-        Opening it in LINE links the LINE account to the caller. A new call replaces the old code.
+        The backoffice ran LINE Login ("เชื่อมบัญชี LINE") and sends the code from its callback, like
+        POST /auth/line/login. The LINE account is linked to the caller, replacing an earlier link.
+      parameters:
+      - description: Code from LINE
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineLinkRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineLinkCreateResponse'
+            $ref: '#/definitions/backend_pkg_modules_auth_models.AuthLineLinkResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: INVALID_LINE_LOGIN
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_ALREADY_LINKED
+          schema:
+            additionalProperties: true
+            type: object
         "503":
           description: LINE_NOT_CONFIGURED
           schema:
@@ -5408,7 +5397,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Start linking my LINE account
+      summary: Link my LINE account
       tags:
       - auth
   /auth/line-unlink:
@@ -6259,318 +6248,6 @@ paths:
       summary: Liveness check
       tags:
       - health
-  /liff/booking-sources:
-    get:
-      description: |-
-        Active booking sources in their sort order.
-        Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSourceListResponse'
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Booking source options for the LIFF booking form
-      tags:
-      - liff
-  /liff/line-bookings:
-    put:
-      consumes:
-      - application/json
-      description: |-
-        The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
-        stay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then
-        waits for the sales owner's PUT /line-bookings/confirm-balance.
-      parameters:
-      - description: Booking
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFUpdateResponse'
-        "400":
-          description: VALIDATION
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: NOT_FOUND
-          schema:
-            additionalProperties: true
-            type: object
-        "409":
-          description: LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Edit a reopened LINE booking from LIFF, or record its balance
-      tags:
-      - line-bookings
-  /liff/line-bookings/{bookingNo}:
-    get:
-      description: |-
-        Only a paid booking (state 20 or 25), also while its documents wait for finance.
-        Any staff user with line-booking:create may open it.
-      parameters:
-      - description: Booking no
-        in: path
-        name: bookingNo
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFGetResponse'
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: NOT_FOUND
-          schema:
-            additionalProperties: true
-            type: object
-        "409":
-          description: LINE_BOOKING_NOT_EDITABLE
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Reopen a LINE booking in LIFF by booking no
-      tags:
-      - line-bookings
-  /liff/line-bookings/{bookingNo}/events:
-    get:
-      description: Same items as GET /line-bookings/{id}/events, for a booking LIFF
-        may open (paid).
-      parameters:
-      - description: Booking no
-        in: path
-        name: bookingNo
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse'
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: NOT_FOUND
-          schema:
-            additionalProperties: true
-            type: object
-        "409":
-          description: LINE_BOOKING_NOT_EDITABLE
-          schema:
-            additionalProperties: true
-            type: object
-      summary: History of a LINE booking reopened in LIFF
-      tags:
-      - line-bookings
-  /liff/line-bookings/list:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.
-        Any staff user with line-booking:create may list them (sales share bookings).
-      parameters:
-      - description: Customer chat
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingLIFFListResponse'
-        "400":
-          description: VALIDATION
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: LINE bookings of one customer chat, for reopening in LIFF
-      tags:
-      - line-bookings
-  /liff/line-contacts/list:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Same as POST /line-contacts/list. Authorization: Bearer <LIFF access token> of a linked
-        staff user with line-contact:list.
-      parameters:
-      - description: Filter
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linecontact_models.LineContactListResponse'
-        "400":
-          description: VALIDATION
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: List LINE OA contacts for the LIFF booking form
-      tags:
-      - liff
-  /liff/line-link:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Called by the LIFF app with the code from the backoffice QR code.
-        Authorization: Bearer <LIFF access token>.
-      parameters:
-      - description: Link code
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/backend_pkg_modules_auth_models.LIFFLineLinkRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_auth_models.LIFFLineLinkResponse'
-        "400":
-          description: LINE_LINK_CODE_INVALID
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "409":
-          description: LINE_ALREADY_LINKED
-          schema:
-            additionalProperties: true
-            type: object
-        "503":
-          description: LINE_NOT_CONFIGURED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Finish linking a LINE account (LIFF)
-      tags:
-      - liff
-  /liff/me:
-    get:
-      description: 'Authorization: Bearer <LIFF access token>. Requires line-booking:create
-        (sales, admin).'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_auth_models.LIFFMeResponse'
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED, PASSWORD_CHANGE_REQUIRED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: The staff user linked to this LINE account (LIFF)
-      tags:
-      - liff
-  /liff/sales-users:
-    get:
-      description: |-
-        Active users with the sales role, by name; defaultId is the caller when they are sales.
-        Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingSalesUserListResponse'
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Sales owner options for the LIFF booking form
-      tags:
-      - liff
   /line-booking-notifications/list:
     post:
       consumes:
@@ -6628,10 +6305,9 @@ paths:
       consumes:
       - application/json
       description: |-
-        Sales staff submit a booking with payment slip from the LIFF app, with the deal from the
-        "สรุปยอดโอน" summary. Unit prices default to the period's; the total includes discount,
-        charges and card fee. Authorization: Bearer <LIFF access token> of a LINE account linked
-        to a staff user with line-booking:create.
+        Sales staff enter a booking with its payment slips on the backoffice booking entry page,
+        with the deal from the "สรุปยอดโอน" summary. Unit prices default to the period's; the total
+        includes discount, charges and card fee.
       parameters:
       - description: Booking
         in: body
@@ -6651,13 +6327,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
         "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
+          description: PERMISSION_DENIED
           schema:
             additionalProperties: true
             type: object
@@ -6671,12 +6342,9 @@ paths:
           schema:
             additionalProperties: true
             type: object
-        "503":
-          description: LINE_NOT_CONFIGURED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Create a LINE booking from LIFF
+      security:
+      - BearerAuth: []
+      summary: Create a LINE booking
       tags:
       - line-bookings
     put:
@@ -6740,7 +6408,7 @@ paths:
   /line-bookings/{id}/events:
     get:
       description: |-
-        Every action on the booking, oldest first: created, confirmed, documents, LIFF edits (with
+        Every action on the booking, oldest first: created, confirmed, documents, deal edits (with
         the changed fields), balance, LINE chat, staff note, delete/restore. Same visibility as GET /line-bookings/{id}.
       parameters:
       - description: LINE Booking ID
@@ -6947,8 +6615,8 @@ paths:
       consumes:
       - application/json
       description: |-
-        The sales owner (or an admin) checked the balance slip recorded from LIFF. The state becomes
-        25 (paid in full) and the booking goes back to its finance user for the RE.
+        The sales owner (or an admin) checked the balance slip recorded on the booking entry page.
+        The state becomes 25 (paid in full) and the booking goes back to its finance user for the RE.
       parameters:
       - description: Booking
         in: body
@@ -7130,6 +6798,164 @@ paths:
       security:
       - BearerAuth: []
       summary: Send the finance documents back to finance with a note
+      tags:
+      - line-bookings
+  /line-bookings/editable:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
+        stay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then
+        waits for the sales owner's PUT /line-bookings/confirm-balance.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDealUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingDealUpdateResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Edit a reopened LINE booking, or record its balance
+      tags:
+      - line-bookings
+  /line-bookings/editable/{bookingNo}:
+    get:
+      description: |-
+        Only a paid booking (state 20 or 25), also while its documents wait for finance.
+        Any staff user with line-booking:create may open it (not limited to their own bookings).
+      parameters:
+      - description: Booking no
+        in: path
+        name: bookingNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEditableGetResponse'
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reopen a LINE booking by booking no
+      tags:
+      - line-bookings
+  /line-bookings/editable/{bookingNo}/events:
+    get:
+      description: Same items as GET /line-bookings/{id}/events, for a booking that
+        can be reopened (paid).
+      parameters:
+      - description: Booking no
+        in: path
+        name: bookingNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEventListResponse'
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: LINE_BOOKING_NOT_EDITABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: History of a reopened LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/editable/list:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.
+        Any staff user with line-booking:create may list them (sales share bookings).
+      parameters:
+      - description: Customer chat
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEditableListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingEditableListResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: LINE bookings of one customer chat that can be reopened
       tags:
       - line-bookings
   /line-bookings/line-contact:
@@ -7331,59 +7157,6 @@ paths:
       summary: Upload an image or document to R2
       tags:
       - media
-  /media/upload/liff:
-    post:
-      consumes:
-      - multipart/form-data
-      description: |-
-        multipart/form-data with "file" and "purpose" (booking-slip).
-        Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
-      parameters:
-      - description: Image file
-        in: formData
-        name: file
-        required: true
-        type: file
-      - description: Purpose (booking-slip)
-        in: formData
-        name: purpose
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/backend_pkg_modules_media_models.MediaUploadResponse'
-        "400":
-          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: INVALID_LINE_TOKEN
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: LINE_NOT_LINKED, PERMISSION_DENIED
-          schema:
-            additionalProperties: true
-            type: object
-        "413":
-          description: MEDIA_TOO_LARGE
-          schema:
-            additionalProperties: true
-            type: object
-        "503":
-          description: STORAGE_UNAVAILABLE, LINE_NOT_CONFIGURED
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Upload a payment slip image from LIFF
-      tags:
-      - line-bookings
   /media/upload/line-booking:
     post:
       consumes:
@@ -7422,6 +7195,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Upload a finance document PDF of a LINE booking
+      tags:
+      - line-bookings
+  /media/upload/line-booking-slip:
+    post:
+      consumes:
+      - multipart/form-data
+      description: multipart/form-data with "file"; the purpose is booking-slip (fixed
+        by this endpoint).
+      parameters:
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_media_models.MediaUploadResponse'
+        "400":
+          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "413":
+          description: MEDIA_TOO_LARGE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: STORAGE_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload a payment slip image for a LINE booking
       tags:
       - line-bookings
   /sales-finances:
@@ -7771,7 +7588,7 @@ paths:
         Active tours in a public state (selling, closed), ordered by code. Prices and dates
         cover upcoming periods only (departing after today, Thailand time). No auth.
       parameters:
-      - description: Matches tour name or code (LIFF tour search)
+      - description: Matches tour name or code (quick search)
         in: query
         name: keyword
         type: string

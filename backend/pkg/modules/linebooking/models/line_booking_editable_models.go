@@ -4,42 +4,42 @@ import (
 	coremodels "backend/pkg/core/api/models"
 )
 
-// --- GET /liff/line-bookings/:bookingNo: reopen a paid booking in LIFF ---
+// --- GET /line-bookings/editable/:bookingNo: reopen a paid booking ---
 
-type LineBookingLIFFGetRequest struct {
+type LineBookingEditableGetRequest struct {
 	BookingNo string `json:"-"`
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
 
-type LineBookingLIFFGetResponse struct {
+type LineBookingEditableGetResponse struct {
 	LineBookingItem
 }
 
-// --- POST /liff/line-bookings/list: the bookings LIFF may reopen for one customer chat ---
+// --- POST /line-bookings/editable/list: the bookings of one customer chat that can be reopened ---
 
-type LineBookingLIFFListRequest struct {
-	// LineContactID is the customer's chat (POST /liff/line-contacts/list).
+type LineBookingEditableListRequest struct {
+	// LineContactID is the customer's chat (POST /line-contacts/list).
 	LineContactID string `json:"lineContactId"`
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
 
-// LineBookingLIFFListResponse lists the chat's active paid bookings (deposit or in full), newest
-// confirmation first, at most liffListLimit.
-type LineBookingLIFFListResponse struct {
+// LineBookingEditableListResponse lists the chat's active paid bookings (deposit or in full), newest
+// confirmation first, at most editableListLimit.
+type LineBookingEditableListResponse struct {
 	Items []LineBookingItem `json:"items"`
 }
 
-// --- PUT /liff/line-bookings: edit the deal of a reopened booking and/or record the balance ---
+// --- PUT /line-bookings/editable: edit the deal of a reopened booking and/or record the balance ---
 
-// LineBookingLIFFUpdateRequest carries the whole deal again, like POST /line-bookings. The tour,
+// LineBookingDealUpdateRequest carries the whole deal again, like POST /line-bookings. The tour,
 // period, first slip and sales owner stay as they are (tourCode, periodId, slipImage and
 // salesUserId are ignored), and so does the payment plan (isDeposit is ignored).
-type LineBookingLIFFUpdateRequest struct {
+type LineBookingDealUpdateRequest struct {
 	BookingNo string `json:"bookingNo" example:"26X8K9AQ"`
 	LineBookingCreateRequest
-	// BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/liff); "" = no balance
+	// BalanceSlipImage is the slip of the balance (R2 URL from /media/upload/line-booking-slip); "" = no balance
 	// paid yet. Only for a deposit booking not paid in full (state 20) whose deposit
 	// documents were approved; sending one makes the booking
 	// wait for the sales owner to confirm the balance.
@@ -48,7 +48,7 @@ type LineBookingLIFFUpdateRequest struct {
 	BalanceSlipImages []string `json:"balanceSlipImages"`
 }
 
-type LineBookingLIFFUpdateResponse struct {
+type LineBookingDealUpdateResponse struct {
 	BookingNo string `json:"bookingNo" example:"26X8K9AQ"`
 	// TotalPrice is the new grand total, card fee included.
 	TotalPrice int `json:"totalPrice"`

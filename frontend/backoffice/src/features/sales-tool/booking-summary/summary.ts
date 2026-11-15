@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { formatPhone } from '../../../lib/format.ts';
 
 // Pure logic of the booking summary tool: totals and the text sales paste into LINE OA / Facebook.
-// The LIFF app parses this text back (frontend/liff/src/lib/parseSummary.ts): keep the
+// The booking entry page parses this text back (features/line-booking-entry/lib/parseSummary.ts): keep the
 // "• <label> : <value>" lines and their labels stable, or update the parser too.
 
 export type PaymentMethod = 'transfer' | 'credit';

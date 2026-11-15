@@ -91,7 +91,7 @@ func chargesText(charges []domain.LineBookingCharge) string {
 	return strings.Join(parts, ", ")
 }
 
-// dealSnapshot is the part of a booking a LIFF edit may change, as display strings in a fixed order.
+// dealSnapshot is the part of a booking a deal edit may change, as display strings in a fixed order.
 // Booking source and LINE contact are read from their relations.
 func dealSnapshot(b *domain.LineBooking) []domain.LineBookingEventChange {
 	field := func(name, value string) domain.LineBookingEventChange {
@@ -161,11 +161,11 @@ func (u *lineBookingUseCase) Events(ctx context.Context, request *models.LineBoo
 	return u.eventList(ctx, b.ID)
 }
 
-// LIFFEvents returns the history of a booking reopened in LIFF (same rule as LIFFGet).
-func (u *lineBookingUseCase) LIFFEvents(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingEventListResponse, error) {
+// EditableEvents returns the history of a reopened booking (same rule as EditableGet).
+func (u *lineBookingUseCase) EditableEvents(ctx context.Context, request *models.LineBookingEditableGetRequest) (*models.LineBookingEventListResponse, error) {
 	b, err := findEditable(ctx, u.repositoryRegistry.LineBookingRepository, request.BookingNo)
 	if err != nil {
-		return nil, cerrors.Wrap(err, "get line booking for LIFF events")
+		return nil, cerrors.Wrap(err, "get editable line booking events")
 	}
 	return u.eventList(ctx, b.ID)
 }

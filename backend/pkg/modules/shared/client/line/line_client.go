@@ -1,5 +1,5 @@
-// Package line verifies LIFF access tokens and Messaging API webhooks, reads OA friends' profiles
-// and pushes messages to them.
+// Package line verifies Messaging API webhooks, reads OA friends' profiles, pushes messages to them
+// and redeems LINE Login codes for the backoffice.
 package line
 
 import (
@@ -26,14 +26,13 @@ var ErrProfileNotFound = errors.New("line: profile not found")
 
 const (
 	verifyURL     = "https://api.line.me/oauth2/v2.1/verify"
-	profileURL    = "https://api.line.me/v2/profile"
 	botProfileURL = "https://api.line.me/v2/bot/profile/"
 	// SignatureHeader carries the webhook body's HMAC-SHA256, keyed with the channel secret.
 	SignatureHeader = "X-Line-Signature"
 	requestTimeout  = 10 * time.Second
 )
 
-// TokenInfo is the result of a successful LIFF access token verification.
+// TokenInfo is the LINE account a LINE Login code belongs to.
 type TokenInfo struct {
 	UserID      string
 	DisplayName string
@@ -48,11 +47,6 @@ type Profile struct {
 
 // Client talks to the LINE Platform API.
 type Client interface {
-	// VerifyAccessToken validates a LIFF access token and returns the user's profile.
-	// It checks that the token's client_id matches the configured LIFF channel.
-	VerifyAccessToken(ctx context.Context, accessToken string) (*TokenInfo, error)
-	Configured() bool
-
 	// VerifySignature reports whether signature is the webhook body's signature for our channel secret.
 	VerifySignature(body []byte, signature string) bool
 	// GetProfile reads an OA friend's profile. ErrProfileNotFound when they are not a friend.
@@ -73,7 +67,7 @@ type Client interface {
 }
 
 type client struct {
-	liffChannelID      string
+	loginChannelID     string
 	channelSecret      string
 	channelAccessToken string
 	loginChannelSecret string
@@ -83,15 +77,13 @@ type client struct {
 // New returns a LINE client. Methods whose credentials are empty return ErrNotConfigured (or false).
 func New(cfg config.LINEConfig) Client {
 	return &client{
-		liffChannelID:      cfg.LIFFChannelID,
+		loginChannelID:     cfg.LoginChannelID,
 		channelSecret:      cfg.ChannelSecret,
 		channelAccessToken: cfg.ChannelAccessToken,
 		loginChannelSecret: cfg.LoginChannelSecret,
 		http:               &http.Client{Timeout: requestTimeout},
 	}
 }
-
-func (c *client) Configured() bool { return c.liffChannelID != "" }
 
 func (c *client) WebhookConfigured() bool { return c.channelSecret != "" }
 
@@ -143,77 +135,4 @@ func (c *client) GetProfile(ctx context.Context, userID string) (*Profile, error
 		return nil, errors.New("line: invalid bot profile response")
 	}
 	return &Profile{UserID: pr.UserID, DisplayName: pr.DisplayName, PictureURL: pr.PictureURL}, nil
-}
-
-// verifyResponse is the JSON returned by GET /oauth2/v2.1/verify.
-type verifyResponse struct {
-	ClientID  string `json:"client_id"`
-	ExpiresIn int64  `json:"expires_in"`
-	Scope     string `json:"scope"`
-}
-
-// profileResponse is the JSON returned by GET /v2/profile.
-type profileResponse struct {
-	UserID      string `json:"userId"`
-	DisplayName string `json:"displayName"`
-}
-
-func (c *client) VerifyAccessToken(ctx context.Context, accessToken string) (*TokenInfo, error) {
-	if c.liffChannelID == "" {
-		return nil, ErrNotConfigured
-	}
-
-	// 1. Verify the token is valid and belongs to our LIFF channel.
-	vReq, err := http.NewRequestWithContext(ctx, http.MethodGet, verifyURL+"?access_token="+accessToken, nil)
-	if err != nil {
-		return nil, errors.New("line: invalid verify request")
-	}
-	vRes, err := c.http.Do(vReq)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, fmt.Errorf("line: %w", ctx.Err())
-		}
-		return nil, errors.New("line: verify request failed")
-	}
-	defer vRes.Body.Close()
-
-	body, _ := io.ReadAll(io.LimitReader(vRes.Body, 4096))
-	if vRes.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("line: token verification failed (status %d)", vRes.StatusCode)
-	}
-
-	var vr verifyResponse
-	if err := json.Unmarshal(body, &vr); err != nil {
-		return nil, errors.New("line: invalid verify response")
-	}
-	if vr.ClientID != c.liffChannelID {
-		return nil, fmt.Errorf("line: token channel %s does not match configured %s", vr.ClientID, c.liffChannelID)
-	}
-
-	// 2. Get the user profile.
-	pReq, err := http.NewRequestWithContext(ctx, http.MethodGet, profileURL, nil)
-	if err != nil {
-		return nil, errors.New("line: invalid profile request")
-	}
-	pReq.Header.Set("Authorization", "Bearer "+accessToken)
-	pRes, err := c.http.Do(pReq)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, fmt.Errorf("line: %w", ctx.Err())
-		}
-		return nil, errors.New("line: profile request failed")
-	}
-	defer pRes.Body.Close()
-
-	pBody, _ := io.ReadAll(io.LimitReader(pRes.Body, 4096))
-	if pRes.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("line: profile fetch failed (status %d)", pRes.StatusCode)
-	}
-
-	var pr profileResponse
-	if err := json.Unmarshal(pBody, &pr); err != nil {
-		return nil, errors.New("line: invalid profile response")
-	}
-
-	return &TokenInfo{UserID: pr.UserID, DisplayName: pr.DisplayName}, nil
 }

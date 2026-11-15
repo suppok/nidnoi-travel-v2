@@ -48,7 +48,7 @@ export const Permissions = {
   BookingGet: 'booking:get',
   BookingUpdate: 'booking:update',
   BookingStatus: 'booking:status',
-  LineBookingCreate: 'line-booking:create', // LIFF app only
+  LineBookingCreate: 'line-booking:create', // the booking entry page (บันทึกใบจอง LINE)
   LineBookingList: 'line-booking:list',
   LineBookingGet: 'line-booking:get',
   LineBookingUpdate: 'line-booking:update',

@@ -35,7 +35,7 @@ export type Me = {
   roles: Role[];
   permissions: Permission[];
   mustChangePassword: boolean;
-  // The user's own LINE account, linked for the LIFF booking app; null until linked.
+  // The user's own LINE account ("ล็อกอินด้วย LINE"); null until linked.
   line: LineAccount | null;
 };
 
@@ -44,11 +44,9 @@ export type LineAccount = {
   linkedAt: string;
 };
 
-// POST /auth/line-link — a one-time LIFF URL shown as a QR code.
-export type LineLinkResponse = {
-  url: string;
-  expiresAt: string;
-};
+// POST /auth/line-link — the LINE Login callback, like LineLoginRequest (no rememberMe).
+export type LineLinkRequest = Omit<LineLoginRequest, 'rememberMe'>;
+export type LineLinkResponse = { line: LineAccount };
 
 // PUT /auth/password
 export type ChangePasswordRequest = {

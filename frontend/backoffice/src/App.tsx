@@ -6,13 +6,14 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
 import AuthProvider from './auth/AuthProvider.tsx';
 import RequireAuth, { CHANGE_PASSWORD_PATH } from './auth/RequireAuth.tsx';
 import RequirePermission from './auth/RequirePermission.tsx';
-import { FINANCE_LINE_BOOKINGS_PATH } from './constants/lineBookingStates.ts';
+import { FINANCE_LINE_BOOKINGS_PATH, LINE_BOOKING_ENTRY_PATH } from './constants/lineBookingStates.ts';
 import { Permissions } from './constants/permissions.ts';
 import AppLayout from './layouts/AppLayout.tsx';
 import AuthLayout from './layouts/AuthLayout.tsx';
 import AirlineListPage from './routes/airlines/AirlineListPage.tsx';
 import BookingSourceListPage from './routes/booking-sources/BookingSourceListPage.tsx';
 import BookingListPage from './routes/bookings/BookingListPage.tsx';
+import LineBookingEntryPage from './routes/line-bookings/entry/LineBookingEntryPage.tsx';
 import LineBookingListPage from './routes/line-bookings/LineBookingListPage.tsx';
 import ChangePasswordPage from './routes/change-password/ChangePasswordPage.tsx';
 import DashboardPage from './routes/dashboard/DashboardPage.tsx';
@@ -48,6 +49,11 @@ const router = createBrowserRouter([
       {
         element: <AuthLayout />,
         children: [{ path: CHANGE_PASSWORD_PATH, element: <ChangePasswordPage /> }],
+      },
+      // Its own tab, without the sidebar (opened from "บันทึกใบจอง LINE").
+      {
+        element: <RequirePermission code={Permissions.LineBookingCreate} />,
+        children: [{ path: LINE_BOOKING_ENTRY_PATH, element: <LineBookingEntryPage /> }],
       },
       {
         element: <AppLayout />,

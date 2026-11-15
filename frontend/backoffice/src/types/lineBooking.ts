@@ -1,8 +1,8 @@
 import type { LineBookingState } from '../constants/lineBookingStates.ts';
 import type { Paging } from './api.ts';
 
-// A booking submitted by sales staff through the LINE OA LIFF app.
-// Tour, dates and prices are a snapshot taken at submission time.
+// A booking sales staff enter (บันทึกใบจอง LINE) for a customer they serve in LINE OA chat.
+// Tour, dates and prices are a snapshot taken when it was entered.
 export type LineBooking = {
   id: string;
   bookingNo: string;
@@ -73,7 +73,7 @@ export type LineBooking = {
   // The latest fix request from sales to finance ('' = none).
   fixNote: string;
   fixRequestedAt: string | null;
-  // The balance of a deposit booking, recorded from LIFF with a slip ('' / null = not yet); it waits
+  // The balance of a deposit booking, recorded on the booking entry page with a slip ('' / null = not yet); it waits
   // for the sales owner's confirm (balanceConfirmedAt), then the booking is paid in full and finance
   // issues the RE.
   balanceSlipImage: string; // the first of balanceSlipImages
@@ -106,7 +106,7 @@ export type LineBookingListRequest = Paging & {
   ownedByMe?: boolean; // only bookings the caller owns as sales
   documentsDone?: boolean; // true = finance sent the documents (newest first), false = waiting
   documentsApproved?: boolean; // true = the sales owner approved them, false = not yet
-  balancePending?: boolean; // true = a balance recorded from LIFF waits for the owner's confirm
+  balancePending?: boolean; // true = a recorded balance waits for the owner's confirm
 };
 
 // The state changes only through confirm / cancel.
@@ -166,4 +166,62 @@ export type LineBookingNotification = {
   author: { id: string; name: string } | null;
   createDate: string;
   readAt: string | null;
+};
+
+// POST /line-bookings — a booking entered on the booking entry page. Unit prices null = the period's.
+export type LineBookingCreateRequest = {
+  salesUserId: string; // GET /users/sales
+  lineContactId: string | null; // the customer's LINE OA chat; null when they chat on a personal account
+  bookingSourceId: string | null;
+  refName: string;
+  refBookingNo: string;
+  tourCode: string;
+  periodId: string;
+} & LineBookingDeal & {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  slipImages: string[]; // 1 to 10, from POST /media/upload/line-booking-slip
+  note: string;
+};
+
+// The deal part of a create / edit, in the backend's room types.
+export type LineBookingDeal = {
+  adultTwin: number;
+  adultSingle: number;
+  childWithBed: number;
+  childNoBed: number;
+  infant: number;
+  adultPrice: number | null;
+  singleSupplement: number | null;
+  childWithBedPrice: number | null;
+  childNoBedPrice: number | null;
+  infantPrice: number | null;
+  adultPriceBeforeDiscount: number | null;
+  discountPerPerson: number;
+  charges: LineBookingCharge[];
+  paymentMethod: LineBookingPaymentMethod;
+  creditFeePercent: number;
+  isDeposit: boolean;
+  depositPerPerson: number;
+  depositDueDate: string | null; // YYYY-MM-DD
+  depositDueTime: string; // HH:mm or ''
+  remainingDueDate: string | null;
+  fullDueDate: string | null;
+  fullDueTime: string;
+};
+
+export type LineBookingCreateResponse = { bookingNo: string; totalPrice: number };
+
+// PUT /line-bookings/editable — the whole deal again; tour, period, first slips, sales owner and the
+// payment plan stay as they are.
+export type LineBookingDealUpdateRequest = Omit<LineBookingCreateRequest, 'salesUserId' | 'tourCode' | 'periodId' | 'slipImages'> & {
+  bookingNo: string;
+  balanceSlipImages: string[]; // the balance, only for a deposit booking that awaits it; [] = none
+};
+
+export type LineBookingDealUpdateResponse = {
+  bookingNo: string;
+  totalPrice: number;
+  balancePending: boolean; // the balance waits for the sales owner's confirm
 };

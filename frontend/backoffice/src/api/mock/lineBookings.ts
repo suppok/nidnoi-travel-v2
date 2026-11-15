@@ -4,13 +4,21 @@ import { Permissions } from '../../constants/permissions.ts';
 import { Roles } from '../../constants/roles.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
 import type { ListResponse } from '../../types/api.ts';
-import type { LineBooking, LineBookingEvent, LineBookingEventChange } from '../../types/lineBooking.ts';
+import type {
+  LineBooking,
+  LineBookingCreateRequest,
+  LineBookingDeal,
+  LineBookingDealUpdateRequest,
+  LineBookingEvent,
+  LineBookingEventChange,
+} from '../../types/lineBooking.ts';
 import { users } from './db.ts';
-import { asRecord, authorize, type MockHandler, MockFail, ok, str } from './http.ts';
+import { asRecord, authorize, type MockHandler, MockFail, ok, str, validation } from './http.ts';
 
-// Mock-only LINE bookings, read-only: list, get and history (the real ones come from the LIFF app).
-// Four bookings at different stages, each with its history, so the list tags, the drawer and the
-// "ประวัติ" timeline can be tried. Actions (confirm, documents, …) are not mocked.
+// Mock-only LINE bookings: list, get and history, plus the booking entry page (create, slip upload,
+// reopen by booking no or customer chat, edit / balance). Four bookings at different stages, each
+// with its history, so the list tags, the drawer and the "ประวัติ" timeline can be tried. Staff
+// actions (confirm, documents, …) are not mocked. New bookings live for this page load only.
 
 const sales = { id: users[2].id, name: users[2].name }; // สมใจ ขายเก่ง
 const finance = { id: users[3].id, name: users[3].name }; // มานี บัญชีดี
@@ -118,7 +126,7 @@ const reviewBooking: LineBooking = {
   documentsAt: ago(3),
 };
 
-// 3. Deposit documents sent to the customer, edited from LIFF, then the balance slip recorded.
+// 3. Deposit documents sent to the customer, the deal edited, then the balance slip recorded.
 const balanceBooking: LineBooking = {
   ...base(3, '26BALMCK', 72, LineBookingStates.DepositPaid),
   adultTwinCount: 3,
@@ -203,7 +211,133 @@ function find(req: Parameters<MockHandler>[0], route: string) {
   return b;
 }
 
+// Like the backend's quoteLine: rows - discount + charges + card fee (on the deposit when paying one).
+function mockTotal(d: LineBookingDeal): number {
+  const pax = d.adultTwin + d.adultSingle + d.childWithBed + d.childNoBed + d.infant;
+  const adult = d.adultPrice ?? 0;
+  const rows =
+    d.adultTwin * adult +
+    d.adultSingle * (adult + (d.singleSupplement ?? 0)) +
+    d.childWithBed * (d.childWithBedPrice ?? 0) +
+    d.childNoBed * (d.childNoBedPrice ?? 0) +
+    d.infant * (d.infantPrice ?? 0) -
+    d.discountPerPerson * pax +
+    d.charges.reduce((sum, c) => sum + c.count * c.price, 0);
+  const feeBase = d.isDeposit ? d.depositPerPerson * pax : rows;
+  const fee = d.paymentMethod === 'credit' ? Math.ceil((feeBase * Math.round(d.creditFeePercent * 100)) / 10000) : 0;
+  return rows + fee;
+}
+
+function dealFields(d: LineBookingDeal, total: number): Partial<LineBooking> {
+  return {
+    adultTwinCount: d.adultTwin,
+    adultTwinPrice: d.adultPrice ?? 0,
+    adultSingleCount: d.adultSingle,
+    adultSinglePrice: d.adultSingle > 0 ? (d.adultPrice ?? 0) + (d.singleSupplement ?? 0) : null,
+    childWithBedCount: d.childWithBed,
+    childWithBedPrice: d.childWithBedPrice,
+    childNoBedCount: d.childNoBed,
+    childNoBedPrice: d.childNoBedPrice,
+    infantCount: d.infant,
+    infantPrice: d.infantPrice,
+    adultPriceBeforeDiscount: d.adultPriceBeforeDiscount,
+    discountPerPerson: d.discountPerPerson,
+    charges: d.charges,
+    paymentMethod: d.paymentMethod,
+    creditFeePercent: d.creditFeePercent,
+    isDeposit: d.isDeposit,
+    depositPerPerson: d.depositPerPerson,
+    depositDueDate: d.depositDueDate,
+    depositDueTime: d.depositDueTime,
+    remainingDueDate: d.remainingDueDate,
+    fullDueDate: d.fullDueDate,
+    fullDueTime: d.fullDueTime,
+    totalPrice: total,
+  };
+}
+
+// Reopen rule like the backend: an active, paid booking; any user with line-booking:create.
+function findEditable(req: Parameters<MockHandler>[0], route: string, bookingNo: string): LineBooking {
+  authorize(req, route, Permissions.LineBookingCreate);
+  const no = bookingNo.trim().toUpperCase();
+  const b = bookings.find((x) => x.bookingNo === no && x.status);
+  if (!b) throw new MockFail(404, ErrorCodes.NotFound, 'Not found');
+  if (!PAID.includes(b.state)) throw new MockFail(409, ErrorCodes.LineBookingNotEditable, 'Only a paid booking can be reopened');
+  return b;
+}
+
+const SOMCHAI = 'c1000000-0000-4000-8000-000000000001';
+const contactOf = (id: string | null) => (id === SOMCHAI ? { id, displayName: 'Somchai', pictureUrl: null, following: true } : null);
+
 export const lineBookingRoutes: Record<string, MockHandler> = {
+  'POST /line-bookings': (req) => {
+    const user = authorize(req, 'POST /line-bookings', Permissions.LineBookingCreate);
+    const body = req.body as LineBookingCreateRequest;
+    if (!body.slipImages?.length) throw validation({ slipImages: 'at least one slip is required' });
+    const owner = users.find((u) => u.id === body.salesUserId);
+    if (!owner || !owner.roles.includes(Roles.Sales)) throw validation({ salesUserId: 'must be an active sales user' });
+    const total = mockTotal(body);
+    const no = `26${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const b: LineBooking = {
+      ...base(9, no, 0, LineBookingStates.New),
+      ...dealFields(body, total),
+      id: crypto.randomUUID(),
+      lineDisplayName: user.name,
+      tourCode: body.tourCode,
+      tourName: `โปรแกรม ${body.tourCode} (mock)`,
+      customerName: body.customerName,
+      customerPhone: body.customerPhone,
+      customerAddress: body.customerAddress,
+      refName: body.refName,
+      refBookingNo: body.refBookingNo,
+      note: body.note,
+      slipImage: body.slipImages[0],
+      slipImages: body.slipImages,
+      salesUser: { id: owner.id, name: owner.name },
+      lineContact: contactOf(body.lineContactId),
+    };
+    bookings.unshift(b);
+    history[b.id] = [event(crypto.randomUUID(), E.Created, 0, { id: user.id, name: user.name })];
+    console.info('[mock] POST /line-bookings', body);
+    return ok({ bookingNo: no, totalPrice: total });
+  },
+  'POST /media/upload/line-booking-slip': (req) => {
+    authorize(req, 'POST /media/upload/line-booking-slip', Permissions.LineBookingCreate);
+    const file = req.body instanceof FormData ? req.body.get('file') : null;
+    if (!(file instanceof File) || file.size === 0) throw validation({ file: 'file is required' });
+    return ok({ url: URL.createObjectURL(file), key: `bookings/slips/${crypto.randomUUID()}`, size: file.size, mime: file.type, fileName: '', width: 0, height: 0 });
+  },
+  'POST /line-bookings/editable/list': (req) => {
+    authorize(req, 'POST /line-bookings/editable/list', Permissions.LineBookingCreate);
+    const id = str(asRecord(req.body).lineContactId);
+    return ok({ items: bookings.filter((b) => b.status && PAID.includes(b.state) && b.lineContact?.id === id) });
+  },
+  'GET /line-bookings/editable/:bookingNo/events': (req) => {
+    const b = findEditable(req, 'GET /line-bookings/editable/:bookingNo/events', req.params.bookingNo ?? '');
+    return ok({ items: history[b.id] ?? [] });
+  },
+  'GET /line-bookings/editable/:bookingNo': (req) => ok(findEditable(req, 'GET /line-bookings/editable/:bookingNo', req.params.bookingNo ?? '')),
+  'PUT /line-bookings/editable': (req) => {
+    const body = req.body as LineBookingDealUpdateRequest;
+    const b = findEditable(req, 'PUT /line-bookings/editable', body.bookingNo ?? '');
+    const balance = (body.balanceSlipImages ?? []).length > 0;
+    if (balance && !(b.isDeposit && b.state === LineBookingStates.DepositPaid && b.documentsApprovedAt)) {
+      throw validation({ balanceSlipImages: 'this booking does not take a balance' });
+    }
+    const deal = { ...body, isDeposit: b.isDeposit };
+    const total = mockTotal(deal);
+    Object.assign(b, dealFields(deal, total), {
+      customerName: body.customerName,
+      customerPhone: body.customerPhone,
+      customerAddress: body.customerAddress,
+      note: body.note,
+      lineContact: contactOf(body.lineContactId) ?? b.lineContact,
+      updateDate: new Date().toISOString(),
+      ...(balance ? { balanceSlipImages: body.balanceSlipImages, balanceSlipImage: body.balanceSlipImages[0], balanceSubmittedAt: new Date().toISOString() } : {}),
+    });
+    console.info('[mock] PUT /line-bookings/editable', body);
+    return ok({ bookingNo: b.bookingNo, totalPrice: total, balancePending: balance });
+  },
   'POST /line-bookings/list': (req) => {
     const user = authorize(req, 'POST /line-bookings/list', Permissions.LineBookingList);
     const body = asRecord(req.body);

@@ -13,7 +13,6 @@ import (
 	cerrors "backend/pkg/core/errors"
 	"backend/pkg/core/validation"
 	"backend/pkg/modules/auth/models"
-	"backend/pkg/modules/shared/client/line"
 )
 
 // LineLoginCallbackPath is where LINE sends the browser back to the backoffice.
@@ -29,19 +28,23 @@ func (u *authUseCase) LineLoginConfig(_ context.Context) (*models.AuthLineLoginC
 }
 
 func (u *authUseCase) LineLoginValidate(request *models.AuthLineLoginRequest) error {
-	fields := validation.Errors{}
-	if err := validation.ValidateStruct(request,
-		validation.Field(&request.Code, validation.Required, validation.RuneLength(1, 512)),
-		validation.Field(&request.CodeVerifier, validation.Required, validation.RuneLength(43, 128)),
-		validation.Field(&request.Nonce, validation.Required, validation.RuneLength(1, 255)),
-		validation.Field(&request.RedirectURI, validation.Required),
-	); err != nil {
-		return err
+	return u.validateLineCallback(request.Code, request.CodeVerifier, request.Nonce, request.RedirectURI)
+}
+
+// validateLineCallback checks what every LINE Login callback sends (sign-in and account link). The
+// redirect URI must be our own backoffice callback: an allowed origin + the callback path.
+func (u *authUseCase) validateLineCallback(code, codeVerifier, nonce, redirectURI string) error {
+	fields := validation.Errors{
+		"code":         validation.Validate(code, validation.Required, validation.RuneLength(1, 512)),
+		"codeVerifier": validation.Validate(codeVerifier, validation.Required, validation.RuneLength(43, 128)),
+		"nonce":        validation.Validate(nonce, validation.Required, validation.RuneLength(1, 255)),
+		"redirectUri":  validation.Validate(redirectURI, validation.Required),
 	}
-	// Only our own backoffice callback: an allowed origin + the callback path.
-	origin, ok := strings.CutSuffix(request.RedirectURI, LineLoginCallbackPath)
-	if !ok || !slices.Contains(u.coreRegistry.Config.CORSAllowedOrigins, origin) {
-		fields["redirectUri"] = errors.New("must be the backoffice LINE callback")
+	if fields["redirectUri"] == nil {
+		origin, ok := strings.CutSuffix(redirectURI, LineLoginCallbackPath)
+		if !ok || !slices.Contains(u.coreRegistry.Config.CORSAllowedOrigins, origin) {
+			fields["redirectUri"] = errors.New("must be the backoffice LINE callback")
+		}
 	}
 	return fields.Filter()
 }
@@ -54,14 +57,9 @@ func (u *authUseCase) LineLogin(ctx context.Context, request *models.AuthLineLog
 		return nil, cerrors.Validation(err)
 	}
 
-	account, err := u.shareRegistry.ClientRegistry.LINE.ExchangeLoginCode(ctx, request.Code, request.RedirectURI, request.CodeVerifier, request.Nonce)
-	switch {
-	case errors.Is(err, line.ErrNotConfigured):
-		return nil, cerrors.New(http.StatusServiceUnavailable, errorcode.LINENotConfigured)
-	case errors.Is(err, line.ErrLoginRejected):
-		return nil, cerrors.New(http.StatusUnauthorized, errorcode.InvalidLINELogin)
-	case err != nil:
-		return nil, cerrors.Wrap(err, "LINE login")
+	account, err := u.exchangeLineCode(ctx, request.Code, request.RedirectURI, request.CodeVerifier, request.Nonce)
+	if err != nil {
+		return nil, err
 	}
 
 	user, err := u.repositoryRegistry.AppUserRepository.FindByLineUserID(ctx, account.UserID)

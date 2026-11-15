@@ -1,8 +1,7 @@
 package coremodels
 
-// UserRequestInfo identifies the authenticated staff user. Always built from the JWT (or, on LIFF
-// routes, the verified LIFF access token) and the database by the auth middleware — never from a
-// request body.
+// UserRequestInfo identifies the authenticated staff user. Always built from the JWT and the
+// database by the auth middleware — never from a request body.
 type UserRequestInfo struct {
 	UserID             string
 	Email              string
@@ -10,7 +9,7 @@ type UserRequestInfo struct {
 	Roles              []string
 	MustChangePassword bool
 
-	// Set on LIFF routes only: the LINE account the LIFF access token belongs to.
+	// The LINE account the user linked ("" when none).
 	LineUserID      string
 	LineDisplayName string
 }

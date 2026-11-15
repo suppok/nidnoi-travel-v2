@@ -19,7 +19,7 @@ const PAID_STATES: readonly number[] = [LineBookingStates.DepositPaid, LineBooki
 type StateFilter = LineBookingState | 0;
 // Finance page: which bookings by documents. Default "waiting".
 // Where a paid booking stands for its sales owner: the finance documents of the current round, and
-// a balance recorded from LIFF that waits for their confirm.
+// a recorded balance that waits for their confirm.
 function salesProgress(b: LineBooking): { label: string; color: string }[] {
   if (!PAID_STATES.includes(b.state)) return [];
   const codes = requiredDocuments(b)
@@ -129,8 +129,8 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
       render: (_, b) => (
         <div className="flex flex-col">
           <span className="text-sm">{b.salesUser?.name ?? '-'}</span>
-          <span className="text-xs text-ink-muted" title="ผู้ส่งผ่าน LINE">
-            ส่งโดย {b.lineDisplayName}
+          <span className="text-xs text-ink-muted" title="ผู้บันทึกใบจอง">
+            บันทึกโดย {b.lineDisplayName}
           </span>
         </div>
       ),
@@ -223,7 +223,7 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
         subtitle={
           finance
             ? 'ใบจอง LINE ที่เซลล์ยืนยันการชำระเงินแล้ว — มัดจำ: ออก AI ใบรับเงินมัดจำ + IV ใบแจ้งหนี้, ชำระเต็มจำนวน: ออก RE ใบเสร็จรับเงิน'
-            : 'ใบจองที่เจ้าหน้าที่ส่งจาก LINE OA พร้อมสลิปโอนเงิน'
+            : 'ใบจองที่เซลล์บันทึกจากแชท LINE OA พร้อมสลิปโอนเงิน'
         }
         actions={
           <Button icon={<ReloadOutlined />} onClick={reloadAll}>

@@ -338,9 +338,8 @@ func newBookingNo(now time.Time) (string, error) {
 	return now.In(utils.Thailand).Format("06") + random, nil
 }
 
-// Create records a LINE booking from the LIFF app. The LIFF middleware has already verified the
-// token and resolved the linked staff user. It validates the tour/period, quotes prices and inserts
-// the row. No seats are reserved.
+// Create records a LINE booking a staff user entered. It validates the tour/period, quotes prices
+// and inserts the row. No seats are reserved.
 func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBookingCreateRequest) (*models.LineBookingCreateResponse, error) {
 	normalizeCreate(request)
 	if !publicCodePattern.MatchString(request.TourCode) {
@@ -351,7 +350,7 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 	}
 
 	info := request.UserRequestInfo
-	if info == nil || info.LineUserID == "" {
+	if info == nil {
 		return nil, cerrors.Unauthenticated()
 	}
 
@@ -432,8 +431,12 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		now := time.Now()
 		b.ID = utils.NewID()
 		b.BookingNo = no
+		// Who entered it: their linked LINE account, else just their name.
 		b.LineUserID = info.LineUserID
 		b.LineDisplayName = info.LineDisplayName
+		if b.LineDisplayName == "" {
+			b.LineDisplayName = info.Name
+		}
 		b.TourProgramID = tour.ID
 		b.TourProgramPeriodID = period.ID
 		b.TourCode = tour.Code
