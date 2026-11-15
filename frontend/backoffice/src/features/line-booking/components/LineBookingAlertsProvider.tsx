@@ -24,7 +24,7 @@ type Stream = {
 };
 
 const STREAMS = {
-  // Sales: a new booking from LIFF (owner scope applies).
+  // Sales: a new LINE booking (owner scope applies).
   newBooking: {
     key: 'new-line-booking',
     request: { state: LineBookingStates.New, status: true, page: 1, pageSize: 1 },
@@ -60,7 +60,7 @@ const STREAMS = {
         .join(' + ')} จาก ${b.financeUser?.name ?? 'ฝ่ายการเงิน'} — เปิดเพื่อตรวจและส่งให้ลูกค้า`,
     path: (b) => `/line-bookings?open=${b.id}`,
   },
-  // Sales: the balance of my deposit booking was recorded from LIFF; waiting for my confirm.
+  // Sales: the balance of my deposit booking was recorded; waiting for my confirm.
   balancePending: {
     key: 'line-booking-balance-pending',
     request: { ownedByMe: true, balancePending: true, status: true, page: 1, pageSize: 1 },

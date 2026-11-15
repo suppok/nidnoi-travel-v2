@@ -70,15 +70,11 @@ func (r R2Config) Configured() bool {
 type LINEConfig struct {
 	ChannelSecret      string // Messaging API channel secret
 	ChannelAccessToken string // Messaging API channel access token (long-lived)
-	LIFFChannelID      string // LINE Login channel ID (the channel that owns the LIFF app)
-	LIFFID             string // LIFF app ID
-	// LoginChannelSecret is the LINE Login channel's secret (the LIFF channel): backoffice "ล็อกอินด้วย
-	// LINE" is off without it.
+	// LoginChannelID / LoginChannelSecret are the LINE Login channel's: backoffice "ล็อกอินด้วย LINE" and
+	// "เชื่อมบัญชี LINE" are off without both. It must be under the same provider as the Messaging API
+	// channel, or the LINE user IDs differ.
+	LoginChannelID     string
 	LoginChannelSecret string
-}
-
-func (l LINEConfig) Configured() bool {
-	return l.LIFFChannelID != ""
 }
 
 type MediaConfig struct {
@@ -191,8 +187,7 @@ func read(path string) (*Config, error) {
 	cfg.LINE = LINEConfig{
 		ChannelSecret:      strings.TrimSpace(os.Getenv("LINE_CHANNEL_SECRET")),
 		ChannelAccessToken: strings.TrimSpace(os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")),
-		LIFFChannelID:      strings.TrimSpace(os.Getenv("LINE_LIFF_CHANNEL_ID")),
-		LIFFID:             strings.TrimSpace(os.Getenv("LINE_LIFF_ID")),
+		LoginChannelID:     strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_ID")),
 		LoginChannelSecret: strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_SECRET")),
 	}
 	return cfg, nil

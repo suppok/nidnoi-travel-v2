@@ -29,3 +29,6 @@ export function lineBookingStateInfo(state: number): { label: string; color: str
 // The finance menu's page: confirmed LINE bookings (sent to the caller; admins see all), newest
 // confirmation first. Same page component as /line-bookings.
 export const FINANCE_LINE_BOOKINGS_PATH = '/finance/line-bookings';
+
+// The booking entry page (บันทึกใบจอง LINE): its own tab, outside the sidebar layout.
+export const LINE_BOOKING_ENTRY_PATH = '/line-bookings/entry';

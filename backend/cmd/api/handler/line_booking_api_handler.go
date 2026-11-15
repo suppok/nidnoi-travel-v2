@@ -43,19 +43,18 @@ func NewLineBookingAPIHandler(
 	}
 }
 
-func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middleware.LIFFAuth, authPermissions middleware.AuthPermissions) {
+func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
 	r := h.router
 
-	// --- LIFF (LINE app) — Authorization is the LIFF access token of a linked staff user. ---
-	liff := []fiber.Handler{liffAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingCreate)}
-	r.Post("/line-bookings", append(liff, h.LineBookingCreate)...)
-	r.Post("/media/upload/liff", append(liff, h.LIFFMediaUpload)...)
-	r.Get("/liff/sales-users", append(liff, h.LIFFSalesUserList)...)
-	r.Get("/liff/booking-sources", append(liff, h.LIFFBookingSourceList)...)
-	r.Post("/liff/line-bookings/list", append(liff, h.LIFFLineBookingList)...)
-	r.Get("/liff/line-bookings/:bookingNo/events", append(liff, h.LIFFLineBookingEventList)...)
-	r.Get("/liff/line-bookings/:bookingNo", append(liff, h.LIFFLineBookingGet)...)
-	r.Put("/liff/line-bookings", append(liff, h.LIFFLineBookingUpdate)...)
+	// --- Booking entry (backoffice "บันทึกใบจอง LINE") — sales enter and reopen bookings. ---
+	// Reopening isn't owner-scoped: sales share booking numbers.
+	entry := []fiber.Handler{jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingCreate)}
+	r.Post("/line-bookings", append(entry, h.LineBookingCreate)...)
+	r.Post("/media/upload/line-booking-slip", append(entry, h.LineBookingSlipUpload)...)
+	r.Post("/line-bookings/editable/list", append(entry, h.LineBookingEditableList)...)
+	r.Put("/line-bookings/editable", append(entry, h.LineBookingUpdateDeal)...)
+	r.Get("/line-bookings/editable/:bookingNo/events", append(entry, h.LineBookingEditableEventList)...)
+	r.Get("/line-bookings/editable/:bookingNo", append(entry, h.LineBookingEditableGet)...)
 
 	// --- Staff (backoffice) — fixed paths before "/:id". ---
 	r.Put("/line-bookings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingUpdate)
@@ -78,96 +77,96 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, liffAuth middlewar
 	r.Get("/line-bookings/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingGet)
 }
 
-// LIFFLineBookingGet godoc
-// @Summary     Reopen a LINE booking in LIFF by booking no
+// LineBookingEditableGet godoc
+// @Summary     Reopen a LINE booking by booking no
 // @Description Only a paid booking (state 20 or 25), also while its documents wait for finance.
-// @Description Any staff user with line-booking:create may open it.
+// @Description Any staff user with line-booking:create may open it (not limited to their own bookings).
 // @Tags        line-bookings
 // @Produce     json
+// @Security    BearerAuth
 // @Param       bookingNo path string true "Booking no"
-// @Success     200 {object} models.LineBookingLIFFGetResponse
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Success     200 {object} models.LineBookingEditableGetResponse
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
 // @Failure     404 {object} map[string]any "NOT_FOUND"
 // @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE"
-// @Router      /liff/line-bookings/{bookingNo} [get]
-func (h *LineBookingAPIHandler) LIFFLineBookingGet(c *fiber.Ctx) error {
-	request := &models.LineBookingLIFFGetRequest{BookingNo: c.Params("bookingNo")}
+// @Router      /line-bookings/editable/{bookingNo} [get]
+func (h *LineBookingAPIHandler) LineBookingEditableGet(c *fiber.Ctx) error {
+	request := &models.LineBookingEditableGetRequest{BookingNo: c.Params("bookingNo")}
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.LIFFGet(ctx, request)
+		return h.lineBookingUseCase.EditableGet(ctx, request)
 	})
 }
 
-// LIFFLineBookingList godoc
-// @Summary     LINE bookings of one customer chat, for reopening in LIFF
+// LineBookingEditableList godoc
+// @Summary     LINE bookings of one customer chat that can be reopened
 // @Description The chat's active paid bookings (state 20 or 25), newest confirmation first, at most 50.
 // @Description Any staff user with line-booking:create may list them (sales share bookings).
 // @Tags        line-bookings
 // @Accept      json
 // @Produce     json
-// @Param       body body models.LineBookingLIFFListRequest true "Customer chat"
-// @Success     200 {object} models.LineBookingLIFFListResponse
+// @Security    BearerAuth
+// @Param       body body models.LineBookingEditableListRequest true "Customer chat"
+// @Success     200 {object} models.LineBookingEditableListResponse
 // @Failure     400 {object} map[string]any "VALIDATION"
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
-// @Router      /liff/line-bookings/list [post]
-func (h *LineBookingAPIHandler) LIFFLineBookingList(c *fiber.Ctx) error {
-	request := &models.LineBookingLIFFListRequest{}
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
+// @Router      /line-bookings/editable/list [post]
+func (h *LineBookingAPIHandler) LineBookingEditableList(c *fiber.Ctx) error {
+	request := &models.LineBookingEditableListRequest{}
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.LIFFList(ctx, request)
+		return h.lineBookingUseCase.EditableList(ctx, request)
 	})
 }
 
-// LIFFLineBookingEventList godoc
-// @Summary     History of a LINE booking reopened in LIFF
-// @Description Same items as GET /line-bookings/{id}/events, for a booking LIFF may open (paid).
+// LineBookingEditableEventList godoc
+// @Summary     History of a reopened LINE booking
+// @Description Same items as GET /line-bookings/{id}/events, for a booking that can be reopened (paid).
 // @Tags        line-bookings
 // @Produce     json
+// @Security    BearerAuth
 // @Param       bookingNo path string true "Booking no"
 // @Success     200 {object} models.LineBookingEventListResponse
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
 // @Failure     404 {object} map[string]any "NOT_FOUND"
 // @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE"
-// @Router      /liff/line-bookings/{bookingNo}/events [get]
-func (h *LineBookingAPIHandler) LIFFLineBookingEventList(c *fiber.Ctx) error {
-	request := &models.LineBookingLIFFGetRequest{BookingNo: c.Params("bookingNo")}
+// @Router      /line-bookings/editable/{bookingNo}/events [get]
+func (h *LineBookingAPIHandler) LineBookingEditableEventList(c *fiber.Ctx) error {
+	request := &models.LineBookingEditableGetRequest{BookingNo: c.Params("bookingNo")}
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.LIFFEvents(ctx, request)
+		return h.lineBookingUseCase.EditableEvents(ctx, request)
 	})
 }
 
-// LIFFLineBookingUpdate godoc
-// @Summary     Edit a reopened LINE booking from LIFF, or record its balance
+// LineBookingUpdateDeal godoc
+// @Summary     Edit a reopened LINE booking, or record its balance
 // @Description The whole deal again (like POST /line-bookings; tour, period, first slip and sales owner
 // @Description stay). The total is quoted again. balanceSlipImages (1-10) record the balance, which then
 // @Description waits for the sales owner's PUT /line-bookings/confirm-balance.
 // @Tags        line-bookings
 // @Accept      json
 // @Produce     json
-// @Param       body body models.LineBookingLIFFUpdateRequest true "Booking"
-// @Success     200 {object} models.LineBookingLIFFUpdateResponse
+// @Security    BearerAuth
+// @Param       body body models.LineBookingDealUpdateRequest true "Booking"
+// @Success     200 {object} models.LineBookingDealUpdateResponse
 // @Failure     400 {object} map[string]any "VALIDATION"
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
 // @Failure     404 {object} map[string]any "NOT_FOUND"
 // @Failure     409 {object} map[string]any "LINE_BOOKING_NOT_EDITABLE, PERIOD_UNAVAILABLE"
-// @Router      /liff/line-bookings [put]
-func (h *LineBookingAPIHandler) LIFFLineBookingUpdate(c *fiber.Ctx) error {
-	request := &models.LineBookingLIFFUpdateRequest{}
+// @Router      /line-bookings/editable [put]
+func (h *LineBookingAPIHandler) LineBookingUpdateDeal(c *fiber.Ctx) error {
+	request := &models.LineBookingDealUpdateRequest{}
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.LIFFUpdate(ctx, request)
+		return h.lineBookingUseCase.UpdateDeal(ctx, request)
 	})
 }
 
 // LineBookingConfirmBalance godoc
 // @Summary     Confirm the balance of a deposit LINE booking
-// @Description The sales owner (or an admin) checked the balance slip recorded from LIFF. The state becomes
-// @Description 25 (paid in full) and the booking goes back to its finance user for the RE.
+// @Description The sales owner (or an admin) checked the balance slip recorded on the booking entry page.
+// @Description The state becomes 25 (paid in full) and the booking goes back to its finance user for the RE.
 // @Tags        line-bookings
 // @Accept      json
 // @Produce     json
@@ -188,22 +187,20 @@ func (h *LineBookingAPIHandler) LineBookingConfirmBalance(c *fiber.Ctx) error {
 }
 
 // LineBookingCreate godoc
-// @Summary     Create a LINE booking from LIFF
-// @Description Sales staff submit a booking with payment slip from the LIFF app, with the deal from the
-// @Description "สรุปยอดโอน" summary. Unit prices default to the period's; the total includes discount,
-// @Description charges and card fee. Authorization: Bearer <LIFF access token> of a LINE account linked
-// @Description to a staff user with line-booking:create.
+// @Summary     Create a LINE booking
+// @Description Sales staff enter a booking with its payment slips on the backoffice booking entry page,
+// @Description with the deal from the "สรุปยอดโอน" summary. Unit prices default to the period's; the total
+// @Description includes discount, charges and card fee.
 // @Tags        line-bookings
 // @Accept      json
 // @Produce     json
+// @Security    BearerAuth
 // @Param       body body models.LineBookingCreateRequest true "Booking"
 // @Success     200 {object} models.LineBookingCreateResponse
 // @Failure     400 {object} map[string]any "VALIDATION"
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
 // @Failure     404 {object} map[string]any "NOT_FOUND (tour)"
 // @Failure     409 {object} map[string]any "PERIOD_UNAVAILABLE"
-// @Failure     503 {object} map[string]any "LINE_NOT_CONFIGURED"
 // @Router      /line-bookings [post]
 func (h *LineBookingAPIHandler) LineBookingCreate(c *fiber.Ctx) error {
 	request := &models.LineBookingCreateRequest{}
@@ -213,29 +210,23 @@ func (h *LineBookingAPIHandler) LineBookingCreate(c *fiber.Ctx) error {
 	})
 }
 
-// LIFFMediaUpload godoc
-// @Summary     Upload a payment slip image from LIFF
-// @Description multipart/form-data with "file" and "purpose" (booking-slip).
-// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
+// LineBookingSlipUpload godoc
+// @Summary     Upload a payment slip image for a LINE booking
+// @Description multipart/form-data with "file"; the purpose is booking-slip (fixed by this endpoint).
 // @Tags        line-bookings
 // @Accept      multipart/form-data
 // @Produce     json
-// @Param       file            formData file   true "Image file"
-// @Param       purpose         formData string true "Purpose (booking-slip)"
+// @Security    BearerAuth
+// @Param       file formData file true "Image file"
 // @Success     200 {object} mediamodels.MediaUploadResponse
 // @Failure     400 {object} map[string]any "VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL"
-// @Failure     401 {object} map[string]any "INVALID_LINE_TOKEN"
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
 // @Failure     413 {object} map[string]any "MEDIA_TOO_LARGE"
-// @Failure     503 {object} map[string]any "STORAGE_UNAVAILABLE, LINE_NOT_CONFIGURED"
-// @Router      /media/upload/liff [post]
-func (h *LineBookingAPIHandler) LIFFMediaUpload(c *fiber.Ctx) error {
-	request := &mediamodels.MediaUploadRequest{Purpose: c.FormValue("purpose")}
+// @Failure     503 {object} map[string]any "STORAGE_UNAVAILABLE"
+// @Router      /media/upload/line-booking-slip [post]
+func (h *LineBookingAPIHandler) LineBookingSlipUpload(c *fiber.Ctx) error {
+	request := &mediamodels.MediaUploadRequest{Purpose: mediamodels.PurposeBookingSlip}
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
-		// The LIFF app may only upload payment slips.
-		if request.Purpose != mediamodels.PurposeBookingSlip {
-			return nil, cerrors.New(http.StatusBadRequest, errorcode.MediaTypeNotAllowed)
-		}
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		if err := h.readUpload(c, request); err != nil {
 			return nil, err
@@ -362,23 +353,6 @@ func (h *LineBookingAPIHandler) LineBookingDocuments(c *fiber.Ctx) error {
 	})
 }
 
-// LIFFSalesUserList godoc
-// @Summary     Sales owner options for the LIFF booking form
-// @Description Active users with the sales role, by name; defaultId is the caller when they are sales.
-// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
-// @Tags        liff
-// @Produce     json
-// @Success     200 {object} models.LineBookingSalesUserListResponse
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
-// @Router      /liff/sales-users [get]
-func (h *LineBookingAPIHandler) LIFFSalesUserList(c *fiber.Ctx) error {
-	request := &models.LineBookingSalesUserListRequest{}
-	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
-		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.SalesUserList(ctx, request)
-	})
-}
-
 // LineBookingList godoc
 // @Summary  List LINE bookings, newest first
 // @Tags     line-bookings
@@ -474,7 +448,7 @@ func (h *LineBookingAPIHandler) LineBookingNotificationRead(c *fiber.Ctx) error 
 
 // LineBookingEventList godoc
 // @Summary  A LINE booking's history
-// @Description Every action on the booking, oldest first: created, confirmed, documents, LIFF edits (with
+// @Description Every action on the booking, oldest first: created, confirmed, documents, deal edits (with
 // @Description the changed fields), balance, LINE chat, staff note, delete/restore. Same visibility as GET /line-bookings/{id}.
 // @Tags     line-bookings
 // @Produce  json
@@ -627,22 +601,5 @@ func (h *LineBookingAPIHandler) LineBookingUpdateStatus(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.UpdateStatus(ctx, request)
-	})
-}
-
-// LIFFBookingSourceList godoc
-// @Summary     Booking source options for the LIFF booking form
-// @Description Active booking sources in their sort order.
-// @Description Authorization: Bearer <LIFF access token> of a linked staff user with line-booking:create.
-// @Tags        liff
-// @Produce     json
-// @Success     200 {object} models.LineBookingSourceListResponse
-// @Failure     403 {object} map[string]any "LINE_NOT_LINKED, PERMISSION_DENIED"
-// @Router      /liff/booking-sources [get]
-func (h *LineBookingAPIHandler) LIFFBookingSourceList(c *fiber.Ctx) error {
-	request := &models.LineBookingSourceListRequest{}
-	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
-		request.UserRequestInfo = requestInfo.UserRequestInfo
-		return h.lineBookingUseCase.SourceList(ctx, request)
 	})
 }

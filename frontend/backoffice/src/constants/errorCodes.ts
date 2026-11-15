@@ -31,7 +31,9 @@ export const ErrorCodes = {
   LineBookingNotNew: 'LINE_BOOKING_NOT_NEW',
   LineBookingDocumentsNotReady: 'LINE_BOOKING_DOCUMENTS_NOT_READY',
   LineBookingBalanceNotPending: 'LINE_BOOKING_BALANCE_NOT_PENDING',
-  PeriodUnavailable: 'PERIOD_UNAVAILABLE', // customer site only (POST /bookings/public)
+  PeriodUnavailable: 'PERIOD_UNAVAILABLE', // the departure can't be booked any more
+  LineBookingNotEditable: 'LINE_BOOKING_NOT_EDITABLE',
+  LineAlreadyLinked: 'LINE_ALREADY_LINKED',
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',
   Unknown: 'UNKNOWN',

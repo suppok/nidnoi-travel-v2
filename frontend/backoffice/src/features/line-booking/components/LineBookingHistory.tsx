@@ -1,6 +1,6 @@
 import { SendOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Mentions, Skeleton, Timeline, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { lineBookingsApi } from '../../../api/lineBookings.ts';
 import {
   LINE_BOOKING_EVENT_COLOR,
@@ -16,12 +16,16 @@ type Props = {
   bookingId: string;
   // Changes whenever the booking changes, so the history reloads.
   version: string;
+  // Where the events come from; default GET /line-bookings/:id/events (owner-scoped).
+  load?: () => Promise<{ items: LineBookingEvent[] }>;
+  // No comment box (e.g. a booking reopened by another sales user, who can't comment on it).
+  readOnly?: boolean;
 };
 
 function title(e: LineBookingEvent): string {
   switch (e.action) {
     case LineBookingEvents.Created:
-      return 'ส่งใบจองจาก LINE';
+      return 'บันทึกใบจอง';
     case LineBookingEvents.Confirmed:
       return `ยืนยันการชำระเงิน · ส่งให้ ${e.target || 'ฝ่ายการเงิน'}`;
     case LineBookingEvents.Cancelled:
@@ -39,7 +43,7 @@ function title(e: LineBookingEvent): string {
     case LineBookingEvents.StaffNoteUpdated:
       return 'แก้บันทึกของเจ้าหน้าที่';
     case LineBookingEvents.Edited:
-      return 'แก้ไขใบจองจาก LINE';
+      return 'แก้ไขข้อมูลใบจอง';
     case LineBookingEvents.BalanceSubmitted:
       return 'บันทึกการชำระส่วนที่เหลือ (แนบสลิป)';
     case LineBookingEvents.BalanceConfirmed:
@@ -143,14 +147,17 @@ function CommentBox({ bookingId, onPosted }: { bookingId: string; onPosted: (e: 
 
 // "ประวัติ" of a LINE booking: every action and comment, oldest first, with the fields an edit
 // changed; a comment box at the bottom.
-export default function LineBookingHistory({ bookingId, version }: Props) {
+export default function LineBookingHistory({ bookingId, version, load, readOnly }: Props) {
   const [loaded, setLoaded] = useState<{ key: string; events: LineBookingEvent[] | null; error: unknown } | null>(null);
   const key = `${bookingId}|${version}`;
+  const loadRef = useRef(load);
+  useEffect(() => {
+    loadRef.current = load;
+  });
 
   useEffect(() => {
     let cancelled = false;
-    lineBookingsApi
-      .events(bookingId)
+    (loadRef.current ?? (() => lineBookingsApi.events(bookingId)))()
       .then((res) => !cancelled && setLoaded({ key, events: res.items, error: null }))
       .catch((err: unknown) => !cancelled && setLoaded({ key, events: null, error: err }));
     return () => {
@@ -209,7 +216,7 @@ export default function LineBookingHistory({ bookingId, version }: Props) {
           }))}
         />
       )}
-      {loaded && (
+      {loaded && !readOnly && (
         <CommentBox
           bookingId={bookingId}
           onPosted={(e) => setLoaded((prev) => (prev ? { ...prev, events: [...(prev.events ?? []), e] } : prev))}

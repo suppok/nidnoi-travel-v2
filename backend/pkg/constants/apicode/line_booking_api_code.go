@@ -1,8 +1,8 @@
 package apicode
 
 var (
-	// LineBookingCreate is checked on the LIFF app's endpoints, for the staff user linked to the LINE account.
-	LineBookingCreate = ApiCode("line-booking:create", "Submit LINE bookings from the LIFF app")
+	// LineBookingCreate is checked on the booking entry endpoints (enter, reopen and edit LINE bookings).
+	LineBookingCreate = ApiCode("line-booking:create", "Enter LINE bookings")
 	LineBookingList   = ApiCode("line-booking:list", "List LINE bookings")
 	LineBookingGet    = ApiCode("line-booking:get", "Get a LINE booking")
 	LineBookingUpdate = ApiCode("line-booking:update", "Confirm or cancel a LINE booking, edit its note")

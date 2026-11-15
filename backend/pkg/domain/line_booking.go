@@ -16,8 +16,8 @@ DB Table Details
 Table: line_booking
 [ 0] id                      UUID         null: false  primary: true
 [ 1] booking_no              TEXT         null: false  (unique, year + 6 random chars, e.g. 26X8K9AQ)
-[ 2] line_user_id            TEXT         null: false  (LINE user ID of sales who submitted)
-[ 3] line_display_name       TEXT         null: false  (LINE display name of sales)
+[ 2] line_user_id            TEXT         null: false  (LINE user ID of the staff user who entered it; '' when not linked)
+[ 3] line_display_name       TEXT         null: false  (their LINE display name, else their name)
 [ 4] tour_program_id         UUID         null: false  (FK tour_program.id)
 [ 5] tour_code               TEXT         null: false  (snapshot)
 [ 6] tour_name               TEXT         null: false  (snapshot)
@@ -79,7 +79,7 @@ Table: line_booking
 [62] fix_note                TEXT         null: false  default: ''  (latest fix request from sales to finance)
 [63] fix_requested_at        TIMESTAMPTZ  null: true
 [64] balance_slip_image      TEXT         null: false  default: ''  (R2 URL, slip of the balance after a deposit)
-[65] balance_submitted_at    TIMESTAMPTZ  null: true   (sales recorded the balance from LIFF; waits for the owner)
+[65] balance_submitted_at    TIMESTAMPTZ  null: true   (sales recorded the balance; waits for the owner)
 [66] balance_submitted_by    UUID         null: true   (FK app_user.id)
 [67] balance_confirmed_at    TIMESTAMPTZ  null: true   (the sales owner confirmed the balance; state 25, finance issues the RE)
 [68] slip_images             TEXT[]       null: false  default: '{}'  (every slip of the payment; slip_image = the first)
@@ -94,7 +94,7 @@ type LineBookingCharge struct {
 	Price int    `json:"price"`
 }
 
-// LineBooking is a booking submitted by sales staff from the LIFF app inside LINE OA.
+// LineBooking is a booking sales staff enter for a customer they serve in LINE OA chat.
 type LineBooking struct {
 	bun.BaseModel `bun:"table:line_booking,alias:lb" json:"-" swaggerignore:"true"`
 
@@ -184,9 +184,9 @@ func (b *LineBooking) NeedsReceipt() bool {
 	return !b.IsDeposit || b.BalanceConfirmedAt.Valid
 }
 
-// EditableFromLIFF reports whether sales may reopen b in LIFF by its booking no: a paid booking
-// (deposit or in full), also while its documents still wait for finance (the LIFF app warns).
-func (b *LineBooking) EditableFromLIFF() bool {
+// Reopenable reports whether sales may reopen b by its booking no: a paid booking (deposit or in
+// full), also while its documents still wait for finance (the booking entry page warns).
+func (b *LineBooking) Reopenable() bool {
 	return b.Status && slices.Contains(linebookingstate.Paid, b.State)
 }
 

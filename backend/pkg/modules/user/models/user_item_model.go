@@ -18,7 +18,7 @@ type UserItem struct {
 	Status             bool      `json:"status"`
 	MustChangePassword bool      `json:"mustChangePassword"`
 	LastLoginAt        null.Time `json:"lastLoginAt" swaggertype:"string"`
-	// LineDisplayName is the LINE account the user linked for the LIFF app; null when not linked.
+	// LineDisplayName is the LINE account the user linked (LINE login); null when not linked.
 	LineDisplayName null.String `json:"lineDisplayName" swaggertype:"string"`
 	CreateDate      time.Time   `json:"createDate"`
 	UpdateDate      time.Time   `json:"updateDate"`

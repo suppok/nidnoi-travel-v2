@@ -79,7 +79,7 @@ var (
 	LineBookingNotNew = ErrCode("LINE_BOOKING_NOT_NEW", "This booking was already confirmed or cancelled")
 	// LineBookingDocumentsNotReady: approve/reject when finance hasn't sent the documents, or they were already approved.
 	LineBookingDocumentsNotReady = ErrCode("LINE_BOOKING_DOCUMENTS_NOT_READY", "The documents are not waiting for review")
-	// LineBookingNotEditable: LIFF opened a booking that isn't paid (new or cancelled).
+	// LineBookingNotEditable: the booking entry page reopened a booking that isn't paid (new or cancelled).
 	LineBookingNotEditable = ErrCode("LINE_BOOKING_NOT_EDITABLE", "Only a paid booking can be edited")
 	// LineBookingBalanceNotPending: confirm-balance when no balance waits for confirmation.
 	LineBookingBalanceNotPending = ErrCode("LINE_BOOKING_BALANCE_NOT_PENDING", "No balance payment waits for confirmation")

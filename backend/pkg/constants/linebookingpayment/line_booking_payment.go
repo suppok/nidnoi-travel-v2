@@ -1,7 +1,7 @@
 package linebookingpayment
 
 // Payment methods and extra-charge kinds of a LINE booking (line_booking.payment_method, charges[].kind).
-// MUST match frontend/liff/src/types/index.ts and frontend/backoffice/src/types/lineBooking.ts.
+// MUST match frontend/backoffice/src/types/lineBooking.ts.
 const (
 	Transfer = "transfer"
 	Credit   = "credit"

@@ -8,20 +8,16 @@ import (
 
 type LineBookingUseCase interface {
 	Create(ctx context.Context, request *models.LineBookingCreateRequest) (*models.LineBookingCreateResponse, error)
-	// SalesUserList returns the sales owner options for the LIFF booking form.
-	SalesUserList(ctx context.Context, request *models.LineBookingSalesUserListRequest) (*models.LineBookingSalesUserListResponse, error)
-	// SourceList returns the booking source options for the LIFF booking form.
-	SourceList(ctx context.Context, request *models.LineBookingSourceListRequest) (*models.LineBookingSourceListResponse, error)
-	// LIFFGet reopens a deposit booking in LIFF by its booking no.
-	LIFFGet(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingLIFFGetResponse, error)
-	// LIFFList lists the bookings LIFF may reopen for one customer chat.
-	LIFFList(ctx context.Context, request *models.LineBookingLIFFListRequest) (*models.LineBookingLIFFListResponse, error)
-	// LIFFUpdate edits a reopened booking's deal and/or records the balance slip.
-	LIFFUpdate(ctx context.Context, request *models.LineBookingLIFFUpdateRequest) (*models.LineBookingLIFFUpdateResponse, error)
-	// ConfirmBalance confirms the balance recorded from LIFF: paid in full, finance issues the RE.
+	// EditableGet reopens a paid booking by its booking no.
+	EditableGet(ctx context.Context, request *models.LineBookingEditableGetRequest) (*models.LineBookingEditableGetResponse, error)
+	// EditableList lists the bookings of one customer chat that can be reopened.
+	EditableList(ctx context.Context, request *models.LineBookingEditableListRequest) (*models.LineBookingEditableListResponse, error)
+	// UpdateDeal edits a reopened booking's deal and/or records the balance slip.
+	UpdateDeal(ctx context.Context, request *models.LineBookingDealUpdateRequest) (*models.LineBookingDealUpdateResponse, error)
+	// ConfirmBalance confirms the balance sales recorded: paid in full, finance issues the RE.
 	ConfirmBalance(ctx context.Context, request *models.LineBookingConfirmBalanceRequest) (*models.LineBookingConfirmBalanceResponse, error)
-	// LIFFEvents returns the history of a booking reopened in LIFF, oldest first.
-	LIFFEvents(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingEventListResponse, error)
+	// EditableEvents returns the history of a reopened booking, oldest first.
+	EditableEvents(ctx context.Context, request *models.LineBookingEditableGetRequest) (*models.LineBookingEventListResponse, error)
 	// Comment adds a comment (with @mentions) to the booking's history and notifies.
 	Comment(ctx context.Context, request *models.LineBookingCommentRequest) (*models.LineBookingCommentResponse, error)
 	// Mentionable lists who may be @mentioned on a booking.

@@ -25,7 +25,7 @@ const (
 	maxSlips        = 10 // slips per payment (a deposit, a full payment or the balance)
 )
 
-// findEditable loads a booking reopened in LIFF by its booking no: NOT_FOUND when there is no such
+// findEditable loads a booking reopened by its booking no: NOT_FOUND when there is no such
 // active booking, LINE_BOOKING_NOT_EDITABLE unless it is paid (deposit or in full).
 // Any user who may create LINE bookings may reopen one (sales share booking numbers).
 func findEditable(ctx context.Context, repo repository.LineBookingRepository, bookingNo string) (*domain.LineBooking, error) {
@@ -40,27 +40,27 @@ func findEditable(ctx context.Context, repo repository.LineBookingRepository, bo
 	if b == nil || !b.Status {
 		return nil, cerrors.NotFound()
 	}
-	if !b.EditableFromLIFF() {
+	if !b.Reopenable() {
 		return nil, cerrors.New(http.StatusConflict, errorcode.LineBookingNotEditable)
 	}
 	return b, nil
 }
 
-// LIFFGet returns a booking reopened in LIFF by its booking no.
-func (u *lineBookingUseCase) LIFFGet(ctx context.Context, request *models.LineBookingLIFFGetRequest) (*models.LineBookingLIFFGetResponse, error) {
+// EditableGet returns a booking reopened by its booking no.
+func (u *lineBookingUseCase) EditableGet(ctx context.Context, request *models.LineBookingEditableGetRequest) (*models.LineBookingEditableGetResponse, error) {
 	b, err := findEditable(ctx, u.repositoryRegistry.LineBookingRepository, request.BookingNo)
 	if err != nil {
-		return nil, cerrors.Wrap(err, "get line booking for LIFF")
+		return nil, cerrors.Wrap(err, "get editable line booking")
 	}
-	return &models.LineBookingLIFFGetResponse{LineBookingItem: models.NewLineBookingItem(b)}, nil
+	return &models.LineBookingEditableGetResponse{LineBookingItem: models.NewLineBookingItem(b)}, nil
 }
 
-// LIFFUpdate saves a reopened booking's deal (travellers, prices, charges, payment, customer) with
+// UpdateDeal saves a reopened booking's deal (travellers, prices, charges, payment, customer) with
 // the total quoted again, and records the balance slip when one is sent. The state and the
 // finance documents don't change here; the balance moves on when the sales owner confirms it.
-func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.LineBookingLIFFUpdateRequest) (*models.LineBookingLIFFUpdateResponse, error) {
+func (u *lineBookingUseCase) UpdateDeal(ctx context.Context, request *models.LineBookingDealUpdateRequest) (*models.LineBookingDealUpdateResponse, error) {
 	info := request.UserRequestInfo
-	if info == nil || info.LineUserID == "" {
+	if info == nil {
 		return nil, cerrors.Unauthenticated()
 	}
 	request.BalanceSlipImages = normalizeSlips(request.BalanceSlipImages, request.BalanceSlipImage)
@@ -190,17 +190,17 @@ func (u *lineBookingUseCase) LIFFUpdate(ctx context.Context, request *models.Lin
 		return nil
 	})
 	if err != nil {
-		return nil, cerrors.Wrap(err, "update line booking from LIFF")
+		return nil, cerrors.Wrap(err, "update line booking deal")
 	}
 
-	u.coreRegistry.Logger.Info("line booking edited from LIFF",
+	u.coreRegistry.Logger.Info("line booking deal edited",
 		zap.String("bookingNo", updated.BookingNo),
 		zap.Int("balanceSlips", len(request.BalanceSlipImages)),
 		zap.String("userId", info.UserID))
-	return &models.LineBookingLIFFUpdateResponse{BookingNo: updated.BookingNo, TotalPrice: updated.TotalPrice, BalancePending: updated.BalancePending()}, nil
+	return &models.LineBookingDealUpdateResponse{BookingNo: updated.BookingNo, TotalPrice: updated.TotalPrice, BalancePending: updated.BalancePending()}, nil
 }
 
-// ConfirmBalance is the sales owner's confirm of the balance recorded from LIFF: the booking
+// ConfirmBalance is the sales owner's confirm of the balance sales recorded: the booking
 // becomes paid in full and goes back to its finance user for the RE (the deposit's AI + IV stay).
 func (u *lineBookingUseCase) ConfirmBalance(ctx context.Context, request *models.LineBookingConfirmBalanceRequest) (*models.LineBookingConfirmBalanceResponse, error) {
 	if err := validation.ValidateStruct(request, validation.Field(&request.ID, validation.Required, validation.UUID)); err != nil {

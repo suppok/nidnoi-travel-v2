@@ -6,9 +6,9 @@ import (
 	coremodels "backend/pkg/core/api/models"
 )
 
-// LineBookingCreateRequest is submitted from the LIFF app by a staff user linked to the LINE account.
-// It carries the same deal as the backoffice "สรุปยอดโอน" summary. Fields added with the summary are
-// optional, so an older LIFF build (counts only) still gets the period quote it got before.
+// LineBookingCreateRequest is entered by a staff user on the backoffice booking entry page. It
+// carries the same deal as the "สรุปยอดโอน" summary. Fields added with the summary are optional, so
+// a request with counts only still gets the period quote.
 type LineBookingCreateRequest struct {
 	TourCode     string `json:"tourCode"`
 	PeriodID     string `json:"periodId"`
@@ -42,7 +42,7 @@ type LineBookingCreateRequest struct {
 	FullDueDate      null.String `json:"fullDueDate" swaggertype:"string"`
 	FullDueTime      string      `json:"fullDueTime"`
 
-	// BookingSourceID is where the customer booked (GET /liff/booking-sources); optional.
+	// BookingSourceID is where the customer booked (POST /booking-sources/list); optional.
 	BookingSourceID null.String `json:"bookingSourceId" swaggertype:"string"`
 	RefName         string      `json:"refName"`      // the customer's name on that source
 	RefBookingNo    string      `json:"refBookingNo"` // the booking number on that source
@@ -50,17 +50,17 @@ type LineBookingCreateRequest struct {
 	CustomerName    string `json:"customerName"`
 	CustomerPhone   string `json:"customerPhone"`
 	CustomerAddress string `json:"customerAddress"`
-	// SlipImages are the payment's slips (R2 URLs from /media/upload/liff), 1 to 10. SlipImage is the
+	// SlipImages are the payment's slips (R2 URLs from /media/upload/line-booking-slip), 1 to 10. SlipImage is the
 	// older single-slip field, still accepted when SlipImages is empty.
 	SlipImages []string `json:"slipImages"`
 	SlipImage  string   `json:"slipImage"`
 	Note       string   `json:"note"`
-	// SalesUserID is the sales person who owns the booking (GET /liff/sales-users).
+	// SalesUserID is the sales person who owns the booking (GET /users/sales).
 	SalesUserID string `json:"salesUserId"`
-	// LineContactID is the customer's LINE OA chat (POST /liff/line-contacts/list); optional.
+	// LineContactID is the customer's LINE OA chat (POST /line-contacts/list); optional.
 	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
 
-	// The linked staff user, with the LINE account from the verified LIFF token.
+	// The signed-in staff user (and the LINE account they linked, if any).
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
 
@@ -76,17 +76,6 @@ type LineBookingCreateResponse struct {
 	BookingNo string `json:"bookingNo" example:"26X8K9AQ"`
 	// TotalPrice is the grand total, card fee included.
 	TotalPrice int `json:"totalPrice"`
-}
-
-// --- GET /liff/booking-sources: booking source options for the LIFF booking form ---
-
-type LineBookingSourceListRequest struct {
-	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
-}
-
-type LineBookingSourceListResponse struct {
-	// Items are the active booking sources, in their sort order.
-	Items []LineBookingSource `json:"items"`
 }
 
 // LineBookingSource is a booking source referenced by a booking.

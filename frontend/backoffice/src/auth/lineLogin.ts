@@ -1,6 +1,7 @@
-// "ล็อกอินด้วย LINE": LINE Login (authorization code + PKCE). The browser goes to LINE's authorize
-// page; LINE sends it back to LINE_CALLBACK_PATH with a code, which the backend exchanges (it holds
-// the channel secret) and turns into a normal session — only for a LINE account a user linked.
+// "ล็อกอินด้วย LINE" and "เชื่อมบัญชี LINE": LINE Login (authorization code + PKCE). The browser goes
+// to LINE's authorize page; LINE sends it back to LINE_CALLBACK_PATH with a code, which the backend
+// exchanges (it holds the channel secret): mode "login" turns it into a session (only for a LINE
+// account a user linked), mode "link" links that LINE account to the signed-in user.
 //
 // The state / nonce / PKCE verifier live in sessionStorage for the few seconds of the round trip and
 // are removed on return. They are one-time values, not credentials: the session itself stays the
@@ -11,7 +12,9 @@ export const LINE_CALLBACK_PATH = '/login/line/callback';
 const AUTHORIZE_URL = 'https://access.line.me/oauth2/v2.1/authorize';
 const STORAGE_KEY = 'nidnoi.lineLogin';
 
-type Pending = { state: string; nonce: string; verifier: string; rememberMe: boolean; returnTo: string };
+export type LineLoginMode = 'login' | 'link';
+
+type Pending = { mode: LineLoginMode; state: string; nonce: string; verifier: string; rememberMe: boolean; returnTo: string };
 
 function randomString(bytes = 32): string {
   return base64Url(crypto.getRandomValues(new Uint8Array(bytes)));
@@ -31,8 +34,17 @@ async function codeChallenge(verifier: string): Promise<string> {
 export const lineRedirectUri = () => `${window.location.origin}${LINE_CALLBACK_PATH}`;
 
 // Sends the browser to LINE. returnTo is where to land after signing in.
-export async function startLineLogin(channelId: string, rememberMe: boolean, returnTo: string): Promise<void> {
-  const pending: Pending = { state: randomString(), nonce: randomString(), verifier: randomString(48), rememberMe, returnTo };
+export function startLineLogin(channelId: string, rememberMe: boolean, returnTo: string): Promise<void> {
+  return startLine('login', channelId, rememberMe, returnTo);
+}
+
+// Sends the signed-in user to LINE to link their LINE account; returnTo is where to come back.
+export function startLineLink(channelId: string, returnTo: string): Promise<void> {
+  return startLine('link', channelId, false, returnTo);
+}
+
+async function startLine(mode: LineLoginMode, channelId: string, rememberMe: boolean, returnTo: string): Promise<void> {
+  const pending: Pending = { mode, state: randomString(), nonce: randomString(), verifier: randomString(48), rememberMe, returnTo };
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
   const params = new URLSearchParams({
     response_type: 'code',

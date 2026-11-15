@@ -23,5 +23,7 @@ func (u *authUseCase) ResolveSession(ctx context.Context, userID string) (*corem
 		Name:               user.Name,
 		Roles:              user.Roles,
 		MustChangePassword: user.MustChangePassword,
+		LineUserID:         user.LineUserID.String,
+		LineDisplayName:    user.LineDisplayName.String,
 	}, nil
 }

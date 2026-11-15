@@ -3,8 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/guregu/null/v5"
-
 	coremodels "backend/pkg/core/api/models"
 )
 
@@ -14,16 +12,21 @@ type AuthLineAccount struct {
 	LinkedAt    time.Time `json:"linkedAt"`
 }
 
-// --- POST /auth/line-link (backoffice): start linking ---
+// --- POST /auth/line-link (backoffice): link the caller's LINE account with a LINE Login code ---
 
-type AuthLineLinkCreateRequest struct {
+// AuthLineLinkRequest carries the LINE Login callback, like AuthLineLoginRequest.
+type AuthLineLinkRequest struct {
+	Code string `json:"code"`
+	// RedirectURI is <backoffice origin>/login/line/callback, the origin one of CORS_ALLOWED_ORIGINS.
+	RedirectURI  string `json:"redirectUri"`
+	CodeVerifier string `json:"codeVerifier"` // PKCE
+	Nonce        string `json:"nonce"`
+
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
 
-type AuthLineLinkCreateResponse struct {
-	// URL opens the LIFF app with the one-time code; the backoffice shows it as a QR code.
-	URL       string    `json:"url" example:"https://liff.line.me/1234567890-AbCdEfGh?lineLink=..."`
-	ExpiresAt time.Time `json:"expiresAt"`
+type AuthLineLinkResponse struct {
+	Line AuthLineAccount `json:"line"`
 }
 
 // --- POST /auth/line-unlink (backoffice) ---
@@ -33,29 +36,3 @@ type AuthLineUnlinkRequest struct {
 }
 
 type AuthLineUnlinkResponse struct{}
-
-// --- POST /liff/line-link (LIFF): finish linking ---
-
-type LIFFLineLinkRequest struct {
-	Code string `json:"code"`
-
-	AccessToken string `json:"-"` // LIFF access token from the Authorization header
-}
-
-type LIFFLineLinkResponse struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-// --- GET /liff/me (LIFF) ---
-
-type LIFFMeRequest struct {
-	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
-}
-
-type LIFFMeResponse struct {
-	Name            string      `json:"name"`
-	Email           string      `json:"email"`
-	Roles           []string    `json:"roles"`
-	LineDisplayName null.String `json:"lineDisplayName" swaggertype:"string"`
-}

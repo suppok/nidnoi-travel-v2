@@ -10,21 +10,21 @@ import (
 	"backend/pkg/modules/linebooking/models"
 )
 
-// liffListLimit caps the bookings listed for one customer chat; older ones still open by booking no.
-const liffListLimit = 50
+// editableListLimit caps the bookings listed for one customer chat; older ones still open by booking no.
+const editableListLimit = 50
 
-func (u *lineBookingUseCase) LIFFListValidate(request *models.LineBookingLIFFListRequest) error {
+func (u *lineBookingUseCase) EditableListValidate(request *models.LineBookingEditableListRequest) error {
 	return validation.ValidateStruct(request,
 		validation.Field(&request.LineContactID, validation.Required, validation.UUID),
 	)
 }
 
-// LIFFList lists the bookings of one customer chat that LIFF may reopen (active and paid, the same
+// EditableList lists the bookings of one customer chat that can be reopened (active and paid, the same
 // rule as findEditable), so sales can pick one instead of typing its booking no. Like reopening,
 // it isn't limited to the caller's own bookings.
-func (u *lineBookingUseCase) LIFFList(ctx context.Context, request *models.LineBookingLIFFListRequest) (*models.LineBookingLIFFListResponse, error) {
+func (u *lineBookingUseCase) EditableList(ctx context.Context, request *models.LineBookingEditableListRequest) (*models.LineBookingEditableListResponse, error) {
 	request.LineContactID = strings.TrimSpace(request.LineContactID)
-	if err := u.LIFFListValidate(request); err != nil {
+	if err := u.EditableListValidate(request); err != nil {
 		return nil, cerrors.Validation(err)
 	}
 	active := true
@@ -33,16 +33,16 @@ func (u *lineBookingUseCase) LIFFList(ctx context.Context, request *models.LineB
 		Status:        &active,
 		LineContactID: request.LineContactID,
 		Page:          1,
-		PageSize:      liffListLimit,
+		PageSize:      editableListLimit,
 	})
 	if err != nil {
-		return nil, cerrors.Wrap(err, "list line bookings for LIFF")
+		return nil, cerrors.Wrap(err, "list editable line bookings")
 	}
 	result := make([]models.LineBookingItem, 0, len(items))
 	for i := range items {
-		if items[i].EditableFromLIFF() {
+		if items[i].Reopenable() {
 			result = append(result, models.NewLineBookingItem(&items[i]))
 		}
 	}
-	return &models.LineBookingLIFFListResponse{Items: result}, nil
+	return &models.LineBookingEditableListResponse{Items: result}, nil
 }

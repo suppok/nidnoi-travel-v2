@@ -88,7 +88,7 @@ const changePassword: MockHandler = (req) => {
   return ok(null);
 };
 
-// The mock has no LIFF app to finish a link with.
+// LINE Login needs the real LINE platform: the mock can't link.
 const lineLink: MockHandler = (req) => {
   authenticate(req, 'POST /auth/line-link');
   throw new MockFail(503, ErrorCodes.LineNotConfigured, 'LINE integration is not configured');

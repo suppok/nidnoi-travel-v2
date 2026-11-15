@@ -2,6 +2,7 @@ import { App, Select, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { tourProgramsApi } from '../../../api/tourPrograms.ts';
 import { errorMessage } from '../../../lib/errors.ts';
+import type { TourProgramState } from '../../../constants/tourProgramStates.ts';
 import type { TourProgramListItem } from '../../../types/tourProgram.ts';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -10,10 +11,11 @@ const PAGE_SIZE = 20;
 type Props = {
   value: TourProgramListItem | null;
   onChange: (tour: TourProgramListItem | null) => void;
+  state?: TourProgramState; // only tours in this state (e.g. selling); omitted = any
 };
 
 // Searches active tours by name, code or wholesale tour code while the dropdown is open.
-export default function TourPicker({ value, onChange }: Props) {
+export default function TourPicker({ value, onChange, state }: Props) {
   const { message } = App.useApp();
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -27,13 +29,13 @@ export default function TourPicker({ value, onChange }: Props) {
     const timer = setTimeout(() => {
       setSearching(true);
       tourProgramsApi
-        .list({ keyword: keyword.trim() || undefined, status: true, page: 1, pageSize: PAGE_SIZE })
+        .list({ keyword: keyword.trim() || undefined, status: true, state, page: 1, pageSize: PAGE_SIZE })
         .then((res) => seq === searchSeq.current && setOptions(res.items))
         .catch((err: unknown) => seq === searchSeq.current && message.error(errorMessage(err)))
         .finally(() => seq === searchSeq.current && setSearching(false));
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [keyword, open, message]);
+  }, [keyword, open, message, state]);
 
   // Keep the chosen tour listed so the Select can show its label.
   const shown = value && !options.some((t) => t.id === value.id) ? [value, ...options] : options;

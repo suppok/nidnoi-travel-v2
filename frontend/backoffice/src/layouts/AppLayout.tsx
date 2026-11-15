@@ -1,4 +1,4 @@
-import { AccountBookOutlined, BellOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, BellOutlined, ExportOutlined, FormOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -15,10 +15,11 @@ import { useLineBookingAlerts } from '../features/line-booking/hooks/useLineBook
 import LineLinkModal from '../features/line-link/LineLinkModal.tsx';
 import { SALES_TOOLS } from '../features/sales-tool/tools.tsx';
 import SiteRebuildButton from '../features/site/components/SiteRebuildButton.tsx';
-import { FINANCE_LINE_BOOKINGS_PATH } from '../constants/lineBookingStates.ts';
+import { FINANCE_LINE_BOOKINGS_PATH, LINE_BOOKING_ENTRY_PATH } from '../constants/lineBookingStates.ts';
 import { initials } from '../lib/format.ts';
 
-type NavItem = { path: string; label: string; icon: ReactNode; permission?: Permission };
+// newTab: opens in its own browser tab (a full-page tool without the sidebar).
+type NavItem = { path: string; label: string; icon: ReactNode; permission?: Permission; newTab?: boolean };
 // roles: the group shows only to users working as one of them (admins see every group).
 type NavGroup = { key: string; label: string; items: NavItem[]; roles?: Role[] };
 
@@ -31,6 +32,7 @@ const NAV: NavGroup[] = [
     roles: [Roles.Sales],
     items: [
       { path: '/bookings', label: 'ใบจอง', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
+      { path: LINE_BOOKING_ENTRY_PATH, label: 'บันทึกใบจอง LINE', icon: <FormOutlined />, permission: Permissions.LineBookingCreate, newTab: true },
       { path: '/line-bookings', label: 'ใบจอง LINE', icon: <MessageOutlined />, permission: Permissions.LineBookingList },
       { path: '/tour-programs', label: 'โปรแกรมทัวร์', icon: <CompassOutlined />, permission: Permissions.TourProgramList },
       { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
@@ -103,7 +105,12 @@ function Shell() {
       .map((item) => ({
         key: item.path,
         icon: item.icon,
-        label: (
+        label: item.newTab ? (
+          <a href={item.path} target="_blank" rel="noopener" className="flex items-center justify-between gap-2">
+            {item.label}
+            <ExportOutlined className="text-xs text-ink-muted" />
+          </a>
+        ) : (
           <Link to={item.path} className="flex items-center justify-between gap-2">
             {item.label}
             {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
