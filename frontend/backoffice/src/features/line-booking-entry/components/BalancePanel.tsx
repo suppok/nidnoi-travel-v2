@@ -38,6 +38,7 @@ export default function BalancePanel({ booking, onSaved, onCancel, onChangePurpo
       const res = await lineBookingsApi.updateDeal({
         bookingNo: booking.bookingNo,
         lineContactId: booking.lineContact?.id ?? null,
+        chatUrl: '',
         bookingSourceId: booking.bookingSource?.id ?? null,
         refName: booking.refName,
         refBookingNo: booking.refBookingNo,

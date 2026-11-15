@@ -105,17 +105,20 @@ function Shell() {
       .map((item) => ({
         key: item.path,
         icon: item.icon,
+        // A long label shrinks (ellipsis) so the badge / icon after it is never clipped.
         label: item.newTab ? (
           <a href={item.path} target="_blank" rel="noopener" className="flex items-center justify-between gap-2">
-            {item.label}
-            <ExportOutlined className="text-xs text-ink-muted" />
+            <span className="min-w-0 truncate">{item.label}</span>
+            <ExportOutlined className="shrink-0 text-xs text-ink-muted" />
           </a>
         ) : (
           <Link to={item.path} className="flex items-center justify-between gap-2">
-            {item.label}
-            {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
-            {item.path === '/line-bookings' && !!lineNewCount && <Badge count={lineNewCount} size="small" />}
-            {item.path === FINANCE_LINE_BOOKINGS_PATH && !!waitingDocumentsCount && <Badge count={waitingDocumentsCount} size="small" />}
+            <span className="min-w-0 truncate">{item.label}</span>
+            <span className="flex shrink-0">
+              {item.path === '/bookings' && !!newCount && <Badge count={newCount} size="small" />}
+              {item.path === '/line-bookings' && !!lineNewCount && <Badge count={lineNewCount} size="small" />}
+              {item.path === FINANCE_LINE_BOOKINGS_PATH && !!waitingDocumentsCount && <Badge count={waitingDocumentsCount} size="small" />}
+            </span>
           </Link>
         ),
       })),

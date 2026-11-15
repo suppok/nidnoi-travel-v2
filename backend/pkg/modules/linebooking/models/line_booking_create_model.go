@@ -59,6 +59,9 @@ type LineBookingCreateRequest struct {
 	SalesUserID string `json:"salesUserId"`
 	// LineContactID is the customer's LINE OA chat (POST /line-contacts/list); optional.
 	LineContactID null.String `json:"lineContactId" swaggertype:"string"`
+	// ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact so
+	// staff can open it; optional, needs lineContactId. "" keeps the one already saved.
+	ChatURL string `json:"chatUrl"`
 
 	// The signed-in staff user (and the LINE account they linked, if any).
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`

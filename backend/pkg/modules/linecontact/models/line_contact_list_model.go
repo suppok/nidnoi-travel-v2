@@ -33,6 +33,7 @@ type LineContactItem struct {
 	PictureURL    null.String `json:"pictureUrl" swaggertype:"string"`
 	Following     bool        `json:"following"`
 	LastMessageAt *time.Time  `json:"lastMessageAt"`
+	ChatURL       string      `json:"chatUrl"` // the chat in LINE OA Manager; "" until sales paste it
 }
 
 func NewLineContactItem(c *domain.LineContact) LineContactItem {
@@ -43,5 +44,6 @@ func NewLineContactItem(c *domain.LineContact) LineContactItem {
 		PictureURL:    c.PictureURL,
 		Following:     c.Following,
 		LastMessageAt: c.LastMessageAt.Ptr(),
+		ChatURL:       c.ChatURL,
 	}
 }

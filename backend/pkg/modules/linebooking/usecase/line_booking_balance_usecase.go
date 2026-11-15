@@ -116,6 +116,9 @@ func (u *lineBookingUseCase) UpdateDeal(ctx context.Context, request *models.Lin
 			if contact == nil || !contact.Status {
 				return cerrors.FieldError("lineContactId", "no such LINE contact")
 			}
+			if err := u.saveChatURL(ctx, appDB, contact, r.ChatURL, info.UserID); err != nil {
+				return err
+			}
 			lineContactID = r.LineContactID
 		}
 		sourceID := null.String{}

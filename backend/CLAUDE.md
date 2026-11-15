@@ -770,7 +770,7 @@ Bookings sales staff enter for customers they serve in LINE OA chat, on the back
   - `POST /line-bookings/list` — `{keyword, state, status, page, pageSize}`, newest first.
   - `GET /line-bookings/:id` — get one.
   - `PUT /line-bookings` — `{id, state, staffNote}`.
-  - `PUT /line-bookings/line-contact` — `{id, lineContactId}` links the customer's LINE OA chat (`line_booking.line_contact_id`, FK `line_contact`); `null` unlinks. Permission `line-booking:update`. The receipt is pushed to this chat later. Every staff response carries `lineContact {id, displayName, pictureUrl, following}` or `null`.
+  - `PUT /line-bookings/line-contact` — `{id, lineContactId}` links the customer's LINE OA chat (`line_booking.line_contact_id`, FK `line_contact`); `null` unlinks. Permission `line-booking:update`. The receipt is pushed to this chat later. Every staff response carries `lineContact {id, lineUserId, displayName, pictureUrl, following, chatUrl}` or `null`.
   - `PUT /line-bookings/status` — soft delete/restore.
 - **States** (`pkg/constants/linebookingstate`): 10 new, 20 deposit paid (ชำระมัดจำแล้ว), 25 paid in full (ชำระครบแล้ว), 30 cancelled. `Paid` = 20 and 25.
 - **Sales finance users** (`pkg/modules/salesfinance`, table `sales_finance`: `sales_user_id`, `finance_user_id` (unique pair, not self), `is_default` (at most one per sales user), audit columns, no status — replaced as a whole): each sales user picks their own. `GET /sales-finances` → `{options (active finance users except you), financeUserIds, defaultFinanceUserId}` and `PUT /sales-finances {financeUserIds (max 20), defaultFinanceUserId}` (must be in the list; a single one becomes the default), always for the caller. Permissions `sales-finance:get|update` (sales). Links to users who were deactivated or lost the finance role are kept but not offered.
@@ -790,6 +790,7 @@ Customers who chat with the OA, collected so sales can link a booking to the cus
 - `following` is what decides whether a push can reach the customer.
 - **Staff:** `POST /line-contacts/list` (`{keyword, following?, page, pageSize}`, most recent chat first; `line-contact:list` — admin, sales, finance) for the contact picker.
 - **Contact picker:** the entry page uses `POST /line-contacts/list`. `POST /line-bookings` takes an optional `lineContactId` (unknown or deleted → `VALIDATION` on `lineContactId`).
+- **Chat URL** (migration `20261115000003`, `line_contact.chat_url`, default `''`): the customer's chat in LINE OA Manager (`https://chat.line.biz/…`). OA Manager's chat ID is not the Messaging API user ID and no API maps them, so sales paste it. `POST /line-bookings`, `PUT /line-bookings/editable` and `PUT /line-bookings/line-contact` take an optional `chatUrl` (≤ 500, must start with `https://chat.line.biz/`, needs `lineContactId`, else `VALIDATION` on `chatUrl`); a non-empty one is saved on that contact (`saveChatURL`), `''` keeps the saved one. Contact items and `lineContact` carry `chatUrl`.
 - **Same provider:** the LINE Login channel and the Messaging API channel must be under the same LINE provider, or the user IDs from LINE Login and from the webhook differ.
 - **LINE console:** Messaging API → Webhook URL `https://dev-api.nidnoitravelv2.com/api/v1/line/webhook` (prd: `api.*`), "Use webhook" on. In OA Manager keep **Chat** on so sales still chat by hand.
 

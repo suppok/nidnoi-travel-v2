@@ -23,6 +23,7 @@ Table: line_contact
 [ 9] update_date         TIMESTAMPTZ  null: false
 [10] create_by           UUID         null: false
 [11] update_by           UUID         null: false
+[12] chat_url            TEXT         null: false  default: ''  (the chat in LINE OA Manager, pasted by sales)
 */
 
 // LineContact is a customer known from LINE OA webhooks (chat, follow, unfollow).
@@ -41,4 +42,5 @@ type LineContact struct {
 	UpdateDate       time.Time   `bun:"update_date"        json:"updateDate"`                            // [ 9] TIMESTAMPTZ
 	CreateBy         string      `bun:"create_by"          json:"createBy"`                              // [10] UUID
 	UpdateBy         string      `bun:"update_by"          json:"updateBy"`                              // [11] UUID
+	ChatURL          string      `bun:"chat_url"           json:"chatUrl"`                               // [12] TEXT
 }

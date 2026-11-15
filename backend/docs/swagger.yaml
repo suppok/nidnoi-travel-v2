@@ -1819,6 +1819,10 @@ definitions:
     type: object
   backend_pkg_modules_linebooking_models.LineBookingContact:
     properties:
+      chatUrl:
+        description: ChatURL opens the chat in LINE OA Manager; "" until sales paste
+          it.
+        type: string
       displayName:
         type: string
       following:
@@ -1826,6 +1830,10 @@ definitions:
           not reach them.'
         type: boolean
       id:
+        type: string
+      lineUserId:
+        description: LineUserID is the customer's LINE user ID; the backoffice links
+          to their chat in OA Manager.
         type: string
       pictureUrl:
         type: string
@@ -1852,6 +1860,11 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq'
         type: array
+      chatUrl:
+        description: |-
+          ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact so
+          staff can open it; optional, needs lineContactId. "" keeps the one already saved.
+        type: string
       childNoBed:
         type: integer
       childNoBedPrice:
@@ -1978,6 +1991,11 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingChargeReq'
         type: array
+      chatUrl:
+        description: |-
+          ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact so
+          staff can open it; optional, needs lineContactId. "" keeps the one already saved.
+        type: string
       childNoBed:
         type: integer
       childNoBedPrice:
@@ -3355,6 +3373,11 @@ definitions:
     type: object
   backend_pkg_modules_linebooking_models.LineBookingUpdateLineContactRequest:
     properties:
+      chatUrl:
+        description: |-
+          ChatURL is that chat in LINE OA Manager (https://chat.line.biz/…), saved on the contact;
+          optional, needs lineContactId. "" keeps the saved one.
+        type: string
       id:
         type: string
       lineContactId:
@@ -3740,6 +3763,9 @@ definitions:
     type: object
   backend_pkg_modules_linecontact_models.LineContactItem:
     properties:
+      chatUrl:
+        description: the chat in LINE OA Manager; "" until sales paste it
+        type: string
       displayName:
         type: string
       following:

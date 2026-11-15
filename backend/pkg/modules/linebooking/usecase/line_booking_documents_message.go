@@ -25,13 +25,10 @@ func thaiDate(t time.Time) string {
 // per PDF (a bot can't attach files, so each button opens the PDF in LINE's browser).
 func documentsMessages(b *domain.LineBooking) []any {
 	buttons := []any{}
-	for i, d := range documentButtons(b) {
-		style := "secondary"
-		if i == 0 {
-			style = "primary"
-		}
+	// Every document is a primary (green) button: they matter equally to the customer.
+	for _, d := range documentButtons(b) {
 		buttons = append(buttons, map[string]any{
-			"type": "button", "style": style, "height": "sm",
+			"type": "button", "style": "primary", "height": "sm",
 			"action": map[string]any{"type": "uri", "label": d[0], "uri": d[1]},
 		})
 	}

@@ -21,6 +21,9 @@ func TestUpdateLineContactValidate(t *testing.T) {
 		{"bad booking id", models.LineBookingUpdateLineContactRequest{ID: "x", LineContactID: null.StringFrom(id)}, false},
 		{"bad contact id", models.LineBookingUpdateLineContactRequest{ID: id, LineContactID: null.StringFrom("x")}, false},
 		{"empty contact id", models.LineBookingUpdateLineContactRequest{ID: id, LineContactID: null.StringFrom("")}, false},
+		{"chat url", models.LineBookingUpdateLineContactRequest{ID: id, LineContactID: null.StringFrom(id), ChatURL: "https://chat.line.biz/Ua/chat/Ub"}, true},
+		{"foreign chat url", models.LineBookingUpdateLineContactRequest{ID: id, LineContactID: null.StringFrom(id), ChatURL: "https://evil.example.com/chat"}, false},
+		{"chat url without contact", models.LineBookingUpdateLineContactRequest{ID: id, ChatURL: "https://chat.line.biz/Ua/chat/Ub"}, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -91,10 +91,13 @@ export type LineBookingCharge = { kind: LineBookingChargeKind; name: string; cou
 
 export type LineBookingContact = {
   id: string;
+  lineUserId: string; // the customer's Messaging API user ID
   displayName: string;
   pictureUrl: string | null;
   // False once the customer blocked the OA: a LINE push would not reach them.
   following: boolean;
+  // The chat in LINE OA Manager (https://chat.line.biz/…), pasted by sales; '' until then.
+  chatUrl: string;
 };
 
 export type LineBookingListRequest = Paging & {
@@ -125,7 +128,8 @@ export type LineBookingFinanceUsers = { items: { id: string; name: string }[]; d
 export type LineBookingUpdateStatusRequest = { id: string; status: boolean };
 
 // lineContactId null unlinks the chat.
-export type LineBookingUpdateLineContactRequest = { id: string; lineContactId: string | null };
+// chatUrl (optional, needs lineContactId) is saved on that chat; omitted / '' keeps the saved one.
+export type LineBookingUpdateLineContactRequest = { id: string; lineContactId: string | null; chatUrl?: string };
 
 // A customer known from LINE OA chats (POST /line-contacts/list).
 export type LineContact = {
@@ -135,6 +139,7 @@ export type LineContact = {
   pictureUrl: string | null;
   following: boolean;
   lastMessageAt: string | null;
+  chatUrl: string; // the chat in LINE OA Manager; '' until sales paste it
 };
 
 export type LineContactListRequest = Paging & {
@@ -172,6 +177,7 @@ export type LineBookingNotification = {
 export type LineBookingCreateRequest = {
   salesUserId: string; // GET /users/sales
   lineContactId: string | null; // the customer's LINE OA chat; null when they chat on a personal account
+  chatUrl: string; // that chat in LINE OA Manager, saved on the contact; '' keeps the saved one
   bookingSourceId: string | null;
   refName: string;
   refBookingNo: string;

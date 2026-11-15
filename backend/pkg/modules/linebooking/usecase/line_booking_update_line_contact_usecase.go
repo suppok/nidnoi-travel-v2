@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -25,6 +26,11 @@ func (u *lineBookingUseCase) UpdateLineContactValidate(request *models.LineBooki
 			fields["lineContactId"] = err
 		}
 	}
+	if err := validation.Validate(request.ChatURL, validation.RuneLength(0, maxChatURLRunes), validation.Match(chatURLPattern)); err != nil {
+		fields["chatUrl"] = err
+	} else if request.ChatURL != "" && !request.LineContactID.Valid {
+		fields["chatUrl"] = errors.New("needs lineContactId")
+	}
 	return fields.Filter()
 }
 
@@ -32,6 +38,7 @@ func (u *lineBookingUseCase) UpdateLineContact(ctx context.Context, request *mod
 	if request.LineContactID.Valid {
 		request.LineContactID = null.StringFrom(strings.TrimSpace(request.LineContactID.String))
 	}
+	request.ChatURL = strings.TrimSpace(request.ChatURL)
 	if err := u.UpdateLineContactValidate(request); err != nil {
 		return nil, cerrors.Validation(err)
 	}
@@ -55,6 +62,9 @@ func (u *lineBookingUseCase) UpdateLineContact(ctx context.Context, request *mod
 			}
 			if contact == nil || !contact.Status {
 				return cerrors.FieldError("lineContactId", "no such LINE contact")
+			}
+			if err := u.saveChatURL(ctx, appDB, contact, request.ChatURL, request.UserRequestInfo.UserID); err != nil {
+				return err
 			}
 		}
 		changed := target.LineContactID != request.LineContactID
