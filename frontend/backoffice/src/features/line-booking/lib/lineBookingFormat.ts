@@ -84,3 +84,8 @@ export function paymentPlan(b: LineBooking): PaymentPlan | null {
   const deposit = b.depositPerPerson * travellerCount(b);
   return { deposit, depositToPay: deposit + b.cardFee, remaining: b.totalPrice - b.cardFee - deposit };
 }
+
+// Who entered the booking: their backoffice name (lineDisplayName only for a row without one).
+export function enteredBy(b: LineBooking): string {
+  return b.createdBy?.name ?? b.lineDisplayName;
+}

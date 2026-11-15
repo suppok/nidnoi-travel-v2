@@ -6197,6 +6197,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -6545,6 +6553,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -6804,6 +6820,14 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "creditFeePercent": {
                     "type": "number"
@@ -7408,6 +7432,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -7667,6 +7699,14 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "creditFeePercent": {
                     "type": "number"
@@ -7933,6 +7973,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -8180,6 +8228,14 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "creditFeePercent": {
                     "type": "number"
@@ -8523,6 +8579,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -8770,6 +8834,14 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "creditFeePercent": {
                     "type": "number"
@@ -9210,6 +9282,14 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
+                },
                 "creditFeePercent": {
                     "type": "number"
                 },
@@ -9468,6 +9548,14 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "description": "CreatedBy is the staff user who entered the booking (their backoffice name, not their LINE name).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser"
+                        }
+                    ]
                 },
                 "creditFeePercent": {
                     "type": "number"

@@ -1259,6 +1259,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -1510,6 +1515,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -1697,6 +1707,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -2149,6 +2164,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -2334,6 +2354,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -2522,6 +2547,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -2699,6 +2729,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -2945,6 +2980,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -3122,6 +3162,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -3442,6 +3487,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:
@@ -3626,6 +3676,11 @@ definitions:
         type: string
       createDate:
         type: string
+      createdBy:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingUser'
+        description: CreatedBy is the staff user who entered the booking (their backoffice
+          name, not their LINE name).
       creditFeePercent:
         type: number
       customerAddress:

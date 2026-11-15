@@ -57,6 +57,8 @@ export type LineBooking = {
   refBookingNo: string;
   // The sales person who owns the booking; null on bookings made before it was recorded.
   salesUser: { id: string; name: string } | null;
+  // The staff user who entered the booking (backoffice name). Show this, not lineDisplayName.
+  createdBy: { id: string; name: string } | null;
   // The finance user who issues the receipt, and when the sales owner confirmed; null while new.
   financeUser: { id: string; name: string } | null;
   confirmedAt: string | null;

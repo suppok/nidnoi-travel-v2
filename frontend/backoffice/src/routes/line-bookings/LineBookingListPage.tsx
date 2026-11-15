@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader.tsx';
 import { LINE_BOOKING_STATE_INFO, type LineBookingState, LineBookingStates, lineBookingStateInfo } from '../../constants/lineBookingStates.ts';
 import LineBookingDrawer from '../../features/line-booking/components/LineBookingDrawer.tsx';
 import { useLineBookingAlerts } from '../../features/line-booking/hooks/useLineBookingAlerts.ts';
-import { requiredDocuments, travellerSummary, tripDates } from '../../features/line-booking/lib/lineBookingFormat.ts';
+import { enteredBy, requiredDocuments, travellerSummary, tripDates } from '../../features/line-booking/lib/lineBookingFormat.ts';
 import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../lib/format.ts';
@@ -17,31 +17,27 @@ const STATES = new Set<number>(LINE_BOOKING_STATE_INFO.map((s) => s.value));
 const PAID_STATES: readonly number[] = [LineBookingStates.DepositPaid, LineBookingStates.PaidInFull];
 
 type StateFilter = LineBookingState | 0;
-// Finance page: which bookings by documents. Default "waiting".
-// Where a paid booking stands for its sales owner: the finance documents of the current round, and
-// a recorded balance that waits for their confirm.
-function salesProgress(b: LineBooking): { label: string; color: string }[] {
-  if (!PAID_STATES.includes(b.state)) return [];
+type Tagged = { label: string; color: string };
+
+// Sales list "เอกสาร": where the finance documents of the current round stand for the sales owner;
+// null before the booking is confirmed (or once cancelled).
+function salesDocuments(b: LineBooking): Tagged | null {
+  if (!PAID_STATES.includes(b.state)) return null;
   const codes = requiredDocuments(b)
     .map((d) => d.code)
     .join(' + ');
   const finance = b.financeUser?.name ?? 'การเงิน';
-  const items: { label: string; color: string }[] = [];
-  if (b.documentsApprovedAt) {
-    items.push({ label: b.customerSentAt ? `ส่ง ${codes} ให้ลูกค้าแล้ว` : `ยืนยัน ${codes} แล้ว`, color: 'green' });
-  } else if (b.documentsAt) {
-    items.push({ label: `${finance} ส่ง ${codes} แล้ว · รอตรวจ`, color: 'blue' });
-  } else if (b.fixRequestedAt) {
-    items.push({ label: `รอ ${finance} แก้ ${codes}`, color: 'red' });
-  } else {
-    items.push({ label: `รอ ${finance} ออก ${codes}`, color: 'orange' });
-  }
-  if (b.state === LineBookingStates.DepositPaid && b.balanceSubmittedAt && !b.balanceConfirmedAt) {
-    items.push({ label: 'รอยืนยันยอดคงเหลือ', color: 'gold' });
-  }
-  return items;
+  if (b.documentsApprovedAt) return { label: b.customerSentAt ? `ส่ง ${codes} ให้ลูกค้าแล้ว` : `ยืนยัน ${codes} แล้ว`, color: 'green' };
+  if (b.documentsAt) return { label: `${finance} ส่ง ${codes} แล้ว · รอตรวจ`, color: 'blue' };
+  if (b.fixRequestedAt) return { label: `รอ ${finance} แก้ ${codes}`, color: 'red' };
+  return { label: `รอ ${finance} ออก ${codes}`, color: 'orange' };
 }
 
+// A balance recorded on the entry page that waits for the sales owner's confirm (a payment matter,
+// so it stays in the สถานะ column).
+const balancePending = (b: LineBooking) => b.state === LineBookingStates.DepositPaid && !!b.balanceSubmittedAt && !b.balanceConfirmedAt;
+
+// Finance page: which bookings by documents. Default "waiting".
 type DocsFilter = 'waiting' | 'done' | 'all';
 const DOCS_FILTERS: { value: DocsFilter; label: string }[] = [
   { value: 'waiting', label: 'รอออกเอกสาร' },
@@ -130,7 +126,7 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
         <div className="flex flex-col">
           <span className="text-sm">{b.salesUser?.name ?? '-'}</span>
           <span className="text-xs text-ink-muted" title="ผู้บันทึกใบจอง">
-            บันทึกโดย {b.lineDisplayName}
+            บันทึกโดย {enteredBy(b)}
           </span>
         </div>
       ),
@@ -191,25 +187,39 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
             },
           },
         ]
-      : []),
+      : [
+          {
+            title: 'เอกสาร',
+            key: 'documents',
+            width: 200,
+            render: (_: unknown, b: LineBooking) => {
+              const d = salesDocuments(b);
+              return d ? (
+                <Tag color={d.color} variant="outlined" className="m-0 whitespace-normal">
+                  {d.label}
+                </Tag>
+              ) : (
+                <span className="text-ink-muted">–</span>
+              );
+            },
+          },
+        ]),
     {
       title: 'สถานะ',
       key: 'state',
-      width: finance ? 120 : 190,
+      width: finance ? 120 : 160,
       render: (_, b) => {
         const s = lineBookingStateInfo(b.state);
-        // Sales also see where the finance documents are (finance has its own column).
-        const progress = finance ? [] : salesProgress(b);
         return (
           <div className="flex flex-col items-start gap-1">
             <Tag color={s.color} className="m-0">
               {s.label}
             </Tag>
-            {progress.map((p) => (
-              <Tag key={p.label} color={p.color} variant="outlined" className="m-0">
-                {p.label}
+            {!finance && balancePending(b) && (
+              <Tag color="gold" variant="outlined" className="m-0">
+                รอยืนยันยอดคงเหลือ
               </Tag>
-            ))}
+            )}
           </div>
         );
       },
@@ -301,7 +311,7 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
             onChange: (page, pageSize) =>
               update({ page: page > 1 ? String(page) : undefined, pageSize: pageSize !== DEFAULT_PAGE_SIZE ? String(pageSize) : undefined }),
           }}
-          scroll={{ x: 1080 }}
+          scroll={{ x: finance ? 1080 : 1250 }}
         />
       </Card>
 
