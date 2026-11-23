@@ -15,6 +15,8 @@ const (
 	PurposeBookingSlip = "booking-slip"
 	// PurposeBookingDocument: finance PDFs (AI/IV/RE) of a LINE booking, via POST /media/upload/line-booking.
 	PurposeBookingDocument = "booking-document"
+	// PurposeEmailContactCard: the contact card image at the bottom of emails (admin page).
+	PurposeEmailContactCard = "email-contact-card"
 )
 
 // MediaUploadRequest is built by the handler from multipart/form-data (fields "file", "purpose").

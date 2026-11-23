@@ -19,6 +19,7 @@ const RULES: Record<MediaPurpose, { mimes: string[]; minWidth?: number; minHeigh
   'country-hero': { mimes: IMAGE, minWidth: 1600, minHeight: 900, prefix: 'countries/heroes/' },
   'city-hero': { mimes: IMAGE, minWidth: 1600, minHeight: 900, prefix: 'cities/heroes/' },
   'airline-logo': { mimes: IMAGE, minWidth: 120, minHeight: 40, prefix: 'airlines/logos/' },
+  'email-contact-card': { mimes: ['image/jpeg', 'image/png'], minWidth: 600, minHeight: 300, prefix: 'email/contact-cards/' },
 };
 
 async function upload(req: Parameters<MockHandler>[0]): Promise<Response> {

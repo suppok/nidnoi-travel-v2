@@ -107,10 +107,11 @@ func New(ctx context.Context) (*App, error) {
 	lineClient := line.New(cfg.LINE)
 	revalidator := revalidation.New(deployHook, revalidation.NewRepositoryBuildLog(repositoryRegistry.SiteBuildRepository, log), log, cfg.Revalidation)
 	mailClient := mailer.New(cfg.Mail, log)
-	emailSender := emailoutbox.NewSender(repositoryRegistry.EmailOutboxRepository, mailClient, log, cfg.Mail.Outbox)
+	storage := objectstorage.New(cfg.R2)
+	emailSender := emailoutbox.NewSender(repositoryRegistry.EmailOutboxRepository, mailClient, storage, log, cfg.Mail.Outbox)
 	shareRegistry := &registry.ShareRegistry{
 		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
-		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook, LINE: lineClient, Mailer: mailClient},
+		ClientRegistry:  registry.ClientRegistry{ObjectStorage: storage, DeployHook: deployHook, LINE: lineClient, Mailer: mailClient},
 	}
 	if !cfg.R2.Configured() {
 		log.Warn("R2 is not configured: media uploads return STORAGE_UNAVAILABLE until every R2_* variable is set")

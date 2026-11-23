@@ -14,6 +14,7 @@ export const ACCEPT: Record<MediaPurpose, string> = {
   'country-hero': 'image/jpeg,image/png,image/webp',
   'city-hero': 'image/jpeg,image/png,image/webp',
   'airline-logo': 'image/jpeg,image/png,image/webp',
+  'email-contact-card': 'image/jpeg,image/png', // Outlook can't show WebP
   'tour-pdf': 'application/pdf,.pdf',
   'tour-docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx',
 };
@@ -26,6 +27,7 @@ export const MIN_SIZE: Partial<Record<MediaPurpose, string>> = {
   'country-hero': '1600×900',
   'city-hero': '1600×900',
   'airline-logo': '120×40',
+  'email-contact-card': '600×300',
 };
 
 // Client-side guard only; the backend re-checks type (by content), size and dimensions.

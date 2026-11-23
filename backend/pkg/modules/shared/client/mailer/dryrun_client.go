@@ -14,7 +14,12 @@ func NewDryRun(log *zap.Logger) Mailer {
 }
 
 func (c *dryRunClient) Send(_ context.Context, msg Message) (string, error) {
+	attachments := make([]string, len(msg.Attachments))
+	for i, a := range msg.Attachments {
+		attachments[i] = a.Filename
+	}
 	c.log.Info("mail dry run: not sent",
+		zap.Strings("attachments", attachments),
 		zap.String("from", msg.From),
 		zap.Strings("to", msg.To),
 		zap.Strings("cc", msg.Cc),

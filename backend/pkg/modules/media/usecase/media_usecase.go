@@ -31,6 +31,9 @@ var purposeRules = map[string]purposeRule{
 	models.PurposeBookingSlip: {mimes: imageMimes, minWidth: 200, minHeight: 200, keyPrefix: "bookings/slips/"},
 	// Finance documents of a LINE booking; the linebooking usecase checks this prefix.
 	models.PurposeBookingDocument: {mimes: []string{commons.MimePDF}, keyPrefix: "bookings/documents/"},
+	// The contact card in email footers: JPEG/PNG only (Outlook can't show WebP). The prefix must match
+	// notification.ContactCardKeyPrefix.
+	models.PurposeEmailContactCard: {mimes: []string{commons.MimeJPEG, commons.MimePNG}, minWidth: 600, minHeight: 300, keyPrefix: "email/contact-cards/"},
 }
 
 func (r purposeRule) isImage() bool { return r.minWidth > 0 }

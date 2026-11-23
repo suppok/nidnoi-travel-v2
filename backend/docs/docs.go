@@ -281,6 +281,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/app-configs/email-contact-card": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "imageUrl is the uploaded card (\"\" = the built-in one, returned as defaultImage for the preview).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-config"
+                ],
+                "summary": "Get the contact card image at the bottom of emails",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_appconfig_models.AppConfigEmailContactCardResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "imageUrl from POST /media/upload with purpose email-contact-card (JPEG/PNG, at least\n600×300), or \"\" for the built-in card. Applies to emails queued from now on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-config"
+                ],
+                "summary": "Change the contact card image at the bottom of emails",
+                "parameters": [
+                    {
+                        "description": "Card",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_appconfig_models.AppConfigEmailContactCardUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_appconfig_models.AppConfigEmailContactCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/app-configs/verify": {
             "post": {
                 "security": [
@@ -4832,6 +4901,35 @@ const docTemplate = `{
                 "maxFileSize": {
                     "description": "MB",
                     "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_appconfig_models.AppConfigEmailContactCardResponse": {
+            "type": "object",
+            "properties": {
+                "defaultImage": {
+                    "description": "DefaultImage is the built-in card as a data: URL, for the preview.",
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "description": "ImageURL is the uploaded card; \"\" = the built-in card is used.",
+                    "type": "string"
+                },
+                "updateBy": {
+                    "description": "name of who saved it; \"\" for none",
+                    "type": "string"
+                },
+                "updateDate": {
+                    "description": "null until an admin saves one",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_appconfig_models.AppConfigEmailContactCardUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "imageUrl": {
+                    "type": "string"
                 }
             }
         },

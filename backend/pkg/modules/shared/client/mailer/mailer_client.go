@@ -25,6 +25,15 @@ type Message struct {
 	Text    string
 	// IdempotencyKey makes a retried send of the same email a no-op at the provider.
 	IdempotencyKey string
+	// Inline images, referenced from HTML as "cid:<ContentID>".
+	Attachments []Attachment
+}
+
+type Attachment struct {
+	Filename    string
+	ContentType string
+	ContentID   string
+	Content     []byte
 }
 
 type Mailer interface {

@@ -56,9 +56,29 @@ func (u *lineBookingUseCase) wholesaleEmailAddresses(ctx context.Context, appDB 
 	return addr, nil
 }
 
-// renderWholesaleEmail renders the booking email to the wholesale and builds its outbox row.
-func (u *lineBookingUseCase) renderWholesaleEmail(ctx context.Context, appDB query.AppIDB, b *domain.LineBooking, w *domain.Wholesale, salesName, actorID string, now time.Time) (*domain.EmailOutbox, error) {
-	email, err := notification.RenderWholesaleBooking(notification.NewWholesaleBooking(b, w.Name, salesName))
+// contactCardID: the uploaded contact card (app config EMAIL_CONTACT_CARD), else the built-in one.
+// A broken config never blocks a booking.
+func (u *lineBookingUseCase) contactCardID(ctx context.Context, appDB query.AppIDB) string {
+	code := appconfigcode.AppConfigEmailContactCard
+	cfg, err := appconfigload.GetAppConfigByOption(ctx, u.repositoryRegistry.AppConfigRepository.WithTx(appDB), code, false)
+	if err != nil {
+		u.coreRegistry.Logger.Error("app config: read failed, using the built-in contact card", zap.String("code", code.Code()), zap.Error(err))
+		return notification.DefaultContactCardID
+	}
+	if cfg == nil || cfg.ImageURL == "" {
+		return notification.DefaultContactCardID
+	}
+	id, ok := notification.ContactCardID(cfg.ImageURL, u.shareRegistry.ClientRegistry.ObjectStorage.PublicBaseURL())
+	if !ok {
+		u.coreRegistry.Logger.Error("app config invalid: using the built-in contact card", zap.String("code", code.Code()))
+	}
+	return id
+}
+
+// renderWholesaleEmail renders the booking email to the wholesale and builds its outbox row. b must be
+// loaded with its relations (BookingSource, SalesUser) and tour with Wholesale and Airline.
+func (u *lineBookingUseCase) renderWholesaleEmail(ctx context.Context, appDB query.AppIDB, b *domain.LineBooking, tour *domain.TourProgram, w *domain.Wholesale, actorID string, now time.Time) (*domain.EmailOutbox, error) {
+	email, err := notification.RenderWholesaleBooking(notification.NewWholesaleBooking(b, tour, u.contactCardID(ctx, appDB)))
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +92,15 @@ func (u *lineBookingUseCase) renderWholesaleEmail(ctx context.Context, appDB que
 // queueWholesaleEmail runs inside the create transaction: when the tour's wholesale has auto email on
 // and an address, it queues the booking email in the outbox, so the booking and its email commit or
 // roll back together. The sender worker delivers it; nothing is sent here.
-func (u *lineBookingUseCase) queueWholesaleEmail(ctx context.Context, appDB query.AppIDB, b *domain.LineBooking, wholesaleID, salesName, actorID string) (models.LineBookingWholesaleEmailResult, error) {
+func (u *lineBookingUseCase) queueWholesaleEmail(ctx context.Context, appDB query.AppIDB, bookingID, tourID, actorID string) (models.LineBookingWholesaleEmailResult, error) {
 	result := models.LineBookingWholesaleEmailResult{To: []string{}}
-	w, err := u.repositoryRegistry.WholesaleRepository.WithTx(appDB).FindByID(ctx, wholesaleID)
+	tour, err := u.repositoryRegistry.TourProgramRepository.WithTx(appDB).FindByID(ctx, tourID)
 	if err != nil {
 		return result, err
+	}
+	var w *domain.Wholesale
+	if tour != nil {
+		w = tour.Wholesale
 	}
 	if w != nil {
 		result.WholesaleName = w.Name
@@ -85,7 +109,12 @@ func (u *lineBookingUseCase) queueWholesaleEmail(ctx context.Context, appDB quer
 	if result.Result != models.WholesaleEmailQueued {
 		return result, nil
 	}
-	row, err := u.renderWholesaleEmail(ctx, appDB, b, w, salesName, actorID, time.Now())
+	// Reload the booking with the source and sales owner the summary shows.
+	b, err := u.repositoryRegistry.LineBookingRepository.WithTx(appDB).FindByID(ctx, bookingID)
+	if err != nil {
+		return result, err
+	}
+	row, err := u.renderWholesaleEmail(ctx, appDB, b, tour, w, actorID, time.Now())
 	if err != nil {
 		return result, err
 	}
@@ -159,22 +188,13 @@ func (u *lineBookingUseCase) WholesaleEmailResend(ctx context.Context, request *
 		if tour == nil {
 			return cerrors.NotFound()
 		}
-		w, err := u.repositoryRegistry.WholesaleRepository.WithTx(appDB).FindByID(ctx, tour.WholesaleID)
-		if err != nil {
-			return err
-		}
+		w := tour.Wholesale
 		if w == nil || len(w.Emails) == 0 {
 			return cerrors.FieldError("id", "the wholesale has no email address")
 		}
-		salesName := ""
-		if creator, err := u.repositoryRegistry.AppUserRepository.WithTx(appDB).FindByID(ctx, b.CreateBy); err != nil {
-			return err
-		} else if creator != nil {
-			salesName = creator.Name
-		}
 
 		now := time.Now()
-		fresh, err := u.renderWholesaleEmail(ctx, appDB, b, w, salesName, info.UserID, now)
+		fresh, err := u.renderWholesaleEmail(ctx, appDB, b, tour, w, info.UserID, now)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-import { AccountBookOutlined, BellOutlined, ExportOutlined, FormOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, TeamOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, BellOutlined, ExportOutlined, FormOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, MailOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -60,6 +60,7 @@ const NAV: NavGroup[] = [
     items: [
       { path: '/users', label: 'ผู้ใช้และสิทธิ์', icon: <TeamOutlined />, permission: Permissions.UserList },
       { path: '/site-builds', label: 'ประวัติอัปเดตหน้าเว็บ', icon: <CloudSyncOutlined />, permission: Permissions.SiteBuildList },
+      { path: '/settings/email-contact-card', label: 'รูปติดต่อท้ายอีเมล', icon: <MailOutlined />, permission: Permissions.AppConfigEmailContactCard },
     ],
   },
 ];

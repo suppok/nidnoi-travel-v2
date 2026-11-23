@@ -39,6 +39,7 @@ export const Permissions = {
   SiteBuildList: 'site-build:list',
   AppConfigVerify: 'app-config:verify',
   AppConfigAppSettings: 'app-config:app-settings',
+  AppConfigEmailContactCard: 'app-config:email-contact-card', // admins: the contact card in email footers
   UserCreate: 'user:create',
   UserUpdate: 'user:update',
   UserList: 'user:list',
