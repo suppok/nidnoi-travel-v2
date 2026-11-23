@@ -45,6 +45,7 @@ type RepositoryRegistry struct {
 	TourProgramPeriodRepository  repository.TourProgramPeriodRepository
 
 	SiteBuildRepository repository.SiteBuildRepository
+	AppConfigRepository repository.AppConfigRepository
 
 	BookingRepository                 repository.BookingRepository
 	LineBookingRepository             repository.LineBookingRepository

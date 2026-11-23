@@ -242,6 +242,72 @@
                 }
             }
         },
+        "/app-configs/app-settings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-config"
+                ],
+                "summary": "Get the general app settings (APP_SETTINGS)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_appconfig_models.AppConfigAppSettingsGetResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "APP_CONFIG_NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/app-configs/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checks every registered app config code: a required code without an active row is\nNOT_FOUND; a stored value that doesn't decode into the code's type or fails its rules\nis INVALID. An empty list means every config is fine.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-config"
+                ],
+                "summary": "Verify app configs (super admin only)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/backend_pkg_modules_appconfig_models.AppConfigVerifyIssue"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "SUPER_ADMIN_REQUIRED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/line-link": {
             "post": {
                 "security": [
@@ -4648,6 +4714,34 @@
                 "status": {
                     "description": "false = soft delete",
                     "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_appconfig_models.AppConfigAppSettingsGetResponse": {
+            "type": "object",
+            "properties": {
+                "maxFileSize": {
+                    "description": "MB",
+                    "type": "integer"
+                }
+            }
+        },
+        "backend_pkg_modules_appconfig_models.AppConfigVerifyIssue": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "NOT_FOUND: a required code has no active row. INVALID: the stored value doesn't decode\ninto the code's type or fails its rules (message says why).",
+                    "type": "string",
+                    "enum": [
+                        "NOT_FOUND",
+                        "INVALID"
+                    ]
                 }
             }
         },
