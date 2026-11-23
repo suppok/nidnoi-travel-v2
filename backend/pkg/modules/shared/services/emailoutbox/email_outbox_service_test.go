@@ -13,6 +13,7 @@ import (
 	"backend/pkg/core/database/query"
 	"backend/pkg/domain"
 	"backend/pkg/modules/shared/client/mailer"
+	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/notification"
 	"backend/pkg/repository"
 )
@@ -105,7 +106,7 @@ func TestSenderTick(t *testing.T) {
 		"busy@x.com": &mailer.SendError{Retryable: true, Status: 429, Message: "slow down"},
 		"bad@x.com":  &mailer.SendError{Status: 422, Message: "invalid to"},
 	}
-	s := NewSender(repo, m, zap.NewNop(), config.MailOutboxConfig{BatchSize: 2, MaxAttempts: 5, TickInterval: time.Second})
+	s := NewSender(repo, m, &fakeStorage{}, zap.NewNop(), config.MailOutboxConfig{BatchSize: 2, MaxAttempts: 5, TickInterval: time.Second})
 	s.now = func() time.Time { return now }
 	s.tick(context.Background())
 
@@ -117,5 +118,52 @@ func TestSenderTick(t *testing.T) {
 	}
 	if o := repo.finished["bad"]; o.State != emailoutboxstate.Failed || o.LastError != "mail: status 422: invalid to" {
 		t.Errorf("bad: %+v", o)
+	}
+}
+
+type fakeStorage struct {
+	objectstorage.ObjectStorage
+	gets int
+	fail bool
+}
+
+func (f *fakeStorage) Get(_ context.Context, key string) ([]byte, error) {
+	f.gets++
+	if f.fail {
+		return nil, errors.New("r2 down")
+	}
+	return []byte("img:" + key), nil
+}
+
+func TestInlineImages(t *testing.T) {
+	storage := &fakeStorage{}
+	c := newInlineImages(storage)
+	html := `<img src="cid:contact-card-0123456789abcdef01234567.png"><img src="cid:contact-card.png"><img src="cid:unknown.png">`
+	for range 3 {
+		got, err := c.attachments(context.Background(), html)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 2 || string(got[0].Content) != "img:email/contact-cards/0123456789abcdef01234567.png" ||
+			got[0].ContentID != "contact-card-0123456789abcdef01234567.png" || got[1].ContentID != "contact-card.png" || len(got[1].Content) < 1000 {
+			t.Fatalf("attachments = %+v", got)
+		}
+	}
+	if storage.gets != 1 {
+		t.Errorf("uploaded card downloaded %d times, want once (cached)", storage.gets)
+	}
+
+	// The cache keeps at most imageCacheSize cards.
+	for i := range imageCacheSize + 2 {
+		_, _ = c.get(context.Background(), "k"+string(rune('a'+i)))
+	}
+	if len(c.cache) != imageCacheSize || len(c.order) != imageCacheSize {
+		t.Errorf("cache size %d / %d", len(c.cache), len(c.order))
+	}
+
+	// A card that can't be loaded fails the attempt as retryable.
+	failing := newInlineImages(&fakeStorage{fail: true})
+	if _, err := failing.attachments(context.Background(), html); err == nil || !mailer.IsRetryable(err) {
+		t.Errorf("err = %v, want a retryable error", err)
 	}
 }

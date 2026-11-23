@@ -485,7 +485,7 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 			return err
 		}
 		// The wholesale email is queued in the same transaction: no booking, no email.
-		email, err = u.queueWholesaleEmail(ctx, appDB, created, tour.WholesaleID, info.Name, info.UserID)
+		email, err = u.queueWholesaleEmail(ctx, appDB, created.ID, tour.ID, info.UserID)
 		return err
 	})
 	return created, email, err

@@ -47,7 +47,7 @@ export default function ImageUploadField({ value, onChange, purpose, disabled, a
         >
           {uploading ? <LoadingOutlined className="text-2xl" /> : <PictureOutlined className="text-2xl" />}
           <span className="text-sm">{uploading ? 'กำลังอัปโหลด…' : 'คลิกเพื่ออัปโหลดรูป'}</span>
-          <span className="text-xs">JPG, PNG หรือ WebP ไม่เกิน 10 MB · อย่างน้อย {MIN_SIZE[purpose]} พิกเซล</span>
+          <span className="text-xs">{ACCEPT[purpose].includes('webp') ? 'JPG, PNG หรือ WebP' : 'JPG หรือ PNG'} ไม่เกิน 10 MB · อย่างน้อย {MIN_SIZE[purpose]} พิกเซล</span>
         </button>
       )}
     </Upload>

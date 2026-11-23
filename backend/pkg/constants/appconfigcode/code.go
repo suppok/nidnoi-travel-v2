@@ -39,4 +39,8 @@ var (
 	// WHOLESALE_EMAIL: Reply-To and Cc of the booking email to wholesales. Read when an email is queued;
 	// a missing or invalid row queues it without them (and logs an error).
 	AppConfigWholesaleEmail = NewAppConfig[models.AppConfigWholesaleEmail]("WHOLESALE_EMAIL", true, "wholesale-email")
+
+	// Email
+	// EMAIL_CONTACT_CARD: the contact card image in email footers (admin page). Missing = the built-in card.
+	AppConfigEmailContactCard = NewAppConfig[models.AppConfigEmailContactCard]("EMAIL_CONTACT_CARD", false, "wholesale-email")
 )

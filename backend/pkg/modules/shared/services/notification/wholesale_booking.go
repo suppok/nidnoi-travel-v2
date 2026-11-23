@@ -1,5 +1,5 @@
 // Package notification renders outgoing emails (subject, HTML and plain text) from embedded
-// templates. It never sends: callers queue the result in email_outbox.
+// templates and assets. It never sends: callers queue the result in email_outbox.
 package notification
 
 import (
@@ -10,94 +10,68 @@ import (
 	"strings"
 	texttemplate "text/template"
 
-	"backend/pkg/core/utils"
 	"backend/pkg/domain"
 )
 
 //go:embed templates/*.tmpl
 var templateFS embed.FS
 
-var funcs = map[string]any{"baht": Baht}
+//go:embed assets/*
+var assetFS embed.FS
 
 var (
-	wholesaleBookingHTML = htmltemplate.Must(htmltemplate.New("wholesale_booking.html.tmpl").Funcs(funcs).
+	wholesaleBookingHTML = htmltemplate.Must(htmltemplate.New("wholesale_booking.html.tmpl").
 				ParseFS(templateFS, "templates/wholesale_booking.html.tmpl"))
-	wholesaleBookingText = texttemplate.Must(texttemplate.New("wholesale_booking.txt.tmpl").Funcs(funcs).
+	wholesaleBookingText = texttemplate.Must(texttemplate.New("wholesale_booking.txt.tmpl").
 				ParseFS(templateFS, "templates/wholesale_booking.txt.tmpl"))
 )
 
-// Email is a rendered email.
+// Email is a rendered email. Its HTML may reference inline images as "cid:<id>" (see inline_assets.go);
+// the outbox sender attaches them.
 type Email struct {
 	Subject string
 	HTML    string
 	Text    string
 }
 
-// TravellerLine is one row of the travellers table.
-type TravellerLine struct {
-	Label string
-	Count int
-}
+// WholesaleGreetingName is who the wholesale email greets ("เรียน …"). To be decided.
+const WholesaleGreetingName = "XXX"
 
 // WholesaleBooking is the data of the booking email to a wholesale.
 type WholesaleBooking struct {
-	WholesaleName   string
-	BookingNo       string
-	TourCode        string
-	TourName        string
-	StartDate       string // Thai d/m/yyyy
-	EndDate         string
-	CustomerName    string
-	Travellers      []TravellerLine
-	TotalTravellers int
-	TotalPrice      int
-	IsDeposit       bool
-	PaidAmount      int // the deposit (with its card fee) or the full total
-	SalesName       string
+	Greeting      string   // "เรียน XXX"
+	CustomerName  string   // as stored
+	TourName      string   // the booking's snapshot
+	DateRange     string   // "11 - 14 ตุลาคม 2569"
+	Travellers    int      // infants included
+	Summary       string   // BookingSummaryText
+	SummaryLines  []string // Summary split into lines (HTML)
+	ContactCardID string   // inline image of the footer
 }
 
-// NewWholesaleBooking builds the email data from a saved LINE booking.
-func NewWholesaleBooking(b *domain.LineBooking, wholesaleName, salesName string) WholesaleBooking {
-	rows := []TravellerLine{
-		{"ผู้ใหญ่ (พักคู่)", b.AdultTwinCount},
-		{"ผู้ใหญ่ (พักเดี่ยว)", b.AdultSingleCount},
-		{"เด็ก (มีเตียง)", b.ChildWithBedCount},
-		{"เด็ก (ไม่มีเตียง)", b.ChildNoBedCount},
-		{"ทารก", b.InfantCount},
+// NewWholesaleBooking builds the email data from a saved LINE booking (with its BookingSource and
+// SalesUser), its tour (with Wholesale and Airline; nil when it can't be loaded) and the content id of
+// the footer's contact card (ContactCardID; "" = the built-in card).
+func NewWholesaleBooking(b *domain.LineBooking, tour *domain.TourProgram, contactCardID string) WholesaleBooking {
+	if contactCardID == "" {
+		contactCardID = DefaultContactCardID
 	}
-	travellers := make([]TravellerLine, 0, len(rows))
-	total := 0
-	for _, r := range rows {
-		if r.Count > 0 {
-			travellers = append(travellers, r)
-			total += r.Count
-		}
-	}
-	paid := b.TotalPrice
-	if b.IsDeposit {
-		paid = b.DepositPerPerson*b.Travellers() + b.CardFee
-	}
+	summary := BookingSummaryText(b, tour)
 	return WholesaleBooking{
-		WholesaleName:   wholesaleName,
-		BookingNo:       b.BookingNo,
-		TourCode:        b.TourCode,
-		TourName:        b.TourName,
-		StartDate:       utils.ThaiDate(b.StartDate),
-		EndDate:         utils.ThaiDate(b.EndDate),
-		CustomerName:    b.CustomerName,
-		Travellers:      travellers,
-		TotalTravellers: total,
-		TotalPrice:      b.TotalPrice,
-		IsDeposit:       b.IsDeposit,
-		PaidAmount:      paid,
-		SalesName:       salesName,
+		Greeting:      "เรียน " + WholesaleGreetingName,
+		CustomerName:  strings.TrimSpace(b.CustomerName),
+		TourName:      b.TourName,
+		DateRange:     ThaiDateRange(b.StartDate, b.EndDate),
+		Travellers:    b.Travellers(),
+		Summary:       summary,
+		SummaryLines:  strings.Split(summary, "\n"),
+		ContactCardID: contactCardID,
 	}
 }
 
-// WholesaleBookingSubject: "[ยืนยันชำระเงิน] <booking no> – <tour name> <departure date>", so the owner
-// can search Gmail by booking no.
+// WholesaleBookingSubject: "BOOKING <customer name> // <tour name> // <dates> // <n>PAX".
 func WholesaleBookingSubject(d WholesaleBooking) string {
-	subject := "[ยืนยันชำระเงิน] " + d.BookingNo + " – " + d.TourName + " " + d.StartDate
+	subject := "BOOKING " + d.CustomerName + " // " + d.TourName + " // " + d.DateRange + " // " + strconv.Itoa(d.Travellers) + "PAX"
 	// Headers are one line.
 	return strings.Join(strings.Fields(subject), " ")
 }

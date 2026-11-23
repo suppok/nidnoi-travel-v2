@@ -27,6 +27,8 @@ func (h *AppConfigAPIHandler) Init(jwtAuth middleware.Auth, authPermissions midd
 	r := h.router
 	r.Post("/app-configs/verify", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.AppConfigVerify), h.AppConfigVerify)
 	r.Get("/app-configs/app-settings", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.AppConfigAppSettings), h.AppConfigAppSettingsGet)
+	r.Get("/app-configs/email-contact-card", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.AppConfigEmailContactCard), h.AppConfigEmailContactCardGet)
+	r.Put("/app-configs/email-contact-card", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.AppConfigEmailContactCard), h.AppConfigEmailContactCardUpdate)
 }
 
 // AppConfigVerify godoc
@@ -61,5 +63,41 @@ func (h *AppConfigAPIHandler) AppConfigAppSettingsGet(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.appConfigUseCase.AppSettingsGet(ctx, request)
+	})
+}
+
+// AppConfigEmailContactCardGet godoc
+// @Summary     Get the contact card image at the bottom of emails
+// @Description imageUrl is the uploaded card ("" = the built-in one, returned as defaultImage for the preview).
+// @Tags        app-config
+// @Produce     json
+// @Security    BearerAuth
+// @Success     200 {object} models.AppConfigEmailContactCardResponse
+// @Router      /app-configs/email-contact-card [get]
+func (h *AppConfigAPIHandler) AppConfigEmailContactCardGet(c *fiber.Ctx) error {
+	request := &models.AppConfigEmailContactCardGetRequest{}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.appConfigUseCase.EmailContactCardGet(ctx, request)
+	})
+}
+
+// AppConfigEmailContactCardUpdate godoc
+// @Summary     Change the contact card image at the bottom of emails
+// @Description imageUrl from POST /media/upload with purpose email-contact-card (JPEG/PNG, at least
+// @Description 600×300), or "" for the built-in card. Applies to emails queued from now on.
+// @Tags        app-config
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.AppConfigEmailContactCardUpdateRequest true "Card"
+// @Success     200 {object} models.AppConfigEmailContactCardResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Router      /app-configs/email-contact-card [put]
+func (h *AppConfigAPIHandler) AppConfigEmailContactCardUpdate(c *fiber.Ctx) error {
+	request := &models.AppConfigEmailContactCardUpdateRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.appConfigUseCase.EmailContactCardUpdate(ctx, request)
 	})
 }

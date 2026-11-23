@@ -31,6 +31,7 @@ import TourProgramEditPage from './routes/tour-programs/[id]/edit/TourProgramEdi
 import TourProgramCreatePage from './routes/tour-programs/create/TourProgramCreatePage.tsx';
 import TourProgramListPage from './routes/tour-programs/list/TourProgramListPage.tsx';
 import UserListPage from './routes/users/UserListPage.tsx';
+import EmailContactCardPage from './routes/settings/EmailContactCardPage.tsx';
 import WholesaleListPage from './routes/wholesales/WholesaleListPage.tsx';
 import { theme } from './theme.ts';
 
@@ -117,6 +118,10 @@ const router = createBrowserRouter([
           {
             element: <RequirePermission code={Permissions.SiteBuildList} />,
             children: [{ path: '/site-builds', element: <SiteBuildListPage /> }],
+          },
+          {
+            element: <RequirePermission code={Permissions.AppConfigEmailContactCard} />,
+            children: [{ path: '/settings/email-contact-card', element: <EmailContactCardPage /> }],
           },
           {
             element: <RequirePermission code={Permissions.SalesFinanceGet} />,

@@ -10,6 +10,7 @@ import (
 	"backend/pkg/core/config"
 	"backend/pkg/domain"
 	"backend/pkg/modules/shared/client/mailer"
+	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/repository"
 )
 
@@ -26,13 +27,15 @@ const maxBatchesPerTick = 10
 type Sender struct {
 	repo   repository.EmailOutboxRepository
 	mailer mailer.Mailer
+	images *inlineImages
 	log    *zap.Logger
 	cfg    config.MailOutboxConfig
 	now    func() time.Time
 }
 
-func NewSender(repo repository.EmailOutboxRepository, m mailer.Mailer, log *zap.Logger, cfg config.MailOutboxConfig) *Sender {
-	return &Sender{repo: repo, mailer: m, log: log, cfg: cfg, now: time.Now}
+// NewSender: storage serves the uploaded inline images (the email contact card).
+func NewSender(repo repository.EmailOutboxRepository, m mailer.Mailer, storage objectstorage.ObjectStorage, log *zap.Logger, cfg config.MailOutboxConfig) *Sender {
+	return &Sender{repo: repo, mailer: m, images: newInlineImages(storage), log: log, cfg: cfg, now: time.Now}
 }
 
 // Run sends due emails every tick until ctx is cancelled. Unsent rows simply wait in the table.
@@ -73,16 +76,23 @@ func (s *Sender) tick(ctx context.Context) {
 }
 
 func (s *Sender) send(ctx context.Context, row *domain.EmailOutbox) {
-	id, sendErr := s.mailer.Send(ctx, mailer.Message{
-		From:           row.FromEmail,
-		To:             row.ToEmails,
-		Cc:             row.CcEmails,
-		ReplyTo:        row.ReplyTo,
-		Subject:        row.Subject,
-		HTML:           row.BodyHTML,
-		Text:           row.BodyText,
-		IdempotencyKey: row.IdempotencyKey(),
-	})
+	// Inline images are attached at send time from the cid: references in the HTML, so the outbox row
+	// stays small. A card that can't be loaded fails this attempt (retryable), like a provider error.
+	var id string
+	attachments, sendErr := s.images.attachments(ctx, row.BodyHTML)
+	if sendErr == nil {
+		id, sendErr = s.mailer.Send(ctx, mailer.Message{
+			From:           row.FromEmail,
+			To:             row.ToEmails,
+			Cc:             row.CcEmails,
+			ReplyTo:        row.ReplyTo,
+			Subject:        row.Subject,
+			HTML:           row.BodyHTML,
+			Text:           row.BodyText,
+			IdempotencyKey: row.IdempotencyKey(),
+			Attachments:    attachments,
+		})
+	}
 	now := s.now()
 	d := Decide(sendErr, mailer.IsRetryable(sendErr), row.Attempts, s.cfg.MaxAttempts, now)
 	outcome := repository.EmailOutboxOutcome{State: d.State, NextAttemptAt: d.NextAttemptAt, Now: now}

@@ -15,6 +15,7 @@ type fakeStorage struct{ base string }
 
 func (f fakeStorage) Put(context.Context, objectstorage.PutInput) error { return nil }
 func (f fakeStorage) Delete(context.Context, string) error              { return nil }
+func (f fakeStorage) Get(context.Context, string) ([]byte, error)       { return nil, nil }
 func (f fakeStorage) PublicURL(key string) string                       { return f.base + "/" + key }
 func (f fakeStorage) PublicBaseURL() string                             { return f.base }
 

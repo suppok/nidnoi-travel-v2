@@ -130,3 +130,32 @@ func TestResendNetworkErrorIsRetryable(t *testing.T) {
 		t.Errorf("error leaks details: %v", err)
 	}
 }
+
+func TestResendInlineAttachment(t *testing.T) {
+	var got captured
+	srv := newServer(t, http.StatusOK, `{"id":"msg_1"}`, &got)
+	msg := message()
+	msg.Attachments = []Attachment{{Filename: "card.png", ContentType: "image/png", ContentID: "card.png", Content: []byte("PNG")}}
+	if _, err := NewResend("re_test", srv.URL, time.Second).Send(context.Background(), msg); err != nil {
+		t.Fatal(err)
+	}
+	list, _ := got.body["attachments"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("attachments %v", got.body["attachments"])
+	}
+	a, _ := list[0].(map[string]any)
+	if a["filename"] != "card.png" || a["content"] != "UE5H" || a["content_id"] != "card.png" || a["content_type"] != "image/png" {
+		t.Errorf("attachment %v", a)
+	}
+}
+
+func TestResendOmitsEmptyAttachments(t *testing.T) {
+	var got captured
+	srv := newServer(t, http.StatusOK, `{"id":"msg_1"}`, &got)
+	if _, err := NewResend("re_test", srv.URL, time.Second).Send(context.Background(), message()); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := got.body["attachments"]; ok {
+		t.Error("attachments sent while empty")
+	}
+}

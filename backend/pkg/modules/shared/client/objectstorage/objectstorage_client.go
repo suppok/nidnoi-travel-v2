@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -29,11 +30,16 @@ type PutInput struct {
 type ObjectStorage interface {
 	Put(ctx context.Context, in PutInput) error
 	Delete(ctx context.Context, key string) error
+	// Get reads an object (at most maxGetBytes).
+	Get(ctx context.Context, key string) ([]byte, error)
 	// PublicURL is the URL the object is served from (R2_PUBLIC_URL + "/" + key).
 	PublicURL(key string) string
 	// PublicBaseURL is R2_PUBLIC_URL without a trailing slash ("" when not set).
 	PublicBaseURL() string
 }
+
+// maxGetBytes caps Get: it reads small objects (email images), never media in bulk.
+const maxGetBytes = 15 << 20
 
 // immutable objects: every key is content-addressed, so browsers and the CDN may cache forever.
 const cacheControl = "public, max-age=31536000, immutable"
@@ -82,6 +88,22 @@ func (s *r2Storage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (s *r2Storage) Get(ctx context.Context, key string) ([]byte, error) {
+	out, err := s.client.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(s.bucket), Key: aws.String(key)})
+	if err != nil {
+		return nil, fmt.Errorf("r2 get %s: %w", key, err)
+	}
+	defer out.Body.Close()
+	data, err := io.ReadAll(io.LimitReader(out.Body, maxGetBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("r2 get %s: %w", key, err)
+	}
+	if len(data) > maxGetBytes {
+		return nil, fmt.Errorf("r2 get %s: larger than %d bytes", key, maxGetBytes)
+	}
+	return data, nil
+}
+
 func (s *r2Storage) PublicURL(key string) string { return s.publicURL + "/" + key }
 func (s *r2Storage) PublicBaseURL() string       { return s.publicURL }
 
@@ -89,5 +111,8 @@ type disabledStorage struct{ publicURL string }
 
 func (disabledStorage) Put(context.Context, PutInput) error  { return ErrNotConfigured }
 func (disabledStorage) Delete(context.Context, string) error { return ErrNotConfigured }
-func (d disabledStorage) PublicURL(key string) string        { return d.publicURL + "/" + key }
-func (d disabledStorage) PublicBaseURL() string              { return d.publicURL }
+func (disabledStorage) Get(context.Context, string) ([]byte, error) {
+	return nil, ErrNotConfigured
+}
+func (d disabledStorage) PublicURL(key string) string { return d.publicURL + "/" + key }
+func (d disabledStorage) PublicBaseURL() string       { return d.publicURL }

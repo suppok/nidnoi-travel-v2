@@ -3,6 +3,7 @@ package mailer
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -32,6 +33,15 @@ type resendRequest struct {
 	Subject string   `json:"subject"`
 	HTML    string   `json:"html"`
 	Text    string   `json:"text"`
+
+	Attachments []resendAttachment `json:"attachments,omitempty"`
+}
+
+type resendAttachment struct {
+	Filename    string `json:"filename"`
+	Content     string `json:"content"` // base64
+	ContentType string `json:"content_type,omitempty"`
+	ContentID   string `json:"content_id,omitempty"` // inline image, referenced as cid:<id>
 }
 
 type resendResponse struct {
@@ -40,10 +50,19 @@ type resendResponse struct {
 }
 
 func (c *resendClient) Send(ctx context.Context, msg Message) (string, error) {
-	body, err := json.Marshal(resendRequest{
+	request := resendRequest{
 		From: msg.From, To: msg.To, Cc: msg.Cc, ReplyTo: msg.ReplyTo,
 		Subject: msg.Subject, HTML: msg.HTML, Text: msg.Text,
-	})
+	}
+	for _, a := range msg.Attachments {
+		request.Attachments = append(request.Attachments, resendAttachment{
+			Filename:    a.Filename,
+			Content:     base64.StdEncoding.EncodeToString(a.Content),
+			ContentType: a.ContentType,
+			ContentID:   a.ContentID,
+		})
+	}
+	body, err := json.Marshal(request)
 	if err != nil {
 		return "", &SendError{Message: "encode request"}
 	}
