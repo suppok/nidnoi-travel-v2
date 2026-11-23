@@ -22,6 +22,7 @@ type WholesaleItem struct {
 	Name       string                 `json:"name"`
 	State      int                    `json:"state"` // 10 on request, 20 connected, 30 blocked, 40 declined
 	Contacts   []WholesaleContactItem `json:"contacts"`
+	Emails     []string               `json:"emails"` // display order
 	Status     bool                   `json:"status"`
 	CreateDate time.Time              `json:"createDate"`
 	UpdateDate time.Time              `json:"updateDate"`
@@ -29,6 +30,10 @@ type WholesaleItem struct {
 
 // NewWholesaleItem expects w.Contacts to be loaded in display order.
 func NewWholesaleItem(w *domain.Wholesale) WholesaleItem {
+	emails := w.Emails
+	if emails == nil {
+		emails = []string{}
+	}
 	contacts := make([]WholesaleContactItem, len(w.Contacts))
 	for i, c := range w.Contacts {
 		contacts[i] = WholesaleContactItem{ID: c.ID, Name: c.Name, Phone: c.Phone}
@@ -40,6 +45,7 @@ func NewWholesaleItem(w *domain.Wholesale) WholesaleItem {
 		Name:       w.Name,
 		State:      w.State,
 		Contacts:   contacts,
+		Emails:     emails,
 		Status:     w.Status,
 		CreateDate: w.CreateDate,
 		UpdateDate: w.UpdateDate,

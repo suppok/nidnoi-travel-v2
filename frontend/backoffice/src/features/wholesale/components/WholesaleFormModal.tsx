@@ -10,6 +10,7 @@ import type { Wholesale, WholesaleContactInput } from '../../../types/wholesale.
 
 const CODE_RE = /^[A-Z0-9]+(-[A-Z0-9]+)*$/;
 const MAX_CONTACTS = 20;
+const MAX_EMAILS = 5;
 
 type FormValues = {
   code: string;
@@ -17,6 +18,7 @@ type FormValues = {
   refId: number | null;
   state: WholesaleState;
   contacts: WholesaleContactInput[];
+  emails: string[];
 };
 
 type Props = {
@@ -43,8 +45,9 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
             refId: wholesale.refId,
             state: wholesale.state,
             contacts: wholesale.contacts.map(({ name, phone }) => ({ name, phone })),
+            emails: wholesale.emails,
           }
-        : { code: '', name: '', refId: null, state: WholesaleStates.OnRequest, contacts: [{ name: '', phone: '' }] },
+        : { code: '', name: '', refId: null, state: WholesaleStates.OnRequest, contacts: [{ name: '', phone: '' }], emails: [] },
     );
   }, [open, wholesale, form]);
 
@@ -56,6 +59,7 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
       refId: values.refId ?? null,
       state: values.state,
       contacts: (values.contacts ?? []).map((c) => ({ name: c.name.trim(), phone: c.phone.trim() })),
+      emails: (values.emails ?? []).map((e) => e.trim().toLowerCase()).filter(Boolean),
     };
     try {
       if (creating) await wholesalesApi.create(body);
@@ -154,6 +158,47 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
                 className="self-start"
               >
                 เพิ่มผู้ติดต่อ
+              </Button>
+            </div>
+          )}
+        </Form.List>
+
+        <Form.List
+          name="emails"
+          rules={[
+            {
+              validator: (_, emails: string[] | undefined) => {
+                const list = (emails ?? []).map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean);
+                if (list.length > MAX_EMAILS) return Promise.reject(new Error(`มีอีเมลได้ไม่เกิน ${MAX_EMAILS} อีเมล`));
+                if (new Set(list).size !== list.length) return Promise.reject(new Error('มีอีเมลซ้ำกัน'));
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          {(fields, { add, remove }, { errors }) => (
+            <div className="mt-5 flex flex-col gap-2">
+              <span className="font-medium">อีเมลติดต่อ</span>
+              {fields.length === 0 && <span className="text-[13px] text-ink-muted">ยังไม่มีอีเมล</span>}
+              {fields.map((field) => (
+                <div key={field.key} className="flex items-start gap-2">
+                  <Form.Item
+                    name={field.name}
+                    className="mb-0 flex-1"
+                    rules={[
+                      { required: true, whitespace: true, message: 'กรุณากรอกอีเมล' },
+                      { type: 'email', transform: (v?: string) => v?.trim(), message: 'รูปแบบอีเมลไม่ถูกต้อง' },
+                      { max: 254, message: 'ยาวได้ไม่เกิน 254 ตัวอักษร' },
+                    ]}
+                  >
+                    <Input type="email" placeholder="เช่น booking@example.com" autoComplete="off" spellCheck={false} />
+                  </Form.Item>
+                  <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} aria-label="ลบอีเมล" />
+                </div>
+              ))}
+              <Form.ErrorList errors={errors} />
+              <Button type="dashed" icon={<PlusOutlined />} onClick={() => add('')} disabled={fields.length >= MAX_EMAILS} className="self-start">
+                เพิ่มอีเมล ({fields.length}/{MAX_EMAILS})
               </Button>
             </div>
           )}

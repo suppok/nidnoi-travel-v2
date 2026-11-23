@@ -12090,6 +12090,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput"
                     }
                 },
+                "emails": {
+                    "description": "max 5, stored lowercase",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "name": {
                     "type": "string"
                 },
@@ -12117,6 +12124,13 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "emails": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "id": {
                     "type": "string"
@@ -12155,6 +12169,13 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "emails": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
@@ -12192,6 +12213,13 @@ const docTemplate = `{
                 "createDate": {
                     "type": "string"
                 },
+                "emails": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
@@ -12218,7 +12246,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "keyword": {
-                    "description": "matches name, code, or a contact's name/phone",
+                    "description": "matches name, code, an email, or a contact's name/phone",
                     "type": "string"
                 },
                 "page": {
@@ -12271,6 +12299,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput"
                     }
                 },
+                "emails": {
+                    "description": "max 5, replaces the whole list",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
@@ -12299,6 +12334,13 @@ const docTemplate = `{
                 },
                 "createDate": {
                     "type": "string"
+                },
+                "emails": {
+                    "description": "display order",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "id": {
                     "type": "string"

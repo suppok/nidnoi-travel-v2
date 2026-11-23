@@ -25,6 +25,7 @@ const (
 	defaultPageSize = 20
 	maxPageSize     = 500
 	maxContacts     = 20
+	maxEmails       = 5
 )
 
 var codeRe = regexp.MustCompile(`^[A-Z0-9]+(-[A-Z0-9]+)*$`)
@@ -89,6 +90,28 @@ func contactsRules() []validation.Rule {
 			)
 		})),
 	}
+}
+
+func emailsRules() []validation.Rule {
+	return []validation.Rule{
+		validation.Length(0, maxEmails),
+		validation.Each(validation.Required, validation.RuneLength(1, 254), validation.Email),
+	}
+}
+
+// normalizeEmails trims and lowercases the emails, dropping blanks and duplicates (order kept).
+func normalizeEmails(emails []string) []string {
+	out := make([]string, 0, len(emails))
+	seen := make(map[string]bool, len(emails))
+	for _, e := range emails {
+		e = strings.ToLower(strings.TrimSpace(e))
+		if e == "" || seen[e] {
+			continue
+		}
+		seen[e] = true
+		out = append(out, e)
+	}
+	return out
 }
 
 // normalize uppercases the code and trims every text field.

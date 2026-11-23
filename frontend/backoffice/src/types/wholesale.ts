@@ -14,6 +14,7 @@ export type Wholesale = {
   name: string;
   state: WholesaleState;
   contacts: WholesaleContact[]; // display order
+  emails: string[]; // lowercase, display order, max 5
   status: boolean; // false = soft-deleted
   createDate: string;
   updateDate: string;
@@ -21,7 +22,7 @@ export type Wholesale = {
 
 // POST /wholesales/list
 export type WholesaleListRequest = Paging & {
-  keyword?: string; // matches name, code, or a contact's name/phone
+  keyword?: string; // matches name, code, an email, or a contact's name/phone
   state?: WholesaleState;
   status?: boolean; // omitted = all
 };
@@ -35,6 +36,7 @@ export type WholesaleCreateRequest = {
   name: string;
   state: WholesaleState;
   contacts: WholesaleContactInput[]; // max 20, replaces the whole list
+  emails: string[]; // max 5, replaces the whole list
 };
 
 // PUT /wholesales

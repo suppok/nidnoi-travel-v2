@@ -14,6 +14,7 @@ type WholesaleUpdateRequest struct {
 	Name     string                  `json:"name"`
 	State    int                     `json:"state"`
 	Contacts []WholesaleContactInput `json:"contacts"`
+	Emails   []string                `json:"emails"` // max 5, replaces the whole list
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }

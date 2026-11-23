@@ -5394,6 +5394,11 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
         type: array
+      emails:
+        description: max 5, stored lowercase
+        items:
+          type: string
+        type: array
       name:
         type: string
       refId:
@@ -5413,6 +5418,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5438,6 +5448,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5463,6 +5478,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5481,7 +5501,7 @@ definitions:
   backend_pkg_modules_wholesale_models.WholesaleListRequest:
     properties:
       keyword:
-        description: matches name, code, or a contact's name/phone
+        description: matches name, code, an email, or a contact's name/phone
         type: string
       page:
         description: default 1
@@ -5517,6 +5537,11 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
         type: array
+      emails:
+        description: max 5, replaces the whole list
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5536,6 +5561,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:

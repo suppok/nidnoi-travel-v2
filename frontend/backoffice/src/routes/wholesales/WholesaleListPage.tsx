@@ -1,4 +1,4 @@
-import { EditOutlined, MoreOutlined, PhoneOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
+import { EditOutlined, MailOutlined, MoreOutlined, PhoneOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, Table, type TableProps, Tag } from 'antd';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -147,6 +147,24 @@ export default function WholesaleListPage() {
               <ContactLine key={c.id} contact={c} />
             ))}
             {w.contacts.length > SHOWN_CONTACTS && <span className="text-[13px] text-ink-muted">และอีก {w.contacts.length - SHOWN_CONTACTS} คน</span>}
+          </div>
+        ),
+    },
+    {
+      title: 'อีเมล',
+      key: 'emails',
+      render: (_, w) =>
+        w.emails.length === 0 ? (
+          <span className="text-ink-muted">—</span>
+        ) : (
+          <div className="flex max-w-[260px] flex-col gap-0.5">
+            {w.emails.slice(0, SHOWN_CONTACTS).map((email) => (
+              <a key={email} href={`mailto:${email}`} className="flex items-center gap-1 truncate text-[13px]">
+                <MailOutlined />
+                <span className="truncate">{email}</span>
+              </a>
+            ))}
+            {w.emails.length > SHOWN_CONTACTS && <span className="text-[13px] text-ink-muted">และอีก {w.emails.length - SHOWN_CONTACTS} อีเมล</span>}
           </div>
         ),
     },

@@ -409,6 +409,7 @@ Editable display fields: `name_th`, `name_en`, `description` (SEO copy for the l
 Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale` + `wholesale_contact`).
 
 - Fields: `ref_id` (legacy id, nullable, unique), `code` (stored uppercase, unique, editable — not used in URLs), `name`, `state` (`pkg/constants/wholesalestate`: 10 on request, 20 connected, 30 blocked, 40 declined; default 10), plus the standard columns.
+- `emails TEXT[]` — contact emails of the wholesale itself (max 5, trimmed, lowercased, duplicates dropped, display order); replaced as a whole on update. The list keyword also matches them.
 - Contacts (name + phone, max 20, in display order) are sent with every create/update and **replaced as a whole** (`WholesaleContactRepository.ReplaceForWholesale`), so `wholesale_contact` has no `status`.
 - Has-many relations must load through `.Model(dest)`, not `Scan(ctx, dest)` (Bun rejects the latter).
 - Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `wholesale:create|update|list|get|status`; `sales` has list/get.

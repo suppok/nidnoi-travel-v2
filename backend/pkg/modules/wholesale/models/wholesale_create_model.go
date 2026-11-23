@@ -18,6 +18,7 @@ type WholesaleCreateRequest struct {
 	Name     string                  `json:"name"`
 	State    int                     `json:"state"` // default 10 (on request)
 	Contacts []WholesaleContactInput `json:"contacts"`
+	Emails   []string                `json:"emails"` // max 5, stored lowercase
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }
