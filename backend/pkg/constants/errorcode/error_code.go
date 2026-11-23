@@ -37,6 +37,13 @@ var (
 	CannotModifySelf    = ErrCode("CANNOT_MODIFY_SELF", "You cannot change your own roles or status")
 )
 
+// App config
+var (
+	// AppConfigNotFound: a required app_config row is missing or inactive (503, like other
+	// "not configured" errors). POST /app-configs/verify lists such codes.
+	AppConfigNotFound = ErrCode("APP_CONFIG_NOT_FOUND", "A required app setting is not configured")
+)
+
 // Taxonomy (country, city)
 var (
 	SlugTaken  = ErrCode("SLUG_TAKEN", "Slug is already in use")

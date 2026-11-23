@@ -1,0 +1,37 @@
+// Package appconfigcode registers every app config code with its value type.
+// Read a value with appconfigload.GetAppConfig(ctx, repo, appconfigcode.X).
+package appconfigcode
+
+import (
+	"backend/pkg/constants/appconfigcode/core"
+	"backend/pkg/constants/appconfigcode/models"
+)
+
+// AppConfig is a registered code.
+type AppConfig struct {
+	AppConfig core.AppConfig
+	// Required codes must have an active, valid row; POST /app-configs/verify reports them otherwise.
+	Required bool
+	// Features lists the features that need this config (informational).
+	Features []string
+}
+
+var appConfigMap = map[string]*AppConfig{}
+
+// GetAppConfigMap returns every registered code, keyed by code.
+func GetAppConfigMap() map[string]*AppConfig { return appConfigMap }
+
+// NewAppConfig declares a code. Declare codes as package-level vars below so the map lists them.
+func NewAppConfig[T any](code string, required bool, features ...string) *core.AppConfigCode[T] {
+	c := core.NewJsonConfig[T](code)
+	if _, dup := appConfigMap[c.Code()]; dup {
+		panic("appconfigcode: duplicate code " + c.Code())
+	}
+	appConfigMap[c.Code()] = &AppConfig{AppConfig: c, Required: required, Features: features}
+	return c
+}
+
+var (
+	// Common
+	AppConfigAppSettings = NewAppConfig[models.AppConfigAppSettings]("APP_SETTINGS", false)
+)

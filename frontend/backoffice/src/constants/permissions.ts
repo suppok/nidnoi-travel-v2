@@ -37,6 +37,8 @@ export const Permissions = {
   MediaUpload: 'media:upload',
   SiteRebuild: 'site:rebuild',
   SiteBuildList: 'site-build:list',
+  AppConfigVerify: 'app-config:verify',
+  AppConfigAppSettings: 'app-config:app-settings',
   UserCreate: 'user:create',
   UserUpdate: 'user:update',
   UserList: 'user:list',

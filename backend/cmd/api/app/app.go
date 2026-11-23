@@ -33,6 +33,7 @@ import (
 	"backend/pkg/registry"
 
 	airlineusecase "backend/pkg/modules/airline/usecase"
+	appconfigusecase "backend/pkg/modules/appconfig/usecase"
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
 	bookingsourceusecase "backend/pkg/modules/bookingsource/usecase"
@@ -132,6 +133,7 @@ func New(ctx context.Context) (*App, error) {
 	tourProgramUseCase := tourprogramusecase.NewTourProgramUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	siteUseCase := siteusecase.NewSiteUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	appConfigUseCase := appconfigusecase.NewAppConfigUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	bookingUseCase := bookingusecase.NewBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineBookingUseCase := linebookingusecase.NewLineBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineContactUseCase := linecontactusecase.NewLineContactUseCase(coreRegistry, shareRegistry, repositoryRegistry)
@@ -179,6 +181,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewTourProgramAPIHandler(v1, apiHandler, tourProgramUseCase).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
+	handler.NewAppConfigAPIHandler(v1, apiHandler, appConfigUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
 	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)

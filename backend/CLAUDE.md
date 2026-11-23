@@ -477,6 +477,25 @@ Each section is filled only when the caller's roles allow its list permission (`
 
 Aggregates live on each table's repository (`Stats*`, `Pipeline`, `ListDepartures`, `CountByState`, `CountPublicPerCountry`, `SeatStats`, `ListUpcoming`); rows created by `create_date` in `Asia/Bangkok`, deleted rows (`status = false`) excluded. Missing buckets are filled with zeros in Go.
 
+## App config
+
+Typed settings stored in the database (`pkg/modules/appconfig`, table `app_config`): one row per `code` (unique, UPPER_SNAKE) with a JSONB `value` (an object, an array or a `{"value": ...}` wrapper), plus `model_type` (label), `description` and the standard columns. Every code is registered in Go with the type its value decodes into, so reads are type-safe and values can be checked.
+
+- **Core** (`pkg/constants/appconfigcode/core`): `AppConfigCode[T]` with `Code()`, `ToValue(data) (T, error)` (lenient: unknown fields ignored) and `Validate(data) error` (strict: unknown fields are errors, then the value's `Validate()` rules via `pkg/core/validation`; slices check each element).
+- **Value types** (`pkg/constants/appconfigcode/models`): one struct per code, camelCase JSON tags, optional `Validate() error` (value receiver). Shared wrappers `AppSingleValue`, `AppSingleValueBool`, `AppSingleValueNumber`.
+- **Registry** (`pkg/constants/appconfigcode/code.go`): `NewAppConfig[T](code, required, features...)` as package-level vars, grouped by module; `GetAppConfigMap()` lists them. A duplicate code panics at startup.
+- **Reading** (`pkg/modules/shared/services/appconfigload`): `GetAppConfig(ctx, repo, code)` → `*T`, or `APP_CONFIG_NOT_FOUND` (503) when the row is missing or inactive (`status = false`); `GetAppConfigByOption(..., required=false)` returns `nil, nil` instead. Undecodable JSON is `INTERNAL`.
+- **Endpoints:** `POST /app-configs/verify` (`app-config:verify`, **super admin only** — checked in the use case because admins hold `*`; others get `SUPER_ADMIN_REQUIRED`) → `[{code, type, message}]` ordered by code, empty when all is well: `NOT_FOUND` = a required code has no active row, `INVALID` = an active row fails `Validate`. `GET /app-configs/app-settings` (`app-config:app-settings`) → `{maxFileSize}`, the example reader.
+- No write endpoint yet: rows are seeded by migrations (`*_seed_app_config`, nil UUID as `create_by`) or edited in SQL; run verify afterwards. `value` is written as raw JSON text — the domain field has no `type:jsonb` tag, which would make Bun store a JSON string.
+- `APP_SETTINGS.maxFileSize` is only the example; uploads still use `media.maxUploadMB`.
+
+### How to add a new app config
+
+1. **Model** — add the value struct in `pkg/constants/appconfigcode/models/<name>_model.go` (camelCase tags; a `Validate() error` with its rules), or reuse an `AppSingleValue*` wrapper.
+2. **Register** — add `AppConfigX = NewAppConfig[models.X]("X_CODE", required, features...)` to the right group in `pkg/constants/appconfigcode/code.go`.
+3. **Seed** — a new migration `<ts>_seed_app_config_<name>.tx.up.sql` inserting the row (`ON CONFLICT (code) DO NOTHING`; `.down.sql` deletes it by id). Migrate dev by hand before pushing `develop`.
+4. **Read** — `cfg, err := appconfigload.GetAppConfig(ctx, u.repositoryRegistry.AppConfigRepository, appconfigcode.AppConfigX)` in a use case (`GetAppConfigByOption(..., false)` when the config is optional), then call `POST /app-configs/verify` to confirm the stored value.
+
 ## Customer site rebuild (Revalidator)
 
 The customer site is fully static on Cloudflare Workers. When published content changes, the backend triggers a rebuild through a Cloudflare **Deploy Hook**. Frontends never call the hook.
