@@ -27,7 +27,9 @@ import (
 	corelogger "backend/pkg/core/logger"
 	"backend/pkg/modules/shared/client/deployhook"
 	"backend/pkg/modules/shared/client/line"
+	"backend/pkg/modules/shared/client/mailer"
 	"backend/pkg/modules/shared/client/objectstorage"
+	"backend/pkg/modules/shared/services/emailoutbox"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/registry"
@@ -62,6 +64,7 @@ type App struct {
 	logger      *zap.Logger
 	db          *bun.DB
 	revalidator revalidation.Worker
+	emailSender *emailoutbox.Sender
 }
 
 // New wires config → infrastructure → registries → use cases → handlers.
@@ -103,15 +106,20 @@ func New(ctx context.Context) (*App, error) {
 	deployHook := deployhook.New(cfg.DeployHookURL)
 	lineClient := line.New(cfg.LINE)
 	revalidator := revalidation.New(deployHook, revalidation.NewRepositoryBuildLog(repositoryRegistry.SiteBuildRepository, log), log, cfg.Revalidation)
+	mailClient := mailer.New(cfg.Mail, log)
+	emailSender := emailoutbox.NewSender(repositoryRegistry.EmailOutboxRepository, mailClient, log, cfg.Mail.Outbox)
 	shareRegistry := &registry.ShareRegistry{
 		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
-		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook, LINE: lineClient},
+		ClientRegistry:  registry.ClientRegistry{ObjectStorage: objectstorage.New(cfg.R2), DeployHook: deployHook, LINE: lineClient, Mailer: mailClient},
 	}
 	if !cfg.R2.Configured() {
 		log.Warn("R2 is not configured: media uploads return STORAGE_UNAVAILABLE until every R2_* variable is set")
 	}
 	if !deployHook.Configured() {
 		log.Warn("CLOUDFLARE_DEPLOY_HOOK_URL is not set: customer-site rebuilds are logged and skipped")
+	}
+	if cfg.Mail.DryRun {
+		log.Warn("MAIL_DRY_RUN is on: queued emails are logged and marked sent, not delivered")
 	}
 	if !lineClient.LoginConfigured() {
 		log.Warn("LINE Login is not configured: \"ล็อกอินด้วย LINE\" and \"เชื่อมบัญชี LINE\" are off until LINE_LOGIN_CHANNEL_ID and LINE_LOGIN_CHANNEL_SECRET are set")
@@ -187,7 +195,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
 	handler.NewDashboardAPIHandler(v1, apiHandler, dashboardUseCase).Init(jwtAuth)
 
-	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator}, nil
+	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator, emailSender: emailSender}, nil
 }
 
 // Run serves until ctx is cancelled, then shuts down gracefully.
@@ -197,13 +205,17 @@ func (a *App) Run(ctx context.Context) error {
 		_ = a.logger.Sync()
 	}()
 
-	// The rebuild worker stops after the HTTP server, so edits made during shutdown are still flushed.
+	// The workers stop after the HTTP server, so edits made during shutdown are still flushed and
+	// emails queued by them are kept in the outbox for the next start.
 	workerCtx, stopWorker := context.WithCancel(context.Background())
 	workerDone := make(chan struct{})
+	senderDone := make(chan struct{})
 	go func() { a.revalidator.Run(workerCtx); close(workerDone) }()
+	go func() { a.emailSender.Run(workerCtx); close(senderDone) }()
 	defer func() {
 		stopWorker()
 		<-workerDone
+		<-senderDone
 	}()
 
 	errCh := make(chan error, 1)

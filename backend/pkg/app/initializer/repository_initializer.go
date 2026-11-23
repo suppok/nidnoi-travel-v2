@@ -24,8 +24,9 @@ func NewRepositoryRegistry(db query.AppIDB) *registry.RepositoryRegistry {
 		TourProgramImageRepository:   repository.NewTourProgramImageRepository(db),
 		TourProgramPeriodRepository:  repository.NewTourProgramPeriodRepository(db),
 
-		SiteBuildRepository: repository.NewSiteBuildRepository(db),
-		AppConfigRepository: repository.NewAppConfigRepository(db),
+		SiteBuildRepository:   repository.NewSiteBuildRepository(db),
+		AppConfigRepository:   repository.NewAppConfigRepository(db),
+		EmailOutboxRepository: repository.NewEmailOutboxRepository(db),
 
 		BookingRepository:                 repository.NewBookingRepository(db),
 		LineBookingRepository:             repository.NewLineBookingRepository(db),

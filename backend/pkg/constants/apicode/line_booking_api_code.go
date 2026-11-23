@@ -9,4 +9,6 @@ var (
 	LineBookingStatus = ApiCode("line-booking:status", "Delete or restore a LINE booking")
 	// LineBookingDocument: finance uploads and sends the AI/IV/RE PDFs of a booking sent to them.
 	LineBookingDocument = ApiCode("line-booking:document", "Send the finance documents of a confirmed LINE booking")
+	// LineBookingWholesaleEmail: send the booking email to the wholesale again (sales owner or admin).
+	LineBookingWholesaleEmail = ApiCode("line-booking:wholesale-email", "Resend the booking email to the wholesale")
 )

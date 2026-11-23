@@ -25,14 +25,15 @@ function seed(): Wholesale[] {
     state: state as WholesaleState,
     contacts: contacts.map(([contactName, phone]): WholesaleContact => ({ id: crypto.randomUUID(), name: contactName, phone })),
     emails: [],
+    autoEmail: false,
   }));
 }
 
 function load(): Wholesale[] {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    // Rows saved before emails existed have no emails field.
-    if (raw) return (JSON.parse(raw) as Wholesale[]).map((w) => ({ ...w, emails: w.emails ?? [] }));
+    // Rows saved before emails / autoEmail existed lack those fields.
+    if (raw) return (JSON.parse(raw) as Wholesale[]).map((w) => ({ ...w, emails: w.emails ?? [], autoEmail: w.autoEmail ?? false }));
   } catch {
     // fall through to seed
   }
@@ -80,7 +81,8 @@ function parse(body: Record<string, unknown>, selfId: string | null) {
 
   if (wholesales.some((w) => w.code === code && w.id !== selfId)) throw new MockFail(409, ErrorCodes.CodeTaken, 'Code is already in use');
   if (refId !== null && wholesales.some((w) => w.refId === refId && w.id !== selfId)) throw new MockFail(409, ErrorCodes.RefIdTaken, 'Ref ID is already in use');
-  return { code, name, refId, state, contacts, emails };
+  const autoEmail = body.autoEmail === true;
+  return { code, name, refId, state, contacts, emails, autoEmail };
 }
 
 const list: MockHandler = (req) => {

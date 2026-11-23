@@ -34,4 +34,9 @@ func NewAppConfig[T any](code string, required bool, features ...string) *core.A
 var (
 	// Common
 	AppConfigAppSettings = NewAppConfig[models.AppConfigAppSettings]("APP_SETTINGS", false)
+
+	// Wholesale
+	// WHOLESALE_EMAIL: Reply-To and Cc of the booking email to wholesales. Read when an email is queued;
+	// a missing or invalid row queues it without them (and logs an error).
+	AppConfigWholesaleEmail = NewAppConfig[models.AppConfigWholesaleEmail]("WHOLESALE_EMAIL", true, "wholesale-email")
 )

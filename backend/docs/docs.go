@@ -2763,6 +2763,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/line-bookings/wholesale-email/resend": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sales owner or admin. Re-reads the wholesale's current addresses and re-renders the\nemail, then queues it again (pending, attempts 0, a new idempotency key). Works even\nwhen the wholesale had auto email off when the booking was saved. VALIDATION on id\nwhen the booking is cancelled or the wholesale has no email address.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "Resend the booking email to the wholesale",
+                "parameters": [
+                    {
+                        "description": "Booking",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "PERMISSION_DENIED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/line-bookings/{id}": {
             "get": {
                 "security": [
@@ -2914,6 +2974,47 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingMentionableResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/line-bookings/{id}/wholesale-email": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "State of the email queued to the tour's wholesale when the booking was saved: 10 pending\n(queued or waiting to retry), 20 sent, 30 failed. email is null when none was queued.\nSame visibility as GET /line-bookings/{id}.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "line-bookings"
+                ],
+                "summary": "The booking email to the wholesale",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "LINE Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailGetResponse"
                         }
                     },
                     "404": {
@@ -7734,6 +7835,14 @@ const docTemplate = `{
                 "totalPrice": {
                     "description": "TotalPrice is the grand total, card fee included.",
                     "type": "integer"
+                },
+                "wholesaleEmail": {
+                    "description": "WholesaleEmail: whether the booking email to the tour's wholesale was queued.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResult"
+                        }
+                    ]
                 }
             }
         },
@@ -10311,6 +10420,108 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailGetResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem": {
+            "type": "object",
+            "properties": {
+                "attempts": {
+                    "description": "in the current round",
+                    "type": "integer"
+                },
+                "ccEmails": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createDate": {
+                    "type": "string"
+                },
+                "lastError": {
+                    "type": "string"
+                },
+                "nextAttemptAt": {
+                    "type": "string"
+                },
+                "replyTo": {
+                    "type": "string"
+                },
+                "sendRound": {
+                    "description": "1 + manual resends",
+                    "type": "integer"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "state": {
+                    "description": "State: 10 pending (queued or waiting to retry), 20 sent, 30 failed.",
+                    "type": "integer",
+                    "enum": [
+                        10,
+                        20,
+                        30
+                    ]
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "toEmails": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updateDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem"
+                }
+            }
+        },
+        "backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResult": {
+            "type": "object",
+            "properties": {
+                "result": {
+                    "type": "string",
+                    "enum": [
+                        "queued",
+                        "disabled",
+                        "no_email"
+                    ]
+                },
+                "to": {
+                    "description": "the addresses it was queued to; empty unless queued",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "wholesaleName": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_linecontact_models.LineContactItem": {
             "type": "object",
             "properties": {
@@ -12174,6 +12385,10 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleCreateRequest": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "description": "AutoEmail: email this wholesale automatically when sales save a LINE booking for its tour.",
+                    "type": "boolean"
+                },
                 "code": {
                     "description": "stored uppercase, unique",
                     "type": "string"
@@ -12207,6 +12422,9 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleCreateResponse": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "type": "boolean"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -12251,6 +12469,9 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleGetResponse": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "type": "boolean"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -12295,6 +12516,9 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleItem": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "type": "boolean"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -12384,6 +12608,10 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleUpdateRequest": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "description": "AutoEmail: email this wholesale automatically when sales save a LINE booking for its tour.",
+                    "type": "boolean"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -12417,6 +12645,9 @@ const docTemplate = `{
         "backend_pkg_modules_wholesale_models.WholesaleUpdateResponse": {
             "type": "object",
             "properties": {
+                "autoEmail": {
+                    "type": "boolean"
+                },
                 "code": {
                     "type": "string"
                 },

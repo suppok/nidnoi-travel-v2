@@ -15,6 +15,7 @@ export const LineBookingEvents = {
   Deleted: 'deleted',
   Restored: 'restored',
   Comment: 'comment',
+  WholesaleEmailResent: 'wholesale_email_resent', // target = the addresses
 } as const;
 
 // Timeline dot colors (antd Timeline item color).
@@ -34,6 +35,7 @@ export const LINE_BOOKING_EVENT_COLOR: Record<string, string> = {
   [LineBookingEvents.Deleted]: 'red',
   [LineBookingEvents.Restored]: 'gray',
   [LineBookingEvents.Comment]: 'purple',
+  [LineBookingEvents.WholesaleEmailResent]: 'blue',
 };
 
 // Labels of the fields an action may change (backend dealSnapshot keys, plus staffNote / lineContact).

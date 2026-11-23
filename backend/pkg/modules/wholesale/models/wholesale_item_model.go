@@ -23,6 +23,7 @@ type WholesaleItem struct {
 	State      int                    `json:"state"` // 10 on request, 20 connected, 30 blocked, 40 declined
 	Contacts   []WholesaleContactItem `json:"contacts"`
 	Emails     []string               `json:"emails"` // display order
+	AutoEmail  bool                   `json:"autoEmail"`
 	Status     bool                   `json:"status"`
 	CreateDate time.Time              `json:"createDate"`
 	UpdateDate time.Time              `json:"updateDate"`
@@ -46,6 +47,7 @@ func NewWholesaleItem(w *domain.Wholesale) WholesaleItem {
 		State:      w.State,
 		Contacts:   contacts,
 		Emails:     emails,
+		AutoEmail:  w.AutoEmail,
 		Status:     w.Status,
 		CreateDate: w.CreateDate,
 		UpdateDate: w.UpdateDate,

@@ -47,4 +47,8 @@ type LineBookingUseCase interface {
 	// UpdateLineContact links the booking to the customer's LINE OA chat, or unlinks it.
 	UpdateLineContact(ctx context.Context, request *models.LineBookingUpdateLineContactRequest) (*models.LineBookingUpdateLineContactResponse, error)
 	UpdateStatus(ctx context.Context, request *models.LineBookingUpdateStatusRequest) (*models.LineBookingUpdateStatusResponse, error)
+	// WholesaleEmailGet returns the state of the booking's email to its wholesale.
+	WholesaleEmailGet(ctx context.Context, request *models.LineBookingWholesaleEmailGetRequest) (*models.LineBookingWholesaleEmailGetResponse, error)
+	// WholesaleEmailResend queues the booking's email to its wholesale again.
+	WholesaleEmailResend(ctx context.Context, request *models.LineBookingWholesaleEmailResendRequest) (*models.LineBookingWholesaleEmailResendResponse, error)
 }

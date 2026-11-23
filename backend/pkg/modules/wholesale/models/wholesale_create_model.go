@@ -19,6 +19,8 @@ type WholesaleCreateRequest struct {
 	State    int                     `json:"state"` // default 10 (on request)
 	Contacts []WholesaleContactInput `json:"contacts"`
 	Emails   []string                `json:"emails"` // max 5, stored lowercase
+	// AutoEmail: email this wholesale automatically when sales save a LINE booking for its tour.
+	AutoEmail bool `json:"autoEmail"`
 
 	UserRequestInfo *coremodels.UserRequestInfo `json:"-"`
 }

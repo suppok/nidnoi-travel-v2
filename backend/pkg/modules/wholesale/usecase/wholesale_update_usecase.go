@@ -44,11 +44,12 @@ func (u *wholesaleUseCase) Update(ctx context.Context, request *models.Wholesale
 		target.Name = request.Name
 		target.State = request.State
 		target.Emails = request.Emails
+		target.AutoEmail = request.AutoEmail
 		target.UpdateDate = time.Now()
 		target.UpdateBy = actorID
 		target.Contacts = nil // not a column; replaced below
 		updated, err = u.repositoryRegistry.WholesaleRepository.WithTx(appDB).Update(ctx, target,
-			"ref_id", "code", "name", "state", "emails", "update_date", "update_by")
+			"ref_id", "code", "name", "state", "emails", "auto_email", "update_date", "update_by")
 		if err != nil {
 			return uniqueConflict(err)
 		}

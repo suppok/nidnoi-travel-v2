@@ -1,5 +1,5 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { App, Button, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { App, Button, Checkbox, Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../api/client.ts';
 import { wholesalesApi } from '../../../api/wholesales.ts';
@@ -19,6 +19,7 @@ type FormValues = {
   state: WholesaleState;
   contacts: WholesaleContactInput[];
   emails: string[];
+  autoEmail: boolean;
 };
 
 type Props = {
@@ -46,8 +47,9 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
             state: wholesale.state,
             contacts: wholesale.contacts.map(({ name, phone }) => ({ name, phone })),
             emails: wholesale.emails,
+            autoEmail: wholesale.autoEmail,
           }
-        : { code: '', name: '', refId: null, state: WholesaleStates.OnRequest, contacts: [{ name: '', phone: '' }], emails: [] },
+        : { code: '', name: '', refId: null, state: WholesaleStates.OnRequest, contacts: [{ name: '', phone: '' }], emails: [], autoEmail: false },
     );
   }, [open, wholesale, form]);
 
@@ -60,6 +62,7 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
       state: values.state,
       contacts: (values.contacts ?? []).map((c) => ({ name: c.name.trim(), phone: c.phone.trim() })),
       emails: (values.emails ?? []).map((e) => e.trim().toLowerCase()).filter(Boolean),
+      autoEmail: values.autoEmail ?? false,
     };
     try {
       if (creating) await wholesalesApi.create(body);
@@ -203,6 +206,15 @@ export default function WholesaleFormModal({ open, wholesale, onClose, onSaved }
             </div>
           )}
         </Form.List>
+
+        <Form.Item
+          name="autoEmail"
+          valuePropName="checked"
+          className="mt-5 mb-0"
+          extra="ส่งอีเมลยืนยันการจองถึงอีเมลด้านบนทุกอีเมล เมื่อเซลล์บันทึกใบจอง LINE ของทัวร์จากโฮลเซลล์นี้"
+        >
+          <Checkbox>ส่งอีเมลอัตโนมัติหลังบันทึกใบจอง</Checkbox>
+        </Form.Item>
       </Form>
     </Modal>
   );

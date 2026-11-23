@@ -7,6 +7,7 @@ import type { ListResponse } from '../../types/api.ts';
 import type {
   LineBooking,
   LineBookingCreateRequest,
+  LineBookingCreateResponse,
   LineBookingDeal,
   LineBookingDealUpdateRequest,
   LineBookingEvent,
@@ -306,7 +307,8 @@ export const lineBookingRoutes: Record<string, MockHandler> = {
     bookings.unshift(b);
     history[b.id] = [event(crypto.randomUUID(), E.Created, 0, { id: user.id, name: user.name })];
     console.info('[mock] POST /line-bookings', body);
-    return ok({ bookingNo: no, totalPrice: total });
+    // The mock has no wholesale email settings: always report auto email off.
+    return ok({ bookingNo: no, totalPrice: total, wholesaleEmail: { result: 'disabled', wholesaleName: '', to: [] } } satisfies LineBookingCreateResponse);
   },
   'POST /media/upload/line-booking-slip': (req) => {
     authorize(req, 'POST /media/upload/line-booking-slip', Permissions.LineBookingCreate);

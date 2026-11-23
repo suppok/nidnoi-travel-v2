@@ -12,6 +12,7 @@ import EntryForm, { type EntryLookups, type SavedResult } from '../../../feature
 import ReopenedSummary from '../../../features/line-booking-entry/components/ReopenedSummary.tsx';
 import ReopenPanel from '../../../features/line-booking-entry/components/ReopenPanel.tsx';
 import SummaryPasteBox from '../../../features/line-booking-entry/components/SummaryPasteBox.tsx';
+import WholesaleEmailNotice from '../../../features/line-booking-entry/components/WholesaleEmailNotice.tsx';
 import { canRecordBalance, dealFromBooking, dealTotals } from '../../../features/line-booking-entry/lib/deal.ts';
 import type { ParsedSummary } from '../../../features/line-booking-entry/lib/parseSummary.ts';
 import { errorMessage } from '../../../lib/errors.ts';
@@ -169,6 +170,7 @@ export default function LineBookingEntryPage() {
                 <dt className="text-ink-muted">ยอดรวม</dt>
                 <dd className="m-0 text-right font-semibold">{formatBaht(step.result.totalPrice)}</dd>
               </dl>
+              {step.result.wholesaleEmail && <WholesaleEmailNotice email={step.result.wholesaleEmail} />}
             </Result>
           </Card>
         )}

@@ -79,6 +79,8 @@ type LineBookingCreateResponse struct {
 	BookingNo string `json:"bookingNo" example:"26X8K9AQ"`
 	// TotalPrice is the grand total, card fee included.
 	TotalPrice int `json:"totalPrice"`
+	// WholesaleEmail: whether the booking email to the tour's wholesale was queued.
+	WholesaleEmail LineBookingWholesaleEmailResult `json:"wholesaleEmail"`
 }
 
 // LineBookingSource is a booking source referenced by a booking.

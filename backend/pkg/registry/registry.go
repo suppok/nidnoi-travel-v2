@@ -10,6 +10,7 @@ import (
 	"backend/pkg/core/database/query"
 	"backend/pkg/modules/shared/client/deployhook"
 	"backend/pkg/modules/shared/client/line"
+	"backend/pkg/modules/shared/client/mailer"
 	"backend/pkg/modules/shared/client/objectstorage"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
@@ -44,8 +45,9 @@ type RepositoryRegistry struct {
 	TourProgramImageRepository   repository.TourProgramImageRepository
 	TourProgramPeriodRepository  repository.TourProgramPeriodRepository
 
-	SiteBuildRepository repository.SiteBuildRepository
-	AppConfigRepository repository.AppConfigRepository
+	SiteBuildRepository   repository.SiteBuildRepository
+	AppConfigRepository   repository.AppConfigRepository
+	EmailOutboxRepository repository.EmailOutboxRepository
 
 	BookingRepository                 repository.BookingRepository
 	LineBookingRepository             repository.LineBookingRepository
@@ -70,4 +72,5 @@ type ClientRegistry struct {
 	ObjectStorage objectstorage.ObjectStorage
 	DeployHook    deployhook.DeployHook
 	LINE          line.Client
+	Mailer        mailer.Mailer
 }

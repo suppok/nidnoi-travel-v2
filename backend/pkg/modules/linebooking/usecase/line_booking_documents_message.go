@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"fmt"
-	"time"
 
+	"backend/pkg/core/utils"
 	"backend/pkg/domain"
 )
 
@@ -14,11 +14,6 @@ func documentButtons(b *domain.LineBooking) [][2]string {
 		return [][2]string{{"AI ใบรับเงินมัดจำ", b.AIFile}, {"IV ใบแจ้งหนี้", b.IVFile}}
 	}
 	return [][2]string{{"RE ใบเสร็จรับเงิน", b.REFile}}
-}
-
-// thaiDate is d/m/yyyy in the Buddhist era, as Thai customers read dates.
-func thaiDate(t time.Time) string {
-	return fmt.Sprintf("%d/%d/%d", t.Day(), int(t.Month()), t.Year()+543)
 }
 
 // documentsMessages is the LINE push for the customer: one Flex card with the booking and a button
@@ -57,7 +52,7 @@ func documentsMessages(b *domain.LineBooking) []any {
 					text(title, "lg", "", true),
 					text("ใบจอง "+b.BookingNo, "sm", "#666666", false),
 					text(b.TourCode+" "+b.TourName, "sm", "", false),
-					text(fmt.Sprintf("เดินทาง %s – %s", thaiDate(b.StartDate), thaiDate(b.EndDate)), "sm", "#666666", false),
+					text(fmt.Sprintf("เดินทาง %s – %s", utils.ThaiDate(b.StartDate), utils.ThaiDate(b.EndDate)), "sm", "#666666", false),
 					text("กดปุ่มด้านล่างเพื่อเปิดเอกสาร (PDF)", "xs", "#999999", false),
 				},
 			},

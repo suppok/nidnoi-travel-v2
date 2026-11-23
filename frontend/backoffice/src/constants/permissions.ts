@@ -56,6 +56,7 @@ export const Permissions = {
   LineBookingUpdate: 'line-booking:update',
   LineBookingStatus: 'line-booking:status',
   LineBookingDocument: 'line-booking:document', // finance: upload and send AI / IV / RE
+  LineBookingWholesaleEmail: 'line-booking:wholesale-email', // resend the booking email to the wholesale
   LineContactList: 'line-contact:list',
   SalesFinanceGet: 'sales-finance:get', // GET /sales-finances, your own finance users
   SalesFinanceUpdate: 'sales-finance:update',

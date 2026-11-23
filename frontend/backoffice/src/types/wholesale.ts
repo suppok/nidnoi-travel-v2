@@ -15,6 +15,7 @@ export type Wholesale = {
   state: WholesaleState;
   contacts: WholesaleContact[]; // display order
   emails: string[]; // lowercase, display order, max 5
+  autoEmail: boolean; // email the wholesale when sales save a LINE booking for its tour
   status: boolean; // false = soft-deleted
   createDate: string;
   updateDate: string;
@@ -37,6 +38,7 @@ export type WholesaleCreateRequest = {
   state: WholesaleState;
   contacts: WholesaleContactInput[]; // max 20, replaces the whole list
   emails: string[]; // max 5, replaces the whole list
+  autoEmail: boolean;
 };
 
 // PUT /wholesales

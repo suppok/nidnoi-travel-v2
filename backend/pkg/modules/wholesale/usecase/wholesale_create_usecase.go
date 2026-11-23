@@ -46,6 +46,7 @@ func (u *wholesaleUseCase) Create(ctx context.Context, request *models.Wholesale
 			Name:       request.Name,
 			State:      request.State,
 			Emails:     request.Emails,
+			AutoEmail:  request.AutoEmail,
 			Status:     true,
 			CreateDate: now,
 			UpdateDate: now,

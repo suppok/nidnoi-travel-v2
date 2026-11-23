@@ -8,7 +8,7 @@ import { TourProgramStates } from '../../../constants/tourProgramStates.ts';
 import { applyFieldErrors, errorMessage } from '../../../lib/errors.ts';
 import { formatBaht, formatPhone } from '../../../lib/format.ts';
 import type { BookingSource } from '../../../types/bookingSource.ts';
-import type { LineBooking, LineBookingContact } from '../../../types/lineBooking.ts';
+import type { LineBooking, LineBookingContact, LineBookingWholesaleEmailResult } from '../../../types/lineBooking.ts';
 import type { TourProgramListItem, TourProgramPeriod } from '../../../types/tourProgram.ts';
 import type { SalesUserListResponse } from '../../../types/user.ts';
 import LineContactPicker from '../../line-booking/components/LineContactPicker.tsx';
@@ -41,7 +41,7 @@ type FormValues = DealValues & {
 // Loaded by the page before the form renders.
 export type EntryLookups = { sales: SalesUserListResponse; sources: BookingSource[] };
 
-export type SavedResult = { bookingNo: string; totalPrice: number; message?: string };
+export type SavedResult = { bookingNo: string; totalPrice: number; message?: string; wholesaleEmail?: LineBookingWholesaleEmailResult };
 
 type Props = {
   // A reopened booking to edit; null = a new booking.

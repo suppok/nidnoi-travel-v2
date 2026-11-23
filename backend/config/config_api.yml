@@ -50,3 +50,11 @@ rateLimit:
   booking: # POST /bookings/public, per client IP
     max: 5
     window: 10m
+
+mail:
+  # From is MAIL_FROM (per environment). Reply-To/Cc of wholesale emails: app config WHOLESALE_EMAIL.
+  httpTimeout: 10s
+  outbox:
+    tickInterval: 10s # how often the sender picks due emails
+    batchSize: 20
+    maxAttempts: 5 # then the email is failed; resend from the backoffice

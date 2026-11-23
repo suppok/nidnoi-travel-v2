@@ -71,6 +71,8 @@ func (h *LineBookingAPIHandler) Init(jwtAuth middleware.Auth, authPermissions mi
 	r.Put("/line-bookings/documents/reject", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingDocumentsReject)
 	r.Post("/media/upload/line-booking", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingDocument), h.LineBookingDocumentUpload)
 	r.Put("/line-bookings/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingStatus), h.LineBookingUpdateStatus)
+	r.Put("/line-bookings/wholesale-email/resend", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingWholesaleEmail), h.LineBookingWholesaleEmailResend)
+	r.Get("/line-bookings/:id/wholesale-email", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingWholesaleEmailGet)
 	r.Get("/line-bookings/:id/mentionable", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingMentionable)
 	r.Get("/line-bookings/:id/events", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingGet), h.LineBookingEventList)
 	r.Get("/line-bookings/:id/finance-users", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.LineBookingUpdate), h.LineBookingFinanceUserList)
@@ -601,5 +603,49 @@ func (h *LineBookingAPIHandler) LineBookingUpdateStatus(c *fiber.Ctx) error {
 	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
 		request.UserRequestInfo = requestInfo.UserRequestInfo
 		return h.lineBookingUseCase.UpdateStatus(ctx, request)
+	})
+}
+
+// LineBookingWholesaleEmailGet godoc
+// @Summary     The booking email to the wholesale
+// @Description State of the email queued to the tour's wholesale when the booking was saved: 10 pending
+// @Description (queued or waiting to retry), 20 sent, 30 failed. email is null when none was queued.
+// @Description Same visibility as GET /line-bookings/{id}.
+// @Tags        line-bookings
+// @Produce     json
+// @Security    BearerAuth
+// @Param       id path string true "LINE Booking ID"
+// @Success     200 {object} models.LineBookingWholesaleEmailGetResponse
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Router      /line-bookings/{id}/wholesale-email [get]
+func (h *LineBookingAPIHandler) LineBookingWholesaleEmailGet(c *fiber.Ctx) error {
+	request := &models.LineBookingWholesaleEmailGetRequest{ID: c.Params("id")}
+	return h.apiHandler.Do(c, nil, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.WholesaleEmailGet(ctx, request)
+	})
+}
+
+// LineBookingWholesaleEmailResend godoc
+// @Summary     Resend the booking email to the wholesale
+// @Description Sales owner or admin. Re-reads the wholesale's current addresses and re-renders the
+// @Description email, then queues it again (pending, attempts 0, a new idempotency key). Works even
+// @Description when the wholesale had auto email off when the booking was saved. VALIDATION on id
+// @Description when the booking is cancelled or the wholesale has no email address.
+// @Tags        line-bookings
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body body models.LineBookingWholesaleEmailResendRequest true "Booking"
+// @Success     200 {object} models.LineBookingWholesaleEmailResendResponse
+// @Failure     400 {object} map[string]any "VALIDATION"
+// @Failure     403 {object} map[string]any "PERMISSION_DENIED"
+// @Failure     404 {object} map[string]any "NOT_FOUND"
+// @Router      /line-bookings/wholesale-email/resend [put]
+func (h *LineBookingAPIHandler) LineBookingWholesaleEmailResend(c *fiber.Ctx) error {
+	request := &models.LineBookingWholesaleEmailResendRequest{}
+	return h.apiHandler.Do(c, request, func(ctx context.Context, requestInfo *coremodels.RequestInfo) (any, error) {
+		request.UserRequestInfo = requestInfo.UserRequestInfo
+		return h.lineBookingUseCase.WholesaleEmailResend(ctx, request)
 	})
 }
