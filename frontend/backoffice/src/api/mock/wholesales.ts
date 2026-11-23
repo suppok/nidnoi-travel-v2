@@ -10,6 +10,8 @@ import { SEED_WHOLESALES } from './wholesaleSeed.ts';
 const DB_KEY = 'nidnoi.mock.wholesales.v2';
 const CODE_RE = /^[A-Z0-9]+(-[A-Z0-9]+)*$/;
 const MAX_CONTACTS = 20;
+const MAX_EMAILS = 5;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const KNOWN_STATES = new Set<number>(WHOLESALE_STATE_INFO.map((s) => s.value));
 
 function seed(): Wholesale[] {
@@ -22,13 +24,16 @@ function seed(): Wholesale[] {
     name,
     state: state as WholesaleState,
     contacts: contacts.map(([contactName, phone]): WholesaleContact => ({ id: crypto.randomUUID(), name: contactName, phone })),
+    emails: [],
+    autoEmail: false,
   }));
 }
 
 function load(): Wholesale[] {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) return JSON.parse(raw) as Wholesale[];
+    // Rows saved before emails / autoEmail existed lack those fields.
+    if (raw) return (JSON.parse(raw) as Wholesale[]).map((w) => ({ ...w, emails: w.emails ?? [], autoEmail: w.autoEmail ?? false }));
   } catch {
     // fall through to seed
   }
@@ -59,6 +64,8 @@ function parse(body: Record<string, unknown>, selfId: string | null) {
   const state = (body.state === undefined || body.state === 0 ? WholesaleStates.OnRequest : Number(body.state)) as WholesaleState;
   const rawContacts = Array.isArray(body.contacts) ? body.contacts : [];
   const contacts = rawContacts.map((c) => ({ id: crypto.randomUUID(), name: str(asRecord(c).name), phone: str(asRecord(c).phone) }));
+  const rawEmails = Array.isArray(body.emails) ? body.emails : [];
+  const emails = [...new Set(rawEmails.map((e) => str(e).toLowerCase()).filter(Boolean))];
 
   if (!code) fields.code = 'กรุณากรอกรหัส';
   else if (code.length > 20 || !CODE_RE.test(code)) fields.code = 'ใช้ได้เฉพาะ A-Z, 0-9 และขีด (-) ไม่เกิน 20 ตัวอักษร';
@@ -68,11 +75,14 @@ function parse(body: Record<string, unknown>, selfId: string | null) {
   if (!KNOWN_STATES.has(state)) fields.state = 'สถานะไม่ถูกต้อง';
   if (contacts.length > MAX_CONTACTS) fields.contacts = `มีผู้ติดต่อได้ไม่เกิน ${MAX_CONTACTS} คน`;
   else if (contacts.some((c) => !c.name || !c.phone)) fields.contacts = 'ผู้ติดต่อทุกคนต้องมีชื่อและเบอร์โทร';
+  if (emails.length > MAX_EMAILS) fields.emails = `มีอีเมลได้ไม่เกิน ${MAX_EMAILS} อีเมล`;
+  else if (emails.some((e) => e.length > 254 || !EMAIL_RE.test(e))) fields.emails = 'รูปแบบอีเมลไม่ถูกต้อง';
   if (Object.keys(fields).length) throw validation(fields);
 
   if (wholesales.some((w) => w.code === code && w.id !== selfId)) throw new MockFail(409, ErrorCodes.CodeTaken, 'Code is already in use');
   if (refId !== null && wholesales.some((w) => w.refId === refId && w.id !== selfId)) throw new MockFail(409, ErrorCodes.RefIdTaken, 'Ref ID is already in use');
-  return { code, name, refId, state, contacts };
+  const autoEmail = body.autoEmail === true;
+  return { code, name, refId, state, contacts, emails, autoEmail };
 }
 
 const list: MockHandler = (req) => {
@@ -90,6 +100,7 @@ const list: MockHandler = (req) => {
         !keyword ||
         w.name.toLowerCase().includes(keyword) ||
         w.code.toLowerCase().includes(keyword) ||
+        w.emails.some((e) => e.includes(keyword)) ||
         w.contacts.some((c) => c.name.toLowerCase().includes(keyword) || c.phone.includes(keyword)),
     )
     .filter((w) => !body.state || w.state === body.state)

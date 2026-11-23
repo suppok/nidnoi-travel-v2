@@ -12,7 +12,7 @@ Go REST API for nidnoi travel (`module backend`). One service serves both the cu
 
 | Binary        | Purpose                                                                                   | Run                |
 |---------------|-------------------------------------------------------------------------------------------|--------------------|
-| `cmd/api`     | REST API + in-process background workers (site-rebuild dispatcher, media orphan sweeper)  | `task run-api`     |
+| `cmd/api`     | REST API + in-process background workers (site-rebuild dispatcher, email outbox sender)   | `task run-api`     |
 | `cmd/migrate` | Database migrations (bun/migrate, SQL files in `migrations/`)                             | `task migrate-up`  |
 
 `cmd/api` has `app/app.go` (wires everything) and `handler/` (HTTP handlers).
@@ -409,6 +409,8 @@ Editable display fields: `name_th`, `name_en`, `description` (SEO copy for the l
 Tour operators we source tours from (`pkg/modules/wholesale`, tables `wholesale` + `wholesale_contact`).
 
 - Fields: `ref_id` (legacy id, nullable, unique), `code` (stored uppercase, unique, editable — not used in URLs), `name`, `state` (`pkg/constants/wholesalestate`: 10 on request, 20 connected, 30 blocked, 40 declined; default 10), plus the standard columns.
+- `emails TEXT[]` — contact emails of the wholesale itself (max 5, trimmed, lowercased, duplicates dropped, display order); replaced as a whole on update. The list keyword also matches them.
+- `auto_email BOOLEAN` (default false, `autoEmail` on the wire) — opt-in: email the wholesale when sales save a LINE booking for one of its tours (see "Email (outbox)").
 - Contacts (name + phone, max 20, in display order) are sent with every create/update and **replaced as a whole** (`WholesaleContactRepository.ReplaceForWholesale`), so `wholesale_contact` has no `status`.
 - Has-many relations must load through `.Model(dest)`, not `Scan(ctx, dest)` (Bun rejects the latter).
 - Errors: `CODE_TAKEN`, `REF_ID_TAKEN` (409). Permissions `wholesale:create|update|list|get|status`; `sales` has list/get.
@@ -494,6 +496,22 @@ Typed settings stored in the database (`pkg/modules/appconfig`, table `app_confi
 2. **Register** — add `AppConfigX = NewAppConfig[models.X]("X_CODE", required, features...)` to the right group in `pkg/constants/appconfigcode/code.go`.
 3. **Seed** — a new migration `<ts>_seed_app_config_<name>.tx.up.sql` inserting the row (`ON CONFLICT (code) DO NOTHING`; `.down.sql` deletes it by id). Migrate dev by hand before pushing `develop`.
 4. **Read** — `cfg, err := appconfigload.GetAppConfig(ctx, u.repositoryRegistry.AppConfigRepository, appconfigcode.AppConfigX)` in a use case (`GetAppConfigByOption(..., false)` when the config is optional), then call `POST /app-configs/verify` to confirm the stored value.
+
+## Email (outbox)
+
+Outgoing email goes through Resend (`POST https://api.resend.com/emails`, plain `net/http`, no SDK) and a **transactional outbox** (table `email_outbox`). Today there is one email: the booking confirmation to the wholesale.
+
+- **Trigger:** `POST /line-bookings` (the backoffice page บันทึกใบจอง LINE). In `createLineBooking`, inside the **same `WithTx`** as the booking insert, `queueWholesaleEmail` loads the tour's wholesale. If `auto_email` is on and it has emails, it renders the email and inserts a pending row (`INSERT … ON CONFLICT (line_booking_id, type) DO NOTHING`, so a duplicate is a no-op). The booking and its email commit or roll back together. The response carries `wholesaleEmail {result: queued|disabled|no_email, wholesaleName, to}` and the entry page shows it. Saving a booking counts as payment confirmed (it comes with a slip), even though its state is still 10. Reopening or editing (`PUT /line-bookings/editable`) and confirm never send.
+- **Email:** To = every address in `wholesale.emails`; From = `MAIL_FROM`; Reply-To and Cc = the app config **`WHOLESALE_EMAIL`** (`{"replyTo": "…", "cc": ["…"]}`, max 10 Cc, seeded by `20261124000003_seed_app_config_wholesale_email`; read in the create transaction). A missing or invalid row never blocks a booking: the email is queued without Reply-To/Cc and an ERROR is logged — `POST /app-configs/verify` reports it (the code is required). Change it in SQL (no write endpoint yet); it applies to emails queued afterwards, no restart. Subject `[ยืนยันชำระเงิน] <booking no> – <tour name> <d/m/yyyy พ.ศ.>`. Thai HTML (table layout, inline styles, no images or tracking) and a plain-text version, both from `services/notification/templates` (go:embed): booking no, tour code/name, dates, customer, travellers per row, total, the amount paid (deposit + card fee, or the total), the sales person and a request to reply to confirm. Addresses, subject and bodies are resolved when the row is queued (`emailoutbox.NewRow`), so a later config or data change never alters a queued email.
+- **Sender** (`services/emailoutbox.Sender`, started and stopped by `app.go` with the revalidator): every `mail.outbox.tickInterval` it claims up to `batchSize` due rows (`state = 10`, `next_attempt_at <= now`) with one `UPDATE … WHERE id IN (SELECT … FOR UPDATE SKIP LOCKED) RETURNING *`. That counts the attempt and leases the row for 5 minutes, so HTTP calls run **outside** any transaction. Then it sends each row and records the outcome (`Finish`, guarded by `send_round` and state):
+  - success → 20 sent (`provider_message_id`, `sent_at`)
+  - 429 / 5xx / network → pending again after 1 m, 5 m, 30 m, 2 h (the last repeats) until `maxAttempts`, then 30 failed
+  - other 4xx → failed at once
+  - Resend's `Idempotency-Key` is `<id>-<send_round>`, so a retried or crashed send is not delivered twice
+  - logs carry the outbox id, booking id, attempt and error, never the API key or the body
+- **States** (`pkg/constants/emailoutboxstate`): 10 pending, 20 sent, 30 failed; type `wholesale_booking_confirm`.
+- **Backoffice:** `GET /line-bookings/:id/wholesale-email` (`line-booking:get`, same visibility as get) → `{email: {state, toEmails, ccEmails, replyTo, subject, attempts, sendRound, nextAttemptAt, lastError, sentAt, createDate, updateDate} | null}`. `PUT /line-bookings/wholesale-email/resend {id}` (`line-booking:wholesale-email`, sales owner or admin): re-reads the wholesale's current emails, `MAIL_FROM` and `WHOLESALE_EMAIL`, re-renders, then sets pending, attempts 0, `send_round + 1`. It creates the row when none exists (auto email was off), and logs `wholesale_email_resent`. `VALIDATION` on `id` for a cancelled booking or a wholesale without emails.
+- **Rules:** use cases only insert outbox rows inside their transaction and **never call the mailer**. The sender is in-process and assumes one API instance (the claim is still safe if two overlap). Sender settings are in `config_api.yml` (`mail.httpTimeout`, `mail.outbox.*`), secrets and From in `MAIL_*` env vars, Reply-To/Cc in app config `WHOLESALE_EMAIL`.
 
 ## Customer site rebuild (Revalidator)
 
@@ -630,7 +648,7 @@ Visibility rules (repository: `wherePublic`, `ListPublic…`; DTOs: `pkg/modules
 | `CoreRegistry` | Logger, Config, `DBTx`, `AppDB`, JWT, Permissions (Casbin checker) |
 | `RepositoryRegistry` | All repositories (built in `pkg/app/initializer/repository_initializer.go`) |
 | `ShareRegistry.ServiceRegistry` | `Revalidator` and other cross-module services |
-| `ShareRegistry.ClientRegistry` | `ObjectStorage`, `DeployHook` |
+| `ShareRegistry.ClientRegistry` | `ObjectStorage`, `DeployHook`, `LINE`, `Mailer` |
 
 No global variables, no `init()` wiring. Background workers (revalidator, media sweeper) are started from `app.go` with a context that is cancelled on shutdown.
 
@@ -662,6 +680,9 @@ Deployed environments read variables from Railway (set per environment; prd secr
 | `LINE_LOGIN_CHANNEL_ID`, `LINE_LOGIN_CHANNEL_SECRET` | The LINE Login channel. Optional: without both, "ล็อกอินด้วย LINE" and "เชื่อมบัญชี LINE" are off. |
 | `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN` | Messaging API channel: webhook signature, OA profiles and pushes. Optional |
 | `R2_PUBLIC_URL` | `https://dev-media.nidnoitravelv2.com` / `https://media.nidnoitravelv2.com` |
+| `MAIL_API_KEY` | Resend API key (secret). Required unless `MAIL_DRY_RUN=true`. Local and dev share one key; prd has its own |
+| `MAIL_FROM` | `nidnoi travel <booking@nidnoitravelv2.com>` on every environment until the cutover (then `…@nidnoitravel.com`). Required unless dry-run. A send-only address: Cloudflare Email Routing forwards inbound mail to the owner's Gmail |
+| `MAIL_DRY_RUN` | Optional, default `false`. `true` = the outbox sender logs emails (no body) and marks them sent instead of delivering |
 
 CORS origins per environment:
 
@@ -804,7 +825,8 @@ Bookings sales staff enter for customers they serve in LINE OA chat, on the back
   - `PUT /line-bookings/status` — soft delete/restore.
 - **States** (`pkg/constants/linebookingstate`): 10 new, 20 deposit paid (ชำระมัดจำแล้ว), 25 paid in full (ชำระครบแล้ว), 30 cancelled. `Paid` = 20 and 25.
 - **Sales finance users** (`pkg/modules/salesfinance`, table `sales_finance`: `sales_user_id`, `finance_user_id` (unique pair, not self), `is_default` (at most one per sales user), audit columns, no status — replaced as a whole): each sales user picks their own. `GET /sales-finances` → `{options (active finance users except you), financeUserIds, defaultFinanceUserId}` and `PUT /sales-finances {financeUserIds (max 20), defaultFinanceUserId}` (must be in the list; a single one becomes the default), always for the caller. Permissions `sales-finance:get|update` (sales). Links to users who were deactivated or lost the finance role are kept but not offered.
-- **Permissions** (`line-booking:create|list|get|update|status|document`): admin has all; sales has create/list/get/update; finance has list/get/document (their own bookings only, see owner scope).
+- **Permissions** (`line-booking:create|list|get|update|status|document|wholesale-email`): admin has all; sales has create/list/get/update/wholesale-email; finance has list/get/document (their own bookings only, see owner scope).
+- **Wholesale email:** saving a booking may queue a confirmation email to the tour's wholesale. See "Email (outbox)".
 - **Booking number format:** same as customer bookings — 2-digit Thai year + 6 random characters, unique index with retry.
 - **Error codes:** `LINE_NOT_CONFIGURED`, `INVALID_LINE_TOKEN`, `LINE_NOT_LINKED`, `LINE_LINK_CODE_INVALID`, `LINE_ALREADY_LINKED`.
 - **Media purposes:** `booking-slip` — images only, min 200x200, key prefix `bookings/slips/`; `booking-document` — PDF only, key prefix `bookings/documents/` (finance AI/IV/RE).

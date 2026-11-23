@@ -219,7 +219,14 @@ export type LineBookingDeal = {
   fullDueTime: string;
 };
 
-export type LineBookingCreateResponse = { bookingNo: string; totalPrice: number };
+// What happened to the booking email to the tour's wholesale when the booking was saved.
+export type LineBookingWholesaleEmailResult = {
+  result: 'queued' | 'disabled' | 'no_email'; // disabled = the wholesale has auto email off
+  wholesaleName: string;
+  to: string[]; // the addresses it was queued to; empty unless queued
+};
+
+export type LineBookingCreateResponse = { bookingNo: string; totalPrice: number; wholesaleEmail: LineBookingWholesaleEmailResult };
 
 // PUT /line-bookings/editable — the whole deal again; tour, period, first slips, sales owner and the
 // payment plan stay as they are.

@@ -21,6 +21,8 @@ Table: wholesale
 [ 7] update_date  TIMESTAMPTZ  null: false
 [ 8] create_by    UUID         null: false
 [ 9] update_by    UUID         null: false
+[10] emails       TEXT[]       null: false  default: '{}'  (lowercase, max 5)
+[11] auto_email   BOOLEAN      null: false  default: false  (email the wholesale when a LINE booking is entered)
 */
 
 // Wholesale is a row of the wholesale table (tour operators we source tours from).
@@ -37,6 +39,8 @@ type Wholesale struct {
 	UpdateDate time.Time `bun:"update_date" json:"updateDate"`                  // [7] TIMESTAMPTZ
 	CreateBy   string    `bun:"create_by"   json:"createBy"`                    // [8] UUID
 	UpdateBy   string    `bun:"update_by"   json:"updateBy"`                    // [9] UUID
+	Emails     []string  `bun:"emails,array" json:"emails"`                     // [10] TEXT[]
+	AutoEmail  bool      `bun:"auto_email"  json:"autoEmail"`                   // [11] BOOLEAN
 
 	Contacts []WholesaleContact `bun:"rel:has-many,join:id=wholesale_id" json:"contacts,omitempty"`
 }

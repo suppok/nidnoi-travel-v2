@@ -18,6 +18,8 @@ const (
 	Deleted           = "deleted"
 	Restored          = "restored"
 	Comment           = "comment" // a staff comment; note = the text, mentions = the @mentioned users
+	// WholesaleEmailResent: the booking email to the wholesale was queued again; target = the addresses.
+	WholesaleEmailResent = "wholesale_email_resent"
 )
 
 // Kinds of line_booking_notification.

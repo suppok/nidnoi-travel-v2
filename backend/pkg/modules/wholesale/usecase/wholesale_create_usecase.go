@@ -20,11 +20,13 @@ func (u *wholesaleUseCase) CreateValidate(request *models.WholesaleCreateRequest
 		validation.Field(&request.Name, nameRules()...),
 		validation.Field(&request.State, stateRules()...),
 		validation.Field(&request.Contacts, contactsRules()...),
+		validation.Field(&request.Emails, emailsRules()...),
 	)
 }
 
 func (u *wholesaleUseCase) Create(ctx context.Context, request *models.WholesaleCreateRequest) (*models.WholesaleCreateResponse, error) {
 	normalize(&request.Code, &request.Name, request.Contacts)
+	request.Emails = normalizeEmails(request.Emails)
 	if request.State == 0 {
 		request.State = wholesalestate.OnRequest
 	}
@@ -43,6 +45,8 @@ func (u *wholesaleUseCase) Create(ctx context.Context, request *models.Wholesale
 			Code:       request.Code,
 			Name:       request.Name,
 			State:      request.State,
+			Emails:     request.Emails,
+			AutoEmail:  request.AutoEmail,
 			Status:     true,
 			CreateDate: now,
 			UpdateDate: now,

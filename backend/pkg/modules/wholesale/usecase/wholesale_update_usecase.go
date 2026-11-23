@@ -19,12 +19,14 @@ func (u *wholesaleUseCase) UpdateValidate(request *models.WholesaleUpdateRequest
 		validation.Field(&request.Name, nameRules()...),
 		validation.Field(&request.State, stateRules()...),
 		validation.Field(&request.Contacts, contactsRules()...),
+		validation.Field(&request.Emails, emailsRules()...),
 	)
 }
 
-// Update replaces every field of the wholesale, including its whole contact list.
+// Update replaces every field of the wholesale, including its whole contact and email lists.
 func (u *wholesaleUseCase) Update(ctx context.Context, request *models.WholesaleUpdateRequest) (*models.WholesaleUpdateResponse, error) {
 	normalize(&request.Code, &request.Name, request.Contacts)
+	request.Emails = normalizeEmails(request.Emails)
 	if err := u.UpdateValidate(request); err != nil {
 		return nil, cerrors.Validation(err)
 	}
@@ -41,11 +43,13 @@ func (u *wholesaleUseCase) Update(ctx context.Context, request *models.Wholesale
 		target.Code = request.Code
 		target.Name = request.Name
 		target.State = request.State
+		target.Emails = request.Emails
+		target.AutoEmail = request.AutoEmail
 		target.UpdateDate = time.Now()
 		target.UpdateBy = actorID
 		target.Contacts = nil // not a column; replaced below
 		updated, err = u.repositoryRegistry.WholesaleRepository.WithTx(appDB).Update(ctx, target,
-			"ref_id", "code", "name", "state", "update_date", "update_by")
+			"ref_id", "code", "name", "state", "emails", "auto_email", "update_date", "update_by")
 		if err != nil {
 			return uniqueConflict(err)
 		}

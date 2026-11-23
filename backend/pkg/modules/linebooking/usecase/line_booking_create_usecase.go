@@ -361,10 +361,11 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 
 	var (
 		created *domain.LineBooking
+		email   models.LineBookingWholesaleEmailResult
 		txErr   error
 	)
 	for attempt := 1; ; attempt++ {
-		created, txErr = u.createLineBooking(ctx, request, info)
+		created, email, txErr = u.createLineBooking(ctx, request, info)
 		if attempt < maxNoAttempts && isLineBookingNoTaken(txErr) {
 			continue
 		}
@@ -378,14 +379,16 @@ func (u *lineBookingUseCase) Create(ctx context.Context, request *models.LineBoo
 		zap.String("bookingNo", created.BookingNo),
 		zap.String("tourCode", created.TourCode),
 		zap.String("lineUserId", created.LineUserID),
-		zap.String("userId", info.UserID))
-	return &models.LineBookingCreateResponse{BookingNo: created.BookingNo, TotalPrice: created.TotalPrice}, nil
+		zap.String("userId", info.UserID),
+		zap.String("wholesaleEmail", email.Result))
+	return &models.LineBookingCreateResponse{BookingNo: created.BookingNo, TotalPrice: created.TotalPrice, WholesaleEmail: email}, nil
 }
 
-func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *models.LineBookingCreateRequest, info *coremodels.UserRequestInfo) (*domain.LineBooking, error) {
+func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *models.LineBookingCreateRequest, info *coremodels.UserRequestInfo) (*domain.LineBooking, models.LineBookingWholesaleEmailResult, error) {
+	var email models.LineBookingWholesaleEmailResult
 	no, err := newBookingNo(time.Now())
 	if err != nil {
-		return nil, err
+		return nil, email, err
 	}
 
 	var created *domain.LineBooking
@@ -478,7 +481,12 @@ func (u *lineBookingUseCase) createLineBooking(ctx context.Context, request *mod
 		if err != nil {
 			return err
 		}
-		return u.logEvent(ctx, appDB, created.ID, linebookingevent.Created, info.UserID, domain.LineBookingEventDetail{})
+		if err := u.logEvent(ctx, appDB, created.ID, linebookingevent.Created, info.UserID, domain.LineBookingEventDetail{}); err != nil {
+			return err
+		}
+		// The wholesale email is queued in the same transaction: no booking, no email.
+		email, err = u.queueWholesaleEmail(ctx, appDB, created, tour.WholesaleID, info.Name, info.UserID)
+		return err
 	})
-	return created, err
+	return created, email, err
 }

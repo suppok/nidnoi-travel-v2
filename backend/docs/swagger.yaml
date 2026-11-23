@@ -2272,6 +2272,11 @@ definitions:
       totalPrice:
         description: TotalPrice is the grand total, card fee included.
         type: integer
+      wholesaleEmail:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResult'
+        description: 'WholesaleEmail: whether the booking email to the tour''s wholesale
+          was queued.'
     type: object
   backend_pkg_modules_linebooking_models.LineBookingDealUpdateRequest:
     properties:
@@ -4121,6 +4126,76 @@ definitions:
       name:
         type: string
     type: object
+  backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailGetResponse:
+    properties:
+      email:
+        $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem'
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem:
+    properties:
+      attempts:
+        description: in the current round
+        type: integer
+      ccEmails:
+        items:
+          type: string
+        type: array
+      createDate:
+        type: string
+      lastError:
+        type: string
+      nextAttemptAt:
+        type: string
+      replyTo:
+        type: string
+      sendRound:
+        description: 1 + manual resends
+        type: integer
+      sentAt:
+        type: string
+      state:
+        description: 'State: 10 pending (queued or waiting to retry), 20 sent, 30
+          failed.'
+        enum:
+        - 10
+        - 20
+        - 30
+        type: integer
+      subject:
+        type: string
+      toEmails:
+        items:
+          type: string
+        type: array
+      updateDate:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendResponse:
+    properties:
+      email:
+        $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailItem'
+    type: object
+  backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResult:
+    properties:
+      result:
+        enum:
+        - queued
+        - disabled
+        - no_email
+        type: string
+      to:
+        description: the addresses it was queued to; empty unless queued
+        items:
+          type: string
+        type: array
+      wholesaleName:
+        type: string
+    type: object
   backend_pkg_modules_linecontact_models.LineContactItem:
     properties:
       chatUrl:
@@ -5408,12 +5483,21 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleCreateRequest:
     properties:
+      autoEmail:
+        description: 'AutoEmail: email this wholesale automatically when sales save
+          a LINE booking for its tour.'
+        type: boolean
       code:
         description: stored uppercase, unique
         type: string
       contacts:
         items:
           $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
+        type: array
+      emails:
+        description: max 5, stored lowercase
+        items:
+          type: string
         type: array
       name:
         type: string
@@ -5426,6 +5510,8 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleCreateResponse:
     properties:
+      autoEmail:
+        type: boolean
       code:
         type: string
       contacts:
@@ -5434,6 +5520,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5451,6 +5542,8 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleGetResponse:
     properties:
+      autoEmail:
+        type: boolean
       code:
         type: string
       contacts:
@@ -5459,6 +5552,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5476,6 +5574,8 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleItem:
     properties:
+      autoEmail:
+        type: boolean
       code:
         type: string
       contacts:
@@ -5484,6 +5584,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -5502,7 +5607,7 @@ definitions:
   backend_pkg_modules_wholesale_models.WholesaleListRequest:
     properties:
       keyword:
-        description: matches name, code, or a contact's name/phone
+        description: matches name, code, an email, or a contact's name/phone
         type: string
       page:
         description: default 1
@@ -5532,11 +5637,20 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleUpdateRequest:
     properties:
+      autoEmail:
+        description: 'AutoEmail: email this wholesale automatically when sales save
+          a LINE booking for its tour.'
+        type: boolean
       code:
         type: string
       contacts:
         items:
           $ref: '#/definitions/backend_pkg_modules_wholesale_models.WholesaleContactInput'
+        type: array
+      emails:
+        description: max 5, replaces the whole list
+        items:
+          type: string
         type: array
       id:
         type: string
@@ -5549,6 +5663,8 @@ definitions:
     type: object
   backend_pkg_modules_wholesale_models.WholesaleUpdateResponse:
     properties:
+      autoEmail:
+        type: boolean
       code:
         type: string
       contacts:
@@ -5557,6 +5673,11 @@ definitions:
         type: array
       createDate:
         type: string
+      emails:
+        description: display order
+        items:
+          type: string
+        type: array
       id:
         type: string
       name:
@@ -6951,6 +7072,35 @@ paths:
       summary: Users who may be @mentioned on a LINE booking
       tags:
       - line-bookings
+  /line-bookings/{id}/wholesale-email:
+    get:
+      description: |-
+        State of the email queued to the tour's wholesale when the booking was saved: 10 pending
+        (queued or waiting to retry), 20 sent, 30 failed. email is null when none was queued.
+        Same visibility as GET /line-bookings/{id}.
+      parameters:
+      - description: LINE Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailGetResponse'
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: The booking email to the wholesale
+      tags:
+      - line-bookings
   /line-bookings/cancel:
     put:
       consumes:
@@ -7512,6 +7662,49 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete or restore a LINE booking
+      tags:
+      - line-bookings
+  /line-bookings/wholesale-email/resend:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Sales owner or admin. Re-reads the wholesale's current addresses and re-renders the
+        email, then queues it again (pending, attempts 0, a new idempotency key). Works even
+        when the wholesale had auto email off when the booking was saved. VALIDATION on id
+        when the booking is cancelled or the wholesale has no email address.
+      parameters:
+      - description: Booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_linebooking_models.LineBookingWholesaleEmailResendResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: PERMISSION_DENIED
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Resend the booking email to the wholesale
       tags:
       - line-bookings
   /line-contacts/list:

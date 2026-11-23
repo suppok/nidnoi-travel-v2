@@ -29,6 +29,7 @@ p, sales, line-booking, create
 p, sales, line-booking, list
 p, sales, line-booking, get
 p, sales, line-booking, update
+p, sales, line-booking, wholesale-email
 p, finance, line-booking, list
 p, finance, line-booking, get
 p, finance, line-booking, document

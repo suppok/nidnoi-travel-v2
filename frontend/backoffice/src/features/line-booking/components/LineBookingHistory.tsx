@@ -52,6 +52,8 @@ function title(e: LineBookingEvent): string {
       return 'ลบใบจอง';
     case LineBookingEvents.Restored:
       return 'กู้คืนใบจอง';
+    case LineBookingEvents.WholesaleEmailResent:
+      return `ส่งอีเมลยืนยันการจองถึงโฮลเซลล์อีกครั้ง (${e.target})`;
     default:
       return e.action;
   }

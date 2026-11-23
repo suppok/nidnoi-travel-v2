@@ -59,6 +59,7 @@ func (r *wholesaleRepository) List(ctx context.Context, criteria repomodels.Whol
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("lower(ws.name) LIKE ?", pattern).
 				WhereOr("lower(ws.code) LIKE ?", pattern).
+				WhereOr("EXISTS (SELECT 1 FROM unnest(ws.emails) e WHERE e LIKE ?)", pattern).
 				WhereOr("EXISTS (SELECT 1 FROM wholesale_contact c WHERE c.wholesale_id = ws.id AND (lower(c.name) LIKE ? OR c.phone LIKE ?))", pattern, pattern)
 		})
 	}

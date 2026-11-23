@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/mail"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +40,24 @@ type Config struct {
 	Media      MediaConfig      `mapstructure:"media"`
 
 	Revalidation RevalidationConfig `mapstructure:"revalidation"`
+	Mail         MailConfig         `mapstructure:"mail"`
+}
+
+// MailConfig: outgoing email (Resend). The outbox settings come from config_api.yml; the API key, the
+// From address and dry-run come from MAIL_* environment variables. Reply-To/Cc live in app_config.
+type MailConfig struct {
+	APIKey string `mapstructure:"-"` // MAIL_API_KEY (secret)
+	From   string `mapstructure:"-"` // MAIL_FROM, e.g. "nidnoi travel <booking@nidnoitravelv2.com>"
+	DryRun bool   `mapstructure:"-"` // MAIL_DRY_RUN: log emails instead of sending them
+
+	HTTPTimeout time.Duration    `mapstructure:"httpTimeout"`
+	Outbox      MailOutboxConfig `mapstructure:"outbox"`
+}
+
+type MailOutboxConfig struct {
+	TickInterval time.Duration `mapstructure:"tickInterval"`
+	BatchSize    int           `mapstructure:"batchSize"`
+	MaxAttempts  int           `mapstructure:"maxAttempts"`
 }
 
 // RevalidationConfig drives the debounced customer-site rebuild.
@@ -190,6 +210,15 @@ func read(path string) (*Config, error) {
 		LoginChannelID:     strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_ID")),
 		LoginChannelSecret: strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_SECRET")),
 	}
+	cfg.Mail.APIKey = strings.TrimSpace(os.Getenv("MAIL_API_KEY"))
+	cfg.Mail.From = strings.TrimSpace(os.Getenv("MAIL_FROM"))
+	if s := strings.TrimSpace(os.Getenv("MAIL_DRY_RUN")); s != "" {
+		dryRun, err := strconv.ParseBool(s)
+		if err != nil {
+			return nil, fmt.Errorf("MAIL_DRY_RUN must be true or false (got %q)", s)
+		}
+		cfg.Mail.DryRun = dryRun
+	}
 	return cfg, nil
 }
 
@@ -246,10 +275,38 @@ func (c *Config) validate() error {
 			problems = append(problems, "revalidation.dailyAt must be HH:MM")
 		}
 	}
+	problems = append(problems, c.Mail.problems()...)
 	if len(problems) > 0 {
 		return errors.New("config: " + strings.Join(problems, "; "))
 	}
 	return nil
+}
+
+func (m MailConfig) problems() []string {
+	var problems []string
+	if !m.DryRun {
+		if m.APIKey == "" {
+			problems = append(problems, "MAIL_API_KEY is required (or set MAIL_DRY_RUN=true)")
+		}
+		if m.From == "" {
+			problems = append(problems, "MAIL_FROM is required (or set MAIL_DRY_RUN=true)")
+		}
+	}
+	if m.From != "" {
+		if _, err := mail.ParseAddress(m.From); err != nil {
+			problems = append(problems, "MAIL_FROM must be an email address, e.g. \"nidnoi travel <booking@example.com>\"")
+		}
+	}
+	if m.HTTPTimeout <= 0 || m.Outbox.TickInterval <= 0 {
+		problems = append(problems, "mail.httpTimeout and mail.outbox.tickInterval must be positive")
+	}
+	if m.Outbox.BatchSize < 1 || m.Outbox.BatchSize > 100 {
+		problems = append(problems, "mail.outbox.batchSize must be 1-100")
+	}
+	if m.Outbox.MaxAttempts < 1 {
+		problems = append(problems, "mail.outbox.maxAttempts must be at least 1")
+	}
+	return problems
 }
 
 func splitList(s string) []string {

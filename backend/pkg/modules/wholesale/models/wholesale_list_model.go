@@ -3,7 +3,7 @@ package models
 import coremodels "backend/pkg/core/api/models"
 
 type WholesaleListRequest struct {
-	Keyword  string `json:"keyword"`  // matches name, code, or a contact's name/phone
+	Keyword  string `json:"keyword"`  // matches name, code, an email, or a contact's name/phone
 	State    int    `json:"state"`    // 0 or omitted = any
 	Status   *bool  `json:"status"`   // omitted = all
 	Page     int    `json:"page"`     // default 1
