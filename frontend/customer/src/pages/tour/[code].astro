@@ -2,6 +2,8 @@
 // Tour detail — /tour/<code>/ matches the legacy URL exactly (no redirect).
 import PeriodTable from '../../components/tour/PeriodTable.astro';
 import TourCard from '../../components/tour/TourCard.astro';
+import TourIncludes from '../../components/tour/TourIncludes.astro';
+import TourTimeline from '../../components/tour/TourTimeline.astro';
 import Breadcrumb from '../../components/ui/Breadcrumb.astro';
 import CfImage from '../../components/ui/CfImage.astro';
 import Icon from '../../components/ui/Icon.astro';
@@ -86,6 +88,8 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
               ))
             }
             <span class="chip"><Icon name="calendar" size={11} /> {duration}</span>
+            {tour.governmentShopStops === false && <span class="chip chip-success"><Icon name="shield" size={11} /> ไม่ลงร้านรัฐบาล</span>}
+            {tour.governmentShopStops === true && <span class="chip"><Icon name="store" size={11} /> ลงร้านรัฐบาล</span>}
           </div>
           <h1 class="h-section mt-0 mb-4 text-[clamp(30px,5vw,54px)]">{tour.name}</h1>
           {tour.highlight && <p class="body-lg m-0 max-w-2xl text-ink-soft">{tour.highlight}</p>}
@@ -156,6 +160,10 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
             </a>
           )
         }
+
+        <TourTimeline days={tour.itinerary ?? []} />
+
+        <TourIncludes includedItems={tour.includedItems ?? []} excludedItems={tour.excludedItems ?? []} governmentShopStops={tour.governmentShopStops ?? null} />
       </div>
 
       <aside id="periods" class="detail-aside scroll-mt-24" aria-label="รอบเดินทางและราคา">

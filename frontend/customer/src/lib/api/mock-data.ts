@@ -296,7 +296,46 @@ const cityRef = (slug: string): CityRef => {
   return { slug: c.slug, countrySlug: c.countrySlug, nameTh: c.nameTh, nameEn: c.nameEn };
 };
 
-function toDetail(t: TourSeed): TourProgramPublicDetail {
+// รวม / ไม่รวม samples: most tours have both lists; one has none (section hidden) and the government
+// shop flag varies, so every state of TourIncludes renders in a mock build.
+const INCLUDED = [
+  'ตั๋วเครื่องบินไป–กลับ ชั้นประหยัด พร้อมคณะ รวมภาษีสนามบินและค่าธรรมเนียมเชื้อเพลิง',
+  'น้ำหนักกระเป๋าโหลดใต้ท้องเครื่องท่านละ 20 กิโลกรัม',
+  'โรงแรมที่พักตามรายการ (พักห้องละ 2–3 ท่าน)',
+  'อาหารตามที่ระบุในรายการ',
+  'ค่าเข้าชมสถานที่ตามรายการ',
+  'รถโค้ชปรับอากาศนำเที่ยว และหัวหน้าทัวร์ดูแลตลอดการเดินทาง',
+  'ประกันอุบัติเหตุระหว่างการเดินทาง วงเงิน 1,000,000 บาท',
+];
+const EXCLUDED = [
+  'ค่าวีซ่าและค่าดำเนินการยื่นขอวีซ่า',
+  'ค่าทิปไกด์และคนขับรถท้องถิ่น 1,500 บาท/ท่าน/ทริป',
+  'ค่าภาษีน้ำมันที่สายการบินเรียกเก็บเพิ่มภายหลัง',
+  'Option: ทัวร์ล่องเรือชมวิวยามค่ำ ท่านละ 1,200 บาท',
+];
+function inclusions(t: TourSeed, i: number): Pick<TourProgramPublicDetail, 'governmentShopStops' | 'includedItems' | 'excludedItems' | 'itinerary'> {
+  if (i === TOURS.length - 1) return { governmentShopStops: null, includedItems: [], excludedItems: [], itinerary: [] };
+  const china = t.countries.includes('china');
+  return {
+    governmentShopStops: china ? i % 2 === 0 : t.countries.includes('vietnam') ? false : null,
+    includedItems: INCLUDED,
+    excludedItems: i % 3 === 0 ? EXCLUDED : EXCLUDED.slice(0, 3),
+    itinerary: timeline(t),
+  };
+}
+
+// A plausible timeline from the seed: fly out, the highlights one per day, fly back.
+function timeline(t: TourSeed): TourProgramPublicDetail['itinerary'] {
+  const city = t.cities[0] ? cityRef(t.cities[0]).nameTh : countryRef(t.countries[0]).nameTh;
+  const sights = t.highlight.split(' · ');
+  return Array.from({ length: t.days }, (_, i) => {
+    if (i === 0) return { day: 1, places: ['สนามบินสุวรรณภูมิ', `สนามบิน${city}`] };
+    if (i === t.days - 1) return { day: i + 1, places: [`สนามบิน${city}`, 'สนามบินสุวรรณภูมิ'] };
+    return { day: i + 1, places: [city, sights[(i - 1) % sights.length]] };
+  });
+}
+
+function toDetail(t: TourSeed, index: number): TourProgramPublicDetail {
   const periods: TourPeriodPublic[] = t.periods.map(([startDate, endDate, price, before, seats], i) => ({
     id: `${t.code}-p${i + 1}`,
     startDate,
@@ -308,7 +347,7 @@ function toDetail(t: TourSeed): TourProgramPublicDetail {
     singleSupplement: Math.round(price * 0.18 / 100) * 100,
     deposit: price >= 60000 ? 20000 : 10000,
     seatsAvailable: seats,
-    soldOut: seats === 0,
+    soldOut: false, // like the backend: only a closed tour is sold out; 0 seats = not specified
   }));
   // Backend rule: starting price = lowest active period price (sold-out periods still count as active).
   const cheapest = periods.reduce((a, b) => (b.price < a.price ? b : a));
@@ -336,6 +375,7 @@ function toDetail(t: TourSeed): TourProgramPublicDetail {
     images: GALLERY_POOL.filter((src) => src !== t.image).slice(0, 4),
     pdfFile: null,
     periods,
+    ...inclusions(t, index),
   };
 }
 

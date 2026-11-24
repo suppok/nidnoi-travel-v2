@@ -24,8 +24,10 @@ type MediaAPIHandler struct {
 	maxBytes     int64
 }
 
-func NewMediaAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, mediaUseCase media.MediaUseCase, maxUploadMB int) *MediaAPIHandler {
-	return &MediaAPIHandler{router: router, apiHandler: apiHandler, mediaUseCase: mediaUseCase, maxBytes: int64(maxUploadMB) * 1024 * 1024}
+// maxBytes is the largest upload of any purpose (config Media.MaxUploadBytes); the use case applies
+// each purpose's own limit.
+func NewMediaAPIHandler(router fiber.Router, apiHandler *api.ApiHandler, mediaUseCase media.MediaUseCase, maxBytes int64) *MediaAPIHandler {
+	return &MediaAPIHandler{router: router, apiHandler: apiHandler, mediaUseCase: mediaUseCase, maxBytes: maxBytes}
 }
 
 func (h *MediaAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middleware.AuthPermissions) {
@@ -40,7 +42,7 @@ func (h *MediaAPIHandler) Init(jwtAuth middleware.Auth, authPermissions middlewa
 // @Accept      multipart/form-data
 // @Produce     json
 // @Security    BearerAuth
-// @Param       file    formData file   true "File (max media.maxUploadMB)"
+// @Param       file    formData file   true "File (max media.maxUploadMB; tour-pdf media.maxDocumentMB)"
 // @Param       purpose formData string true "Purpose"
 // @Success     200 {object} models.MediaUploadResponse
 // @Failure     400 {object} map[string]any "VALIDATION, MEDIA_TYPE_NOT_ALLOWED, IMAGE_TOO_SMALL"

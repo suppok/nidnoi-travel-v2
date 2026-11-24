@@ -13,7 +13,7 @@ export const AI_MODELS = [
   { id: 'claude-opus-5-5', label: 'Claude Opus 5.5 (แม่นยำกว่า ราคาสูงกว่า)' },
   { id: 'claude-haiku-5-5', label: 'Claude Haiku 5.5 (เร็วและถูกที่สุด)' },
 ];
-const MAX_PDF_LIMIT = 40;
+const MAX_PDF_LIMIT = 50;
 
 type Stored = { enabled: boolean; model: string; maxPdfSizeMb: number; apiKey: string; updateDate: string | null; updateBy: string };
 
@@ -24,7 +24,7 @@ function load(): Stored {
   } catch {
     // fall through
   }
-  return { enabled: false, model: AI_MODELS[0].id, maxPdfSizeMb: 40, apiKey: '', updateDate: null, updateBy: '' };
+  return { enabled: false, model: AI_MODELS[0].id, maxPdfSizeMb: 50, apiKey: '', updateDate: null, updateBy: '' };
 }
 
 let stored = load();

@@ -44,7 +44,7 @@ type TourPeriodPublicItem struct {
 	SingleSupplement    null.Int `json:"singleSupplement" swaggertype:"integer"`
 	Deposit             null.Int `json:"deposit" swaggertype:"integer"`
 	SeatsAvailable      int      `json:"seatsAvailable"`
-	// SoldOut is true when no seat is left or the tour is closed.
+	// SoldOut is true when the tour is closed (ปิดรับ). Seats never make a period sold out: 0 = not specified.
 	SoldOut bool `json:"soldOut"`
 }
 
@@ -76,6 +76,11 @@ type TourProgramPublicDetail struct {
 	Images      []string               `json:"images"`
 	PDFFile     null.String            `json:"pdfFile" swaggertype:"string"`
 	Periods     []TourPeriodPublicItem `json:"periods"`
+	// GovernmentShopStops: stops at government shops (ลงร้านรัฐบาล); null = not specified.
+	GovernmentShopStops null.Bool                 `json:"governmentShopStops" swaggertype:"boolean"`
+	IncludedItems       []string                  `json:"includedItems"` // what the price includes
+	ExcludedItems       []string                  `json:"excludedItems"` // what it doesn't include
+	Itinerary           []domain.TourItineraryDay `json:"itinerary"`     // day-by-day places, may be empty
 }
 
 // NewTourPeriodPublicItems maps active upcoming periods (already filtered and ordered by the repository).
@@ -94,7 +99,7 @@ func NewTourPeriodPublicItems(state int, periods []domain.TourProgramPeriod) []T
 			SingleSupplement:    p.SingleSupplement,
 			Deposit:             p.Deposit,
 			SeatsAvailable:      p.SeatsAvailable,
-			SoldOut:             closed || p.SeatsAvailable == 0,
+			SoldOut:             closed,
 		}
 	}
 	return items
@@ -154,5 +159,9 @@ func NewTourProgramPublicDetail(t *domain.TourProgram, periods []domain.TourProg
 		Images:                images,
 		PDFFile:               t.PDFFile,
 		Periods:               NewTourPeriodPublicItems(t.State, periods),
+		GovernmentShopStops:   t.GovernmentShopStops,
+		IncludedItems:         nonNil(t.IncludedItems),
+		ExcludedItems:         nonNil(t.ExcludedItems),
+		Itinerary:             nonNilDays(t.Itinerary),
 	}
 }

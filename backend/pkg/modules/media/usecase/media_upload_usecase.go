@@ -52,8 +52,14 @@ func (u *mediaUseCase) Upload(ctx context.Context, request *models.MediaUploadRe
 	}
 	rule := purposeRules[request.Purpose]
 
-	if len(request.Data) > u.coreRegistry.Config.Media.MaxUploadMB*1024*1024 {
-		return nil, cerrors.New(http.StatusRequestEntityTooLarge, errorcode.MediaTooLarge)
+	limitMB := u.coreRegistry.Config.Media.MaxUploadMB
+	if rule.document {
+		limitMB = u.coreRegistry.Config.Media.MaxDocumentMB
+	}
+	if len(request.Data) > limitMB*1024*1024 {
+		e := cerrors.New(http.StatusRequestEntityTooLarge, errorcode.MediaTooLarge)
+		e.Message = fmt.Sprintf("The file is too large (at most %d MB)", limitMB)
+		return nil, e
 	}
 
 	mime := commons.DetectType(request.Data)

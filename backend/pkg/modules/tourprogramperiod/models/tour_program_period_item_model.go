@@ -66,6 +66,6 @@ type TourProgramPeriodFields struct {
 	SingleSupplement    null.Int `json:"singleSupplement" swaggertype:"integer"`
 	Deposit             null.Int `json:"deposit" swaggertype:"integer"`
 	SeatsTotal          int      `json:"seatsTotal"`
-	SeatsAvailable      int      `json:"seatsAvailable"` // 0..seatsTotal; 0 = sold out
+	SeatsAvailable      int      `json:"seatsAvailable"` // 0..seatsTotal; 0 of 0 = not specified (the customer site never shows sold out from seats)
 	Note                string   `json:"note"`
 }

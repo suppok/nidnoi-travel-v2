@@ -1,3 +1,4 @@
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { App, Button, Card, Form, Input, InputNumber, Select, Tag, Tooltip } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../api/client.ts';
@@ -35,6 +36,10 @@ const EMPTY: FormValues = {
   pdfFile: null,
   docxFile: null,
   internalNote: '',
+  governmentShopStops: null,
+  includedItems: [],
+  excludedItems: [],
+  itinerary: [],
   countryIds: [],
   cityIds: [],
   images: [],
@@ -57,6 +62,10 @@ function toValues(tour: TourProgram): FormValues {
     pdfFile: tour.pdfFile,
     docxFile: tour.docxFile,
     internalNote: tour.internalNote,
+    governmentShopStops: tour.governmentShopStops ?? null,
+    includedItems: tour.includedItems ?? [],
+    excludedItems: tour.excludedItems ?? [],
+    itinerary: tour.itinerary ?? [],
     countryIds: tour.countries.map((c) => c.id),
     cityIds: tour.cities.map((c) => c.id),
     images: tour.images.map((i) => i.url),
@@ -82,6 +91,31 @@ type Props = {
   beforeSubmit?: () => string | null;
   /** Rendered after the form sections, above the save bar. */
   extraSections?: ReactNode;
+};
+
+// One item per line in a text area; empty lines are kept while typing and dropped on save.
+const linesProps = {
+  getValueProps: (v: string[] | undefined) => ({ value: (v ?? []).join('\n') }),
+  normalize: (v: string) => v.split('\n'),
+};
+const cleanLines = (lines: string[] | undefined) => [...new Set((lines ?? []).map((l) => l.trim().replace(/\s+/g, ' ')).filter(Boolean))];
+
+// Timeline days: trimmed places, empty days dropped, renumbered (the backend does the same).
+const cleanDays = (days: FormValues['itinerary'] | undefined) =>
+  (days ?? [])
+    .map((d) => (d?.places ?? []).map((p) => p.trim().replace(/\s+/g, ' ')).filter(Boolean))
+    .filter((places) => places.length > 0)
+    .map((places, i) => ({ day: i + 1, places }));
+
+// ลงร้านรัฐบาล: a Select can't hold null, so it uses '' for "not specified".
+const SHOP_OPTIONS = [
+  { value: '', label: 'ไม่ระบุ' },
+  { value: 'no', label: 'ไม่ลงร้านรัฐบาล' },
+  { value: 'yes', label: 'ลงร้านรัฐบาล' },
+];
+const shopProps = {
+  getValueProps: (v: boolean | null | undefined) => ({ value: v === true ? 'yes' : v === false ? 'no' : '' }),
+  normalize: (v: string) => (v === 'yes' ? true : v === 'no' ? false : null),
 };
 
 function FieldLabel({ text, ai, attention }: { text: string; ai: boolean; attention: boolean }) {
@@ -198,6 +232,10 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
         highlight: values.highlight.trim(),
         description: values.description.trim(),
         internalNote: values.internalNote.trim(),
+        governmentShopStops: values.governmentShopStops ?? null,
+        includedItems: cleanLines(values.includedItems),
+        excludedItems: cleanLines(values.excludedItems),
+        itinerary: cleanDays(values.itinerary),
       });
     } catch (err) {
       if (err instanceof ApiError && err.code === ErrorCodes.RefIdTaken) {
@@ -331,6 +369,58 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
         </Form.Item>
       </Section>
 
+      <Section title="ราคานี้รวม / ไม่รวม">
+        <Form.Item label={lbl('governmentShopStops', 'ลงร้านรัฐบาล')} name="governmentShopStops" {...shopProps} extra="แสดงบนหน้าเว็บ — เลือก ไม่ระบุ ถ้าโปรแกรมไม่ได้บอก" className="max-w-[260px]">
+          <Select options={SHOP_OPTIONS} />
+        </Form.Item>
+        <div className="grid grid-cols-2 gap-x-4 max-md:grid-cols-1">
+          <Form.Item
+            label={lbl('includedItems', 'ราคานี้รวม')}
+            name="includedItems"
+            {...linesProps}
+            extra="บรรทัดละ 1 รายการ เช่น ค่าตั๋วเครื่องบินไป-กลับ, ค่าที่พัก, ค่าอาหารตามรายการ"
+            rules={[{ validator: (_, v: string[]) => (cleanLines(v).length <= 50 ? Promise.resolve() : Promise.reject(new Error('ได้ไม่เกิน 50 รายการ'))) }]}
+          >
+            <Input.TextArea autoSize={{ minRows: 4, maxRows: 16 }} />
+          </Form.Item>
+          <Form.Item
+            label={lbl('excludedItems', 'ราคานี้ไม่รวม')}
+            name="excludedItems"
+            {...linesProps}
+            extra="บรรทัดละ 1 รายการ สั้น ๆ เช่น ค่าวีซ่า, ค่าทิปไกด์และคนขับรถ 1,500 บาท/ท่าน, Option: ทัวร์เสริม … — ไม่ต้องใส่รายการที่ทุกทัวร์มีเหมือนกัน"
+            rules={[{ validator: (_, v: string[]) => (cleanLines(v).length <= 50 ? Promise.resolve() : Promise.reject(new Error('ได้ไม่เกิน 50 รายการ'))) }]}
+          >
+            <Input.TextArea autoSize={{ minRows: 4, maxRows: 16 }} />
+          </Form.Item>
+        </div>
+      </Section>
+
+      <Section title="ไทม์ไลน์รายวัน" extra={lbl('itinerary', '')}>
+        <p className="mt-0 mb-4 text-[13px] text-ink-muted">
+          สรุปสั้น ๆ ว่าแต่ละวันไปที่ไหนบ้าง (แสดงบนหน้าเว็บ) — พิมพ์ชื่อสถานที่แล้วกด Enter ทีละที่ เรียงตามลำดับ ไม่ต้องใส่โรงแรม
+        </p>
+        <Form.List name="itinerary">
+          {(fields, { add, remove }) => (
+            <div className="flex flex-col gap-2">
+              {fields.map((field, i) => (
+                <div key={field.key} className="flex items-start gap-2">
+                  <span className="mt-1 w-[64px] shrink-0 text-sm font-medium text-ink">วันที่ {i + 1}</span>
+                  <Form.Item name={[field.name, 'places']} className="mb-0 flex-1">
+                    <Select mode="tags" open={false} tokenSeparators={[',']} placeholder="เช่น สนามบินสุวรรณภูมิ, สนามบินปักกิ่ง, พระราชวังต้องห้าม" aria-label={`สถานที่วันที่ ${i + 1}`} />
+                  </Form.Item>
+                  {!readOnly && <Button type="text" danger icon={<DeleteOutlined />} aria-label={`ลบวันที่ ${i + 1}`} onClick={() => remove(field.name)} />}
+                </div>
+              ))}
+              {!readOnly && (
+                <Button icon={<PlusOutlined />} onClick={() => add({ day: fields.length + 1, places: [] })} className="self-start">
+                  เพิ่มวัน
+                </Button>
+              )}
+            </div>
+          )}
+        </Form.List>
+      </Section>
+
       <Section title="รูปภาพ">
         <div className="grid grid-cols-[3fr_2fr] gap-x-6 max-lg:grid-cols-1">
           <Form.Item label="แบนเนอร์" name="bannerImage" extra="รูปใหญ่ด้านบนหน้ารายละเอียดทัวร์ และรูปตอนแชร์ลิงก์">
@@ -352,7 +442,7 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
 
       <Section title="เอกสารโปรแกรม">
         <div className="grid grid-cols-2 gap-x-4 max-md:grid-cols-1">
-          <Form.Item label="ไฟล์ PDF" name="pdfFile" extra="ลูกค้าดาวน์โหลดได้จากหน้าทัวร์">
+          <Form.Item label={lbl('pdfFile', 'ไฟล์ PDF')} name="pdfFile" extra="ลูกค้าดาวน์โหลดได้จากหน้าทัวร์">
             <DocumentUploadField purpose="tour-pdf" disabled={readOnly} />
           </Form.Item>
           <Form.Item label="ไฟล์ Word (DOCX)" name="docxFile" extra="ไฟล์ต้นฉบับสำหรับแก้ไข เห็นเฉพาะพนักงาน">

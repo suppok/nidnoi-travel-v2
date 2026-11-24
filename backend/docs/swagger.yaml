@@ -31,6 +31,15 @@ definitions:
       to:
         type: string
     type: object
+  backend_pkg_domain.TourItineraryDay:
+    properties:
+      day:
+        type: integer
+      places:
+        items:
+          type: string
+        type: array
+    type: object
   backend_pkg_modules_airline_models.AirlineCreateRequest:
     properties:
       code:
@@ -4490,6 +4499,11 @@ definitions:
     properties:
       extras:
         type: string
+      inclusions:
+        description: government shops and the included / excluded lists
+        type: string
+      itinerary:
+        type: string
       main:
         type: string
       periods:
@@ -4498,6 +4512,15 @@ definitions:
         type: string
       taxonomy:
         type: string
+    type: object
+  backend_pkg_modules_tourprogram_commons.AIDay:
+    properties:
+      day:
+        type: integer
+      places:
+        items:
+          type: string
+        type: array
     type: object
   backend_pkg_modules_tourprogram_commons.AIDraft:
     properties:
@@ -4522,14 +4545,29 @@ definitions:
         type: string
       docxFile:
         type: string
+      excludedItems:
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: null = not stated
+        type: boolean
       highlight:
         type: string
       images:
         items:
           type: string
         type: array
+      includedItems:
+        items:
+          type: string
+        type: array
       internalNote:
         type: string
+      itinerary:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_commons.AIDay'
+        type: array
       name:
         type: string
       nights:
@@ -4646,7 +4684,8 @@ definitions:
       singleSupplement:
         type: integer
       soldOut:
-        description: SoldOut is true when no seat is left or the tour is closed.
+        description: 'SoldOut is true when the tour is closed (ปิดรับ). Seats never
+          make a period sold out: 0 = not specified.'
         type: boolean
       startDate:
         example: "2026-12-01"
@@ -4799,6 +4838,15 @@ definitions:
       docxFile:
         description: URL from POST /media/upload (tour-docx), staff only
         type: string
+      excludedItems:
+        description: what it doesn't include, display order (max 50)
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: 'GovernmentShopStops: the tour stops at government shops (ลงร้านรัฐบาล);
+          null = not specified.'
+        type: boolean
       highlight:
         description: short summary for tour cards
         type: string
@@ -4807,9 +4855,21 @@ definitions:
         items:
           type: string
         type: array
+      includedItems:
+        description: what the price includes, display order (max 50)
+        items:
+          type: string
+        type: array
       internalNote:
         description: staff only
         type: string
+      itinerary:
+        description: |-
+          Itinerary: the short day-by-day timeline, in day order (max 60 days, 20 places a day). day is
+          ignored on input and renumbered from the position; days without places are dropped.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
+        type: array
       name:
         type: string
       nights:
@@ -4862,6 +4922,13 @@ definitions:
         type: string
       docxFile:
         type: string
+      excludedItems:
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: null = not specified
+        type: boolean
       highlight:
         type: string
       id:
@@ -4871,8 +4938,17 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
         type: array
+      includedItems:
+        items:
+          type: string
+        type: array
       internalNote:
         type: string
+      itinerary:
+        description: day-by-day places
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
+        type: array
       name:
         type: string
       nights:
@@ -4927,6 +5003,13 @@ definitions:
         type: string
       docxFile:
         type: string
+      excludedItems:
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: null = not specified
+        type: boolean
       highlight:
         type: string
       id:
@@ -4936,8 +5019,17 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
         type: array
+      includedItems:
+        items:
+          type: string
+        type: array
       internalNote:
         type: string
+      itinerary:
+        description: day-by-day places
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
+        type: array
       name:
         type: string
       nights:
@@ -5064,11 +5156,30 @@ definitions:
         type: integer
       description:
         type: string
+      excludedItems:
+        description: what it doesn't include
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: 'GovernmentShopStops: stops at government shops (ลงร้านรัฐบาล);
+          null = not specified.'
+        type: boolean
       highlight:
         type: string
       images:
         items:
           type: string
+        type: array
+      includedItems:
+        description: what the price includes
+        items:
+          type: string
+        type: array
+      itinerary:
+        description: day-by-day places, may be empty
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
         type: array
       name:
         type: string
@@ -5186,6 +5297,15 @@ definitions:
       docxFile:
         description: URL from POST /media/upload (tour-docx), staff only
         type: string
+      excludedItems:
+        description: what it doesn't include, display order (max 50)
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: 'GovernmentShopStops: the tour stops at government shops (ลงร้านรัฐบาล);
+          null = not specified.'
+        type: boolean
       highlight:
         description: short summary for tour cards
         type: string
@@ -5196,9 +5316,21 @@ definitions:
         items:
           type: string
         type: array
+      includedItems:
+        description: what the price includes, display order (max 50)
+        items:
+          type: string
+        type: array
       internalNote:
         description: staff only
         type: string
+      itinerary:
+        description: |-
+          Itinerary: the short day-by-day timeline, in day order (max 60 days, 20 places a day). day is
+          ignored on input and renumbered from the position; days without places are dropped.
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
+        type: array
       name:
         type: string
       nights:
@@ -5251,6 +5383,13 @@ definitions:
         type: string
       docxFile:
         type: string
+      excludedItems:
+        items:
+          type: string
+        type: array
+      governmentShopStops:
+        description: null = not specified
+        type: boolean
       highlight:
         type: string
       id:
@@ -5260,8 +5399,17 @@ definitions:
         items:
           $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage'
         type: array
+      includedItems:
+        items:
+          type: string
+        type: array
       internalNote:
         type: string
+      itinerary:
+        description: day-by-day places
+        items:
+          $ref: '#/definitions/backend_pkg_domain.TourItineraryDay'
+        type: array
       name:
         type: string
       nights:
@@ -5326,7 +5474,8 @@ definitions:
         description: must be above price
         type: integer
       seatsAvailable:
-        description: 0..seatsTotal; 0 = sold out
+        description: 0..seatsTotal; 0 of 0 = not specified (the customer site never
+          shows sold out from seats)
         type: integer
       seatsTotal:
         type: integer
@@ -5468,7 +5617,8 @@ definitions:
         description: must be above price
         type: integer
       seatsAvailable:
-        description: 0..seatsTotal; 0 = sold out
+        description: 0..seatsTotal; 0 of 0 = not specified (the customer site never
+          shows sold out from seats)
         type: integer
       seatsTotal:
         type: integer
@@ -8203,7 +8353,7 @@ paths:
         multipart/form-data with "file" and "purpose" (tour-banner | tour-card | tour-gallery | tour-pdf | tour-docx | country-hero | city-hero).
         The type is detected from the content: images are JPEG/PNG/WebP with a minimum size per purpose, documents are PDF or DOCX.
       parameters:
-      - description: File (max media.maxUploadMB)
+      - description: File (max media.maxUploadMB; tour-pdf media.maxDocumentMB)
         in: formData
         name: file
         required: true

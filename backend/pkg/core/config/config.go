@@ -124,7 +124,10 @@ type LINEConfig struct {
 }
 
 type MediaConfig struct {
-	MaxUploadMB   int `mapstructure:"maxUploadMB"`
+	MaxUploadMB int `mapstructure:"maxUploadMB"`
+	// MaxDocumentMB is the limit for tour PDFs (purpose tour-pdf): brochures are often 20-50 MB, and the
+	// AI prefill puts the PDF it reads into the tour. Must stay below server.bodyLimitMB.
+	MaxDocumentMB int `mapstructure:"maxDocumentMB"`
 	MaxMegapixels int `mapstructure:"maxMegapixels"`
 }
 
@@ -173,6 +176,11 @@ type RateLimitRule struct {
 type PermissionConfig struct {
 	ModelPath  string `mapstructure:"modelPath"`
 	PolicyPath string `mapstructure:"policyPath"`
+}
+
+// MaxUploadBytes is the largest file any media purpose accepts (the handler's read limit).
+func (m MediaConfig) MaxUploadBytes() int64 {
+	return int64(max(m.MaxUploadMB, m.MaxDocumentMB)) * 1024 * 1024
 }
 
 func (c *Config) IsLocal() bool { return c.AppEnv == EnvLocal }
@@ -290,6 +298,9 @@ func (c *Config) validate() error {
 	}
 	if c.Media.MaxUploadMB < 1 || c.Media.MaxUploadMB >= c.Server.BodyLimitMB {
 		problems = append(problems, "media.maxUploadMB must be at least 1 and below server.bodyLimitMB")
+	}
+	if c.Media.MaxDocumentMB < c.Media.MaxUploadMB || c.Media.MaxDocumentMB >= c.Server.BodyLimitMB {
+		problems = append(problems, "media.maxDocumentMB must be at least media.maxUploadMB and below server.bodyLimitMB")
 	}
 	if c.Media.MaxMegapixels < 1 {
 		problems = append(problems, "media.maxMegapixels must be at least 1")

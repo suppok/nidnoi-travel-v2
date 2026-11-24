@@ -17,7 +17,7 @@ import (
 )
 
 // DefaultMaxPdfSizeMb is the PDF size limit before an admin sets one (capped by config ai.maxPdfMB).
-const DefaultMaxPdfSizeMb = 40
+const DefaultMaxPdfSizeMb = 50
 
 // Settings are the decoded AI settings with the API key decrypted. Never log or return APIKey.
 type Settings struct {

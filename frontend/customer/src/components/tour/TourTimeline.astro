@@ -1,0 +1,51 @@
+---
+// Short day-by-day timeline on the tour detail page (design: ex/nidnoi-travel-v2/tour-app.jsx
+// TourItinerary — vertical line, a dot and "DAY 01" per day). Static, no client JS. Renders nothing
+// when the tour has no timeline.
+import type { TourItineraryDay } from '../../types/tour-program';
+
+type Props = { days: TourItineraryDay[] };
+
+const { days } = Astro.props;
+---
+
+{
+  days.length > 0 && (
+    <section class="mt-16" aria-labelledby="timeline-title">
+      <p class="eyebrow mb-4">ไทม์ไลน์การเดินทาง</p>
+      <h2 id="timeline-title" class="h-section mt-0 mb-8">
+        {days.length} วัน<em>เที่ยวที่ไหน</em>บ้าง
+      </h2>
+
+      <ol class="timeline relative m-0 list-none p-0">
+        {days.map((d) => (
+          <li class="relative pb-7 pl-14 last:pb-0">
+            <span class="absolute top-1.5 left-[17px] h-4 w-4 rounded-full border-2 border-primary bg-white" aria-hidden="true" />
+            <p class="m-0 mb-1.5 text-xs font-semibold tracking-[0.16em] text-primary-deep">DAY {String(d.day).padStart(2, '0')}</p>
+            <p class="m-0 font-display text-[17px] leading-relaxed font-semibold text-ink">
+              {d.places.map((place, i) => (
+                <>
+                  {i > 0 && <span class="mx-1.5 font-normal text-ink-muted" aria-hidden="true">–</span>}
+                  <span>{place}</span>
+                </>
+              ))}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+<style>
+  /* The vertical line through the dots. */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background: var(--color-line);
+  }
+</style>

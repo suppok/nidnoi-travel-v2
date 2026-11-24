@@ -15,6 +15,11 @@ const (
 	maxHighlightRunes = 500
 	maxDays           = 60
 	maxPeriodDays     = 90
+	maxPriceItems     = 50
+	maxPriceItemRunes = 300
+	maxItineraryDays  = 60
+	maxPlacesPerDay   = 20
+	maxPlaceRunes     = 100
 )
 
 // AIWarning is shown to staff above the prefilled form. Field names the form item it is about
@@ -43,7 +48,12 @@ type NormalizedTour struct {
 	JoinLandPrice     *int               `json:"joinLandPrice"`
 	MinGroupSize      *int               `json:"minGroupSize"`
 	OtherCharges      []string           `json:"otherCharges"`
-	Confidence        AIConfidence       `json:"confidence"`
+	// GovernmentShopStops: true = stops at government shops (ลงร้านรัฐบาล), false = it says it doesn't, nil = not stated.
+	GovernmentShopStops *bool        `json:"governmentShopStops"`
+	IncludedItems       []string     `json:"includedItems"`
+	ExcludedItems       []string     `json:"excludedItems"`
+	Itinerary           []AIDay      `json:"itinerary"` // renumbered 1..n, no empty days
+	Confidence          AIConfidence `json:"confidence"`
 }
 
 type NormalizedPlace struct {
@@ -87,7 +97,16 @@ func NormalizeAIExtraction(x *AIExtraction, today time.Time) (*NormalizedTour, [
 		Cities:            []NormalizedCity{},
 		Periods:           []NormalizedPeriod{},
 		OtherCharges:      []string{},
+		IncludedItems:     cleanPriceItems(x.IncludedItems),
+		ExcludedItems:     cleanPriceItems(x.ExcludedItems),
+		Itinerary:         cleanDays(x.Itinerary),
 		Confidence:        normalizeConfidence(x.Confidence),
+	}
+	switch x.GovernmentShops {
+	case "yes":
+		out.GovernmentShopStops = boolPtr(true)
+	case "no":
+		out.GovernmentShopStops = boolPtr(false)
 	}
 	if clean(x.Name) != "" && utf8.RuneCountInString(clean(x.Name)) > maxNameRunes {
 		warn("name", "ชื่อโปรแกรมยาวเกิน %d ตัวอักษร ตัดให้แล้ว", maxNameRunes)
@@ -206,6 +225,9 @@ func NormalizeAIExtraction(x *AIExtraction, today time.Time) (*NormalizedTour, [
 	if len(out.Periods) == 0 {
 		warn("periods", "ไม่พบรอบเดินทางในไฟล์")
 	}
+	if n := len(out.Itinerary); n > 0 && out.Days != nil && n != *out.Days {
+		warn("itinerary", "ไทม์ไลน์รายวันมี %d วัน แต่โปรแกรม %d วัน กรุณาตรวจสอบ", n, *out.Days)
+	}
 	if !today.IsZero() {
 		past := 0
 		for _, p := range out.Periods {
@@ -309,7 +331,7 @@ func normalizeConfidence(c AIConfidence) AIConfidence {
 		}
 		return "low"
 	}
-	return AIConfidence{Main: level(c.Main), Taxonomy: level(c.Taxonomy), Periods: level(c.Periods), Prices: level(c.Prices), Extras: level(c.Extras)}
+	return AIConfidence{Main: level(c.Main), Taxonomy: level(c.Taxonomy), Periods: level(c.Periods), Prices: level(c.Prices), Extras: level(c.Extras), Inclusions: level(c.Inclusions), Itinerary: level(c.Itinerary)}
 }
 
 func clean(s *string) string {
@@ -327,6 +349,55 @@ func truncateRunes(s string, n int) string {
 }
 
 func intPtr(n int) *int { return &n }
+
+func boolPtr(b bool) *bool { return &b }
+
+// cleanDays trims places, drops empty ones, a place repeated right after itself and empty days, keeps
+// the limits of the tour program field and renumbers the days 1..n.
+func cleanDays(days []AIDay) []AIDay {
+	out := []AIDay{}
+	for _, d := range days {
+		places := []string{}
+		for _, p := range d.Places {
+			p = truncateRunes(strings.Join(strings.Fields(p), " "), maxPlaceRunes)
+			if p == "" || isHotelStop(p) || (len(places) > 0 && places[len(places)-1] == p) || len(places) == maxPlacesPerDay {
+				continue
+			}
+			places = append(places, p)
+		}
+		if len(places) == 0 || len(out) == maxItineraryDays {
+			continue
+		}
+		out = append(out, AIDay{Day: len(out) + 1, Places: places})
+	}
+	return out
+}
+
+// isHotelStop: the timeline lists places, not where the night is spent ("โรงแรม", "ที่พัก", "พักโรงแรม …").
+func isHotelStop(place string) bool {
+	k := matchKey(place)
+	return strings.HasPrefix(k, matchKey("โรงแรม")) || strings.HasPrefix(k, matchKey("ที่พัก")) || strings.HasPrefix(k, matchKey("พักโรงแรม")) || strings.HasPrefix(k, "hotel")
+}
+
+// cleanPriceItems trims and collapses each line, drops empty and repeated ones, keeps the order and
+// the limits of the tour program fields.
+func cleanPriceItems(items []string) []string {
+	out := []string{}
+	seen := map[string]bool{}
+	for _, it := range items {
+		it = strings.Join(strings.Fields(it), " ")
+		if rest, ok := strings.CutPrefix(it, "ตัวเลือกเสริม:"); ok {
+			it = "Option: " + strings.TrimSpace(rest) // the label the site shows for paid extras
+		}
+		it = truncateRunes(it, maxPriceItemRunes)
+		if it == "" || seen[it] || len(out) == maxPriceItems {
+			continue
+		}
+		seen[it] = true
+		out = append(out, it)
+	}
+	return out
+}
 
 // formatBaht is 23999 → "23,999".
 func formatBaht(n int) string {

@@ -47,29 +47,33 @@ type TourProgramImage struct {
 
 // TourProgramItem is the full tour returned by get, create and update.
 type TourProgramItem struct {
-	ID                string               `json:"id"`
-	RefID             null.Int             `json:"refId" swaggertype:"integer"` // legacy id
-	Code              string               `json:"code"`                        // public, never changes
-	Name              string               `json:"name"`
-	Wholesale         TourProgramWholesale `json:"wholesale"`
-	WholesaleTourCode string               `json:"wholesaleTourCode"`
-	State             int                  `json:"state"` // 10 draft, 20 selling, 30 closed, 40 cancelled
-	Days              int                  `json:"days"`
-	Nights            int                  `json:"nights"`
-	Airline           *TourProgramAirline  `json:"airline"` // null when the tour has no airline
-	Highlight         string               `json:"highlight"`
-	Description       string               `json:"description"`
-	BannerImage       null.String          `json:"bannerImage" swaggertype:"string"` // tour detail page hero
-	CardImage         null.String          `json:"cardImage" swaggertype:"string"`   // tour cards on home/listing pages
-	PDFFile           null.String          `json:"pdfFile" swaggertype:"string"`
-	DOCXFile          null.String          `json:"docxFile" swaggertype:"string"`
-	InternalNote      string               `json:"internalNote"`
-	Countries         []TourProgramCountry `json:"countries"` // display order; the first is the main country
-	Cities            []TourProgramCity    `json:"cities"`    // display order
-	Images            []TourProgramImage   `json:"images"`    // gallery, display order
-	Status            bool                 `json:"status"`
-	CreateDate        time.Time            `json:"createDate"`
-	UpdateDate        time.Time            `json:"updateDate"`
+	ID                  string                    `json:"id"`
+	RefID               null.Int                  `json:"refId" swaggertype:"integer"` // legacy id
+	Code                string                    `json:"code"`                        // public, never changes
+	Name                string                    `json:"name"`
+	Wholesale           TourProgramWholesale      `json:"wholesale"`
+	WholesaleTourCode   string                    `json:"wholesaleTourCode"`
+	State               int                       `json:"state"` // 10 draft, 20 selling, 30 closed, 40 cancelled
+	Days                int                       `json:"days"`
+	Nights              int                       `json:"nights"`
+	Airline             *TourProgramAirline       `json:"airline"` // null when the tour has no airline
+	Highlight           string                    `json:"highlight"`
+	Description         string                    `json:"description"`
+	BannerImage         null.String               `json:"bannerImage" swaggertype:"string"` // tour detail page hero
+	CardImage           null.String               `json:"cardImage" swaggertype:"string"`   // tour cards on home/listing pages
+	PDFFile             null.String               `json:"pdfFile" swaggertype:"string"`
+	DOCXFile            null.String               `json:"docxFile" swaggertype:"string"`
+	InternalNote        string                    `json:"internalNote"`
+	GovernmentShopStops null.Bool                 `json:"governmentShopStops" swaggertype:"boolean"` // null = not specified
+	IncludedItems       []string                  `json:"includedItems"`
+	ExcludedItems       []string                  `json:"excludedItems"`
+	Itinerary           []domain.TourItineraryDay `json:"itinerary"` // day-by-day places
+	Countries           []TourProgramCountry      `json:"countries"` // display order; the first is the main country
+	Cities              []TourProgramCity         `json:"cities"`    // display order
+	Images              []TourProgramImage        `json:"images"`    // gallery, display order
+	Status              bool                      `json:"status"`
+	CreateDate          time.Time                 `json:"createDate"`
+	UpdateDate          time.Time                 `json:"updateDate"`
 }
 
 // TourProgramListItem is the lighter row returned by list.
@@ -137,29 +141,33 @@ func NewTourProgramItem(t *domain.TourProgram) TourProgramItem {
 		images[i] = TourProgramImage{ID: img.ID, URL: img.URL}
 	}
 	return TourProgramItem{
-		ID:                t.ID,
-		RefID:             t.RefID,
-		Code:              t.Code,
-		Name:              t.Name,
-		Wholesale:         newWholesale(t.Wholesale),
-		WholesaleTourCode: t.WholesaleTourCode,
-		State:             t.State,
-		Days:              t.Days,
-		Nights:            t.Nights,
-		Airline:           newAirline(t.Airline),
-		Highlight:         t.Highlight,
-		Description:       t.Description,
-		BannerImage:       t.BannerImage,
-		CardImage:         t.CardImage,
-		PDFFile:           t.PDFFile,
-		DOCXFile:          t.DOCXFile,
-		InternalNote:      t.InternalNote,
-		Countries:         newCountries(t.CountryLinks),
-		Cities:            newCities(t.CityLinks),
-		Images:            images,
-		Status:            t.Status,
-		CreateDate:        t.CreateDate,
-		UpdateDate:        t.UpdateDate,
+		ID:                  t.ID,
+		RefID:               t.RefID,
+		Code:                t.Code,
+		Name:                t.Name,
+		Wholesale:           newWholesale(t.Wholesale),
+		WholesaleTourCode:   t.WholesaleTourCode,
+		State:               t.State,
+		Days:                t.Days,
+		Nights:              t.Nights,
+		Airline:             newAirline(t.Airline),
+		Highlight:           t.Highlight,
+		Description:         t.Description,
+		BannerImage:         t.BannerImage,
+		CardImage:           t.CardImage,
+		PDFFile:             t.PDFFile,
+		DOCXFile:            t.DOCXFile,
+		InternalNote:        t.InternalNote,
+		GovernmentShopStops: t.GovernmentShopStops,
+		IncludedItems:       nonNil(t.IncludedItems),
+		ExcludedItems:       nonNil(t.ExcludedItems),
+		Itinerary:           nonNilDays(t.Itinerary),
+		Countries:           newCountries(t.CountryLinks),
+		Cities:              newCities(t.CityLinks),
+		Images:              images,
+		Status:              t.Status,
+		CreateDate:          t.CreateDate,
+		UpdateDate:          t.UpdateDate,
 	}
 }
 
@@ -182,4 +190,20 @@ func NewTourProgramListItem(t *domain.TourProgram) TourProgramListItem {
 		CreateDate:        t.CreateDate,
 		UpdateDate:        t.UpdateDate,
 	}
+}
+
+// nonNil keeps empty lists as [] in JSON.
+func nonNil(items []string) []string {
+	if items == nil {
+		return []string{}
+	}
+	return items
+}
+
+// nonNilDays keeps an empty itinerary as [] in JSON.
+func nonNilDays(days []domain.TourItineraryDay) []domain.TourItineraryDay {
+	if days == nil {
+		return []domain.TourItineraryDay{}
+	}
+	return days
 }

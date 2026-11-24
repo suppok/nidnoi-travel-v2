@@ -158,7 +158,7 @@ func TestResolveAIDraft(t *testing.T) {
 	if d.State != DraftStateDraft || d.RefID != nil || d.Description != "" {
 		t.Errorf("draft defaults: %+v", d)
 	}
-	if len(d.Periods) != 1 || *d.Periods[0].Deposit != 10000 || d.Periods[0].SeatsTotal != nil {
+	if len(d.Periods) != 1 || *d.Periods[0].Deposit != 10000 || *d.Periods[0].SeatsTotal != 0 || *d.Periods[0].SeatsAvailable != 0 {
 		t.Errorf("periods = %+v", d.Periods)
 	}
 	for _, want := range []string{"Join Land (ไม่ใช้ตั๋วเครื่องบิน): 5,000 บาท", "กรุ๊ปออกเดินทางขั้นต่ำ 10 ท่าน", "หนังสือเดินทางต่างชาติ"} {
@@ -179,5 +179,61 @@ func TestResolveAIDraft(t *testing.T) {
 		if !strings.Contains(all, want) {
 			t.Errorf("warnings missing %q:\n%s", want, all)
 		}
+	}
+}
+
+func TestNormalizeInclusions(t *testing.T) {
+	long := strings.Repeat("ก", 400)
+	x := &AIExtraction{
+		GovernmentShops: "no",
+		IncludedItems:   []string{"  ค่าตั๋วเครื่องบิน   ไป-กลับ ", "", "ค่าตั๋วเครื่องบิน ไป-กลับ", long},
+		ExcludedItems:   []string{"ตัวเลือกเสริม:  บัตร Access"},
+	}
+	n, _ := NormalizeAIExtraction(x, today)
+	if n.GovernmentShopStops == nil || *n.GovernmentShopStops {
+		t.Fatalf("governmentShopStops = %v, want false", n.GovernmentShopStops)
+	}
+	if len(n.IncludedItems) != 2 || n.IncludedItems[0] != "ค่าตั๋วเครื่องบิน ไป-กลับ" || len([]rune(n.IncludedItems[1])) != maxPriceItemRunes {
+		t.Fatalf("included = %q", n.IncludedItems)
+	}
+	if len(n.ExcludedItems) != 1 || n.ExcludedItems[0] != "Option: บัตร Access" {
+		t.Fatalf("excluded = %q, want the option relabelled", n.ExcludedItems)
+	}
+	if e, _ := NormalizeAIExtraction(&AIExtraction{}, today); e.ExcludedItems == nil || len(e.ExcludedItems) != 0 {
+		t.Fatalf("excluded must be an empty list, got %#v", e.ExcludedItems)
+	}
+	for in, want := range map[string]*bool{"yes": boolPtr(true), "unknown": nil, "": nil} {
+		n, _ := NormalizeAIExtraction(&AIExtraction{GovernmentShops: in}, today)
+		if (want == nil) != (n.GovernmentShopStops == nil) || (want != nil && *want != *n.GovernmentShopStops) {
+			t.Errorf("%q → %v", in, n.GovernmentShopStops)
+		}
+	}
+}
+
+func TestNormalizeItinerary(t *testing.T) {
+	x := &AIExtraction{
+		Days: ip(5),
+		Itinerary: []AIDay{
+			{Day: 1, Places: []string{" สนามบิน  สุวรรณภูมิ", "สนามบินผู่ตง", "สนามบินผู่ตง", "", "โรงแรม", "ที่พัก HOLIDAY INN"}},
+			{Day: 2, Places: []string{"  "}},
+			{Day: 9, Places: []string{"Shanghai Disneyland", "Hotel Moxy Sion"}},
+		},
+	}
+	n, warns := NormalizeAIExtraction(x, today)
+	if len(n.Itinerary) != 2 || n.Itinerary[1].Day != 2 {
+		t.Fatalf("itinerary = %+v, want 2 days renumbered", n.Itinerary)
+	}
+	if strings.Join(n.Itinerary[0].Places, "|") != "สนามบิน สุวรรณภูมิ|สนามบินผู่ตง" || strings.Join(n.Itinerary[1].Places, "|") != "Shanghai Disneyland" {
+		t.Fatalf("days = %v (spaces collapsed, repeat, empty and hotel stops dropped)", n.Itinerary)
+	}
+	found := false
+	for _, w := range warns {
+		found = found || (w.Field == "itinerary" && strings.Contains(w.Message, "2 วัน"))
+	}
+	if !found {
+		t.Fatalf("want a warning that the timeline has 2 days for a 5-day tour: %+v", warns)
+	}
+	if n2, _ := NormalizeAIExtraction(&AIExtraction{}, today); n2.Itinerary == nil {
+		t.Fatal("itinerary must be an empty list, not nil")
 	}
 }

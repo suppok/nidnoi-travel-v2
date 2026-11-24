@@ -141,15 +141,15 @@ func quote(p *domain.TourProgramPeriod, r *models.BookingPublicCreateRequest) (*
 	}, nil
 }
 
-// bookable reports whether customers may still send a booking for the period: the tour is selling,
-// and the period is active, upcoming and not sold out.
+// bookable reports whether customers may still send a booking for the period: the tour is selling
+// and the period is active and upcoming. Seats are not checked: 0 means "not specified" and a
+// booking is a lead that staff confirm.
 func bookable(tour *domain.TourProgram, p *domain.TourProgramPeriod, today time.Time) bool {
 	return p != nil &&
 		p.TourProgramID == tour.ID &&
 		tour.State == tourprogramstate.Selling &&
 		p.Status &&
-		p.StartDate.After(today) &&
-		p.SeatsAvailable > 0
+		p.StartDate.After(today)
 }
 
 // PublicCreate records a booking request from the customer site. It reserves no seats: sales

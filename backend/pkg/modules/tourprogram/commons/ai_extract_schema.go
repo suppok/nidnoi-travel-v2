@@ -14,7 +14,7 @@ import "encoding/json"
 var AIExtractSchema = json.RawMessage(`{
   "type": "object",
   "additionalProperties": false,
-  "required": ["name", "days", "nights", "highlight", "airline", "wholesaleTourCode", "printedTourCode", "countries", "cities", "periods", "extras", "confidence"],
+  "required": ["name", "days", "nights", "highlight", "airline", "wholesaleTourCode", "printedTourCode", "countries", "cities", "periods", "extras", "governmentShopStops", "includedItems", "excludedItems", "itinerary", "confidence"],
   "properties": {
     "name": {"type": "string", "description": "Tour program title as printed, Thai text verbatim"},
     "days": {"type": "integer", "description": "0 when not stated"},
@@ -76,15 +76,31 @@ var AIExtractSchema = json.RawMessage(`{
         "otherCharges": {"type": "array", "items": {"type": "string"}, "description": "Other per-person charges or surcharges, one Thai line each, verbatim"}
       }
     },
+    "governmentShopStops": {"type": "string", "enum": ["yes", "no", "unknown"], "description": "Does the tour stop at government shops (ลงร้านรัฐบาล)?"},
+    "includedItems": {"type": "array", "items": {"type": "string"}, "description": "What the tour price includes, one short Thai line each"},
+    "excludedItems": {"type": "array", "items": {"type": "string"}, "description": "What the tour price does not include, one short Thai line each"},
+    "itinerary": {
+      "type": "array",
+      "description": "One entry per day of the day-by-day plan, in order",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["day", "places"],
+        "properties": {
+          "day": {"type": "integer"},
+          "places": {"type": "array", "items": {"type": "string"}, "description": "Short place names in visiting order, no hotels"}
+        }
+      }
+    },
     "confidence": {
       "type": "object", "additionalProperties": false,
-      "required": ["main", "taxonomy", "periods", "prices", "extras"],
+      "required": ["main", "taxonomy", "periods", "prices", "extras", "inclusions", "itinerary"],
       "properties": {
         "main": {"$ref": "#/$defs/level"},
         "taxonomy": {"$ref": "#/$defs/level"},
         "periods": {"$ref": "#/$defs/level"},
         "prices": {"$ref": "#/$defs/level"},
-        "extras": {"$ref": "#/$defs/level"}
+        "extras": {"$ref": "#/$defs/level"},
+        "inclusions": {"$ref": "#/$defs/level"},
+        "itinerary": {"$ref": "#/$defs/level"}
       }
     }
   },
@@ -114,6 +130,10 @@ type AIExtraction struct {
 	Cities          []AICity     `json:"cities"`
 	Periods         []AIPeriod   `json:"periods"`
 	Extras          AIExtras     `json:"extras"`
+	GovernmentShops string       `json:"governmentShopStops"` // yes | no | unknown
+	IncludedItems   []string     `json:"includedItems"`
+	ExcludedItems   []string     `json:"excludedItems"`
+	Itinerary       []AIDay      `json:"itinerary"`
 	Confidence      AIConfidence `json:"confidence"`
 }
 
@@ -161,9 +181,17 @@ type AIExtras struct {
 
 // AIConfidence is the model's own confidence per section: high | medium | low.
 type AIConfidence struct {
-	Main     string `json:"main"`
-	Taxonomy string `json:"taxonomy"`
-	Periods  string `json:"periods"`
-	Prices   string `json:"prices"`
-	Extras   string `json:"extras"`
+	Main       string `json:"main"`
+	Taxonomy   string `json:"taxonomy"`
+	Periods    string `json:"periods"`
+	Prices     string `json:"prices"`
+	Extras     string `json:"extras"`
+	Inclusions string `json:"inclusions"` // government shops and the included / excluded lists
+	Itinerary  string `json:"itinerary"`
+}
+
+// AIDay is one day of the short timeline (also the normalized and draft shape).
+type AIDay struct {
+	Day    int      `json:"day"`
+	Places []string `json:"places"`
 }

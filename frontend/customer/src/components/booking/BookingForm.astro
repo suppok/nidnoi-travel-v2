@@ -104,7 +104,7 @@ const phone = contact.phones[0];
           <select id="bk-period" class="bk-input bk-select" data-period-select>
             {
               tour.periods.map((p) => (
-                <option value={p.id} selected={p.id === period?.id} disabled={p.soldOut || p.seatsAvailable === 0}>
+                <option value={p.id} selected={p.id === period?.id} disabled={p.soldOut}>
                   {periodOptionLabel(p)}
                 </option>
               ))
@@ -306,7 +306,7 @@ const phone = contact.phones[0];
       select.innerHTML = '';
       for (const p of periods) {
         const opt = new Option(periodOptionLabel(p), p.id, false, p.id === period?.id);
-        opt.disabled = p.soldOut || p.seatsAvailable === 0;
+        opt.disabled = p.soldOut;
         select.add(opt);
       }
     }

@@ -170,6 +170,35 @@ func compareTours(want, got *NormalizedTour) []evalCheck {
 	eq("depositPerPerson", deref(want.DepositPerPerson), deref(got.DepositPerPerson))
 	eq("joinLandPrice", deref(want.JoinLandPrice), deref(got.JoinLandPrice))
 	eq("minGroupSize", deref(want.MinGroupSize), deref(got.MinGroupSize))
+	eq("governmentShopStops", derefBool(want.GovernmentShopStops), derefBool(got.GovernmentShopStops))
+	// Itinerary: the number of days, then each golden place found on the same day (itemFound).
+	eq("itinerary.days", len(want.Itinerary), len(got.Itinerary))
+	for i, w := range want.Itinerary {
+		var places []string
+		if i < len(got.Itinerary) {
+			places = got.Itinerary[i].Places
+		}
+		for _, place := range w.Places {
+			cs = append(cs, evalCheck{Field: "itinerary.place", Pass: itemFound(place, places), Detail: fmt.Sprintf("day %d: %s", w.Day, place)})
+		}
+	}
+	// Included / excluded lists are free text: scored on having found the list, and on each golden
+	// item having a matching returned line (itemFound).
+	for _, l := range []struct {
+		field     string
+		want, got []string
+	}{{"includedItems", want.IncludedItems, got.IncludedItems}, {"excludedItems", want.ExcludedItems, got.ExcludedItems}} {
+		cs = append(cs, evalCheck{Field: l.field + ".found", Pass: (len(l.want) == 0) == (len(l.got) == 0),
+			Detail: fmt.Sprintf("want %d items, got %d", len(l.want), len(l.got))})
+		for _, w := range l.want {
+			cs = append(cs, evalCheck{Field: l.field + ".item", Pass: itemFound(w, l.got), Detail: w})
+		}
+		for _, g := range l.got {
+			if noise := noiseItem(g); noise != "" {
+				cs = append(cs, evalCheck{Field: l.field + ".noise", Pass: false, Detail: fmt.Sprintf("%q looks like boilerplate (%s)", g, noise)})
+			}
+		}
+	}
 	// otherCharges: every amount in the golden lines must appear in some returned line.
 	gotText := strings.Join(got.OtherCharges, " | ")
 	for _, line := range want.OtherCharges {
@@ -210,6 +239,13 @@ func cityNames(ps []NormalizedCity) []string {
 		out = append(out, matchKey(strings.NewReplacer("è", "e", "é", "e").Replace(p.NameEn)))
 	}
 	return out
+}
+
+func derefBool(p *bool) any {
+	if p == nil {
+		return "null"
+	}
+	return *p
 }
 
 func deref(p *int) any {
