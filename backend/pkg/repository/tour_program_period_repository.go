@@ -94,7 +94,8 @@ func (r *tourProgramPeriodRepository) SeatStats(ctx context.Context, from, to ti
 		ColumnExpr("count(*) AS periods").
 		ColumnExpr("coalesce(sum(tpp.seats_total), 0) AS seats_total").
 		ColumnExpr("coalesce(sum(tpp.seats_available), 0) AS seats_available").
-		ColumnExpr("count(*) FILTER (WHERE tpp.seats_available <= 0) AS sold_out").
+		// seats_total 0 = seats not specified, not sold out.
+		ColumnExpr("count(*) FILTER (WHERE tpp.seats_total > 0 AND tpp.seats_available <= 0) AS sold_out").
 		ColumnExpr("count(*) FILTER (WHERE tpp.seats_available BETWEEN 1 AND ?) AS low_seats", lowSeats).
 		Scan(ctx, out)
 	return out, err

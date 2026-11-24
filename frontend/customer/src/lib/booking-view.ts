@@ -49,13 +49,14 @@ export function totalPrice(rows: PriceRow[], counts: BookingCounts): number {
 }
 
 export function periodOptionLabel(p: TourPeriodPublic): string {
-  const seats = p.soldOut || p.seatsAvailable === 0 ? 'เต็มแล้ว' : `ว่าง ${p.seatsAvailable} ที่นั่ง`;
-  return `${formatDateRange(p.startDate, p.endDate)} · ${formatPrice(p.price)} บาท · ${seats}`;
+  // Sold out only when the tour is closed; 0 seats = not specified (no seat text).
+  const seats = p.soldOut ? ' · เต็มแล้ว' : p.seatsAvailable > 0 ? ` · ว่าง ${p.seatsAvailable} ที่นั่ง` : '';
+  return `${formatDateRange(p.startDate, p.endDate)} · ${formatPrice(p.price)} บาท${seats}`;
 }
 
 /** First bookable period: the requested one when it is open, else the first open one. */
 export function pickPeriod(periods: TourPeriodPublic[], wantedId: string | null): TourPeriodPublic | null {
-  const open = periods.filter((p) => !p.soldOut && p.seatsAvailable > 0);
+  const open = periods.filter((p) => !p.soldOut);
   return open.find((p) => p.id === wantedId) ?? open[0] ?? null;
 }
 
@@ -109,6 +110,6 @@ export function periodDatesHtml(p: TourPeriodPublic | null, duration: string): s
 
 /** Shown when more travellers are requested than seats left: still allowed, staff check it. */
 export function seatsHint(p: TourPeriodPublic | null, counts: BookingCounts): string {
-  if (!p || travellers(counts).total <= p.seatsAvailable) return '';
+  if (!p || p.seatsAvailable <= 0 || travellers(counts).total <= p.seatsAvailable) return '';
   return `รอบนี้เหลือ ${p.seatsAvailable} ที่นั่ง เจ้าหน้าที่จะตรวจสอบที่นั่งให้อีกครั้งเมื่อติดต่อกลับ`;
 }

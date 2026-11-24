@@ -215,6 +215,11 @@
     @apply border-primary-light bg-primary-tint text-primary-deep;
   }
 
+  .chip-success {
+    @apply border-transparent text-success;
+    background: color-mix(in srgb, var(--color-success) 10%, white);
+  }
+
   .chip-accent {
     @apply border-transparent bg-accent-tint text-accent-deep;
   }

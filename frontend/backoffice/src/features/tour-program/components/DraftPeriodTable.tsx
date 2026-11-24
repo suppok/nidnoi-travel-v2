@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import type { AIDraftPeriod } from '../../../types/aiExtract.ts';
 import { type DraftPeriodRow, newDraftRowKey } from '../lib/draftPeriods.ts';
+import { seatsForTotal } from '../lib/seats.ts';
 
 const DATE = 'YYYY-MM-DD';
 
@@ -53,8 +54,8 @@ export default function DraftPeriodTable({ rows, onChange, days, attention, disa
           infantPrice: last?.infantPrice ?? null,
           singleSupplement: last?.singleSupplement ?? null,
           deposit: last?.deposit ?? null,
-          seatsTotal: last?.seatsTotal ?? null,
-          seatsAvailable: last?.seatsAvailable ?? null,
+          seatsTotal: last?.seatsTotal ?? 0,
+          seatsAvailable: last?.seatsAvailable ?? 0,
           note: '',
         },
       },
@@ -144,7 +145,7 @@ export default function DraftPeriodTable({ rows, onChange, days, attention, disa
             value={row.value.seatsTotal}
             status={row.value.seatsTotal === null ? 'error' : undefined}
             disabled={disabled}
-            onChange={(v) => set(row.key, { seatsTotal: v ?? null })}
+            onChange={(v) => set(row.key, v === null ? { seatsTotal: null } : seatsForTotal(row.value.seatsTotal, row.value.seatsAvailable, v))}
             className="w-[60px]"
             aria-label="ที่นั่งทั้งหมด"
           />
@@ -197,7 +198,7 @@ export default function DraftPeriodTable({ rows, onChange, days, attention, disa
       }
     >
       <p className="mt-0 text-[13px] text-ink-muted">
-        บันทึกพร้อมโปรแกรม — ตรวจทุกรอบกับไฟล์ต้นฉบับ PDF ไม่มีจำนวนที่นั่ง กรุณากรอกเอง (ช่องสีแดงต้องกรอก) ลบรอบที่ไม่ต้องการได้
+        บันทึกพร้อมโปรแกรม — ตรวจทุกรอบกับไฟล์ต้นฉบับ ที่นั่งเริ่มที่ 0 (ไม่ระบุ — หน้าเว็บไม่แสดงว่าเต็ม) แก้ได้ภายหลัง ลบรอบที่ไม่ต้องการได้
       </p>
       <Table<DraftPeriodRow>
         size="small"

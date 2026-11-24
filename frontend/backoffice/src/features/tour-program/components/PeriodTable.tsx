@@ -10,6 +10,7 @@ import { ErrorCodes } from '../../../constants/errorCodes.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { formatBaht } from '../../../lib/format.ts';
 import type { TourProgramPeriod, TourProgramPeriodFields } from '../../../types/tourProgram.ts';
+import { seatsForTotal } from '../lib/seats.ts';
 
 const DATE = 'YYYY-MM-DD';
 const NEW_PREFIX = 'new:';
@@ -271,11 +272,11 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
               precision={0}
               value={row.draft.seatsTotal}
               disabled={!editable(row)}
-              onChange={(v) => setDraft(row.key, { seatsTotal: v ?? 0 }, row.draft)}
+              onChange={(v) => setDraft(row.key, seatsForTotal(row.draft.seatsTotal, row.draft.seatsAvailable, v ?? 0), row.draft)}
               className="w-[64px]"
               aria-label="ที่นั่งทั้งหมด"
             />
-            {row.period && row.draft.seatsAvailable === 0 && (
+            {row.period && row.draft.seatsTotal > 0 && row.draft.seatsAvailable === 0 && (
               <Tag color="red" className="m-0">
                 เต็ม
               </Tag>

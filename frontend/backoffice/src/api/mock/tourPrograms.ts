@@ -60,10 +60,30 @@ function airlineSummary(id: string | null | undefined): TourProgram['airline'] {
   return { id, code: a?.code ?? '', name: a?.name ?? '', logo: a?.logo ?? null, status: a?.status ?? false };
 }
 
+// Price item lines like the backend: trimmed, no empty or repeated lines.
+function lines(v: unknown): string[] {
+  const all = Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  return [...new Set(all.map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean))].slice(0, 50);
+}
+
+// Timeline like the backend: trimmed places, empty days dropped, renumbered.
+function itineraryDays(v: unknown): TourProgram['itinerary'] {
+  const all = Array.isArray(v) ? v : [];
+  return all
+    .map((d) => lines((d as { places?: unknown } | null)?.places))
+    .filter((places) => places.length > 0)
+    .map((places, i) => ({ day: i + 1, places }));
+}
+
 function toTour({ wholesaleId, airlineId, countryIds, cityIds, images, ...t }: StoredTour): TourProgram {
   const w = mockWholesale(wholesaleId);
   return {
     ...t,
+    // Tours stored before these fields existed.
+    governmentShopStops: t.governmentShopStops ?? null,
+    includedItems: t.includedItems ?? [],
+    excludedItems: t.excludedItems ?? [],
+    itinerary: t.itinerary ?? [],
     wholesale: { id: wholesaleId, code: w?.code ?? '', name: w?.name ?? '', status: w?.status ?? false },
     airline: airlineSummary(airlineId),
     countries: countryIds.map(countrySummary),
@@ -153,6 +173,10 @@ function parseTour(body: Record<string, unknown>, previous: StoredTour | null) {
     pdfFile: str(body.pdfFile) || null,
     docxFile: str(body.docxFile) || null,
     internalNote: str(body.internalNote),
+    governmentShopStops: typeof body.governmentShopStops === 'boolean' ? body.governmentShopStops : null,
+    includedItems: lines(body.includedItems),
+    excludedItems: lines(body.excludedItems),
+    itinerary: itineraryDays(body.itinerary),
     countryIds,
     cityIds,
     images,

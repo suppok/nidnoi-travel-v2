@@ -203,7 +203,7 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewAirlineAPIHandler(v1, apiHandler, airlineUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingSourceAPIHandler(v1, apiHandler, bookingSourceUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSalesFinanceAPIHandler(v1, apiHandler, salesFinanceUseCase).Init(jwtAuth, authPermissions)
-	handler.NewMediaAPIHandler(v1, apiHandler, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
+	handler.NewMediaAPIHandler(v1, apiHandler, mediaUseCase, cfg.Media.MaxUploadBytes()).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramAPIHandler(v1, apiHandler, tourProgramUseCase).Init(jwtAuth, authPermissions)
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)

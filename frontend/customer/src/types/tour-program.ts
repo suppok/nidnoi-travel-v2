@@ -23,6 +23,9 @@ export type TourPeriodPublic = {
   soldOut: boolean;
 };
 
+/** One day of the short timeline: places in visiting order ("โรงแรม" last when the night is at a hotel). */
+export type TourItineraryDay = { day: number; places: string[] };
+
 /** Card / listing shape. */
 export type TourProgramPublicItem = {
   code: string;
@@ -50,4 +53,11 @@ export type TourProgramPublicDetail = TourProgramPublicItem & {
   images: string[];
   pdfFile: string | null;
   periods: TourPeriodPublic[];
+  /** ลงร้านรัฐบาล: true = stops at government shops, false = it doesn't, null = not specified. */
+  governmentShopStops: boolean | null;
+  /** What the price includes / doesn't, in display order (may be empty). */
+  includedItems: string[];
+  excludedItems: string[];
+  /** Day-by-day places (may be empty). */
+  itinerary: TourItineraryDay[];
 };

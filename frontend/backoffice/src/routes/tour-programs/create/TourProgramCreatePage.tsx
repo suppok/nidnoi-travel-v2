@@ -6,7 +6,8 @@ import { aiExtractApi, periodsApi, tourProgramsApi } from '../../../api/tourProg
 import { useAuth } from '../../../auth/useAuth.ts';
 import PageHeader from '../../../components/PageHeader.tsx';
 import { Permissions } from '../../../constants/permissions.ts';
-import AIExtractPanel from '../../../features/tour-program/components/AIExtractPanel.tsx';
+import { errorMessage } from '../../../lib/errors.ts';
+import AIExtractPanel, { type AIPdfUpload } from '../../../features/tour-program/components/AIExtractPanel.tsx';
 import DraftPeriodTable from '../../../features/tour-program/components/DraftPeriodTable.tsx';
 import { type DraftPeriodRow, draftPeriodProblem, newDraftRowKey } from '../../../features/tour-program/lib/draftPeriods.ts';
 import TourProgramForm, { type AIPrefill, type FormValues } from '../../../features/tour-program/components/TourProgramForm.tsx';
@@ -20,6 +21,8 @@ const CONFIDENCE_SECTIONS: { key: keyof AIConfidence; label: string; fields: (ke
   { key: 'periods', label: 'วันเดินทาง', fields: [] },
   { key: 'prices', label: 'ราคา', fields: [] },
   { key: 'extras', label: 'ข้อมูลเพิ่มเติม', fields: ['internalNote'] },
+  { key: 'inclusions', label: 'รวม / ไม่รวม', fields: ['governmentShopStops', 'includedItems', 'excludedItems'] },
+  { key: 'itinerary', label: 'ไทม์ไลน์', fields: ['itinerary'] },
 ];
 const LEVEL: Record<AIConfidenceLevel, { color: string; text: string }> = {
   high: { color: 'green', text: 'มั่นใจ' },
@@ -32,9 +35,10 @@ const REQUIRED: (keyof FormValues)[] = ['name', 'days', 'nights', 'countryIds'];
 /** "periods[3].price" → "periods"; "countryIds" → "countryIds". */
 const fieldRoot = (field: string) => field.split(/[[.]/)[0];
 
-function toPrefill(result: AIExtractResult, version: number): AIPrefill {
+function toPrefill(result: AIExtractResult, pdfUrl: string | null, version: number): AIPrefill {
   const d = result.draft;
   const values: Partial<FormValues> = {
+    pdfFile: pdfUrl,
     name: d.name,
     wholesaleId: d.wholesaleId ?? '',
     wholesaleTourCode: d.wholesaleTourCode,
@@ -45,6 +49,10 @@ function toPrefill(result: AIExtractResult, version: number): AIPrefill {
     highlight: d.highlight,
     description: d.description,
     internalNote: d.internalNote,
+    governmentShopStops: d.governmentShopStops,
+    includedItems: d.includedItems,
+    excludedItems: d.excludedItems,
+    itinerary: d.itinerary ?? [],
     countryIds: d.countryIds,
     cityIds: d.cityIds,
   };
@@ -86,21 +94,22 @@ export default function TourProgramCreatePage() {
   }, [canAI]);
   const aiReady = canAI && !!aiConfig?.ready;
 
-  const apply = (r: AIExtractResult) => {
+  const apply = (r: AIExtractResult, pdf: AIPdfUpload) => {
     setResult(r);
-    setPrefill((prev) => toPrefill(r, (prev?.version ?? 0) + 1));
+    setPrefill((prev) => toPrefill(r, 'url' in pdf ? pdf.url : null, (prev?.version ?? 0) + 1));
     setPeriodRows(toRows(r));
     message.success('AI กรอกข้อมูลให้แล้ว — ตรวจสอบทุกช่องก่อนบันทึก');
+    if ('error' in pdf) message.warning(`แนบไฟล์ PDF อัตโนมัติไม่สำเร็จ (${errorMessage(pdf.error)}) — อัปโหลดเองในช่อง "ไฟล์ PDF"`, 8);
   };
 
-  const onResult = (r: AIExtractResult) => {
-    if (!prefill) return apply(r);
+  const onResult = (r: AIExtractResult, pdf: AIPdfUpload) => {
+    if (!prefill) return apply(r, pdf);
     modal.confirm({
       title: 'แทนที่ข้อมูลในฟอร์ม?',
       content: 'ข้อมูลจากไฟล์ใหม่จะแทนที่สิ่งที่กรอกไว้และรอบเดินทางทั้งหมด',
       okText: 'แทนที่',
       cancelText: 'ยกเลิก',
-      onOk: () => apply(r),
+      onOk: () => apply(r, pdf),
     });
   };
 
@@ -160,7 +169,7 @@ export default function TourProgramCreatePage() {
               { value: 'pdf', label: 'อัปโหลด PDF (AI ช่วยกรอก)', icon: <FilePdfOutlined /> },
             ]}
           />
-          {mode === 'pdf' && <AIExtractPanel maxPdfSizeMb={aiConfig?.maxPdfSizeMb ?? 40} onResult={onResult} />}
+          {mode === 'pdf' && <AIExtractPanel maxPdfSizeMb={aiConfig?.maxPdfSizeMb ?? 50} onResult={onResult} />}
         </div>
       )}
 
@@ -175,8 +184,8 @@ export default function TourProgramCreatePage() {
               <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
                 ความมั่นใจของ AI:
                 {CONFIDENCE_SECTIONS.map((s) => (
-                  <Tag key={s.key} color={LEVEL[result.confidence[s.key]].color} className="m-0">
-                    {s.label}: {LEVEL[result.confidence[s.key]].text}
+                  <Tag key={s.key} color={LEVEL[result.confidence[s.key] ?? 'low'].color} className="m-0">
+                    {s.label}: {LEVEL[result.confidence[s.key] ?? 'low'].text}
                   </Tag>
                 ))}
               </div>

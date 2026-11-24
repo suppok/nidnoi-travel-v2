@@ -5,7 +5,7 @@ server:
   writeTimeout: 30s
   # Fiber default is 4 MB. Media uploads are up to 10 MB; tour PDFs for AI prefill up to ai.maxPdfMB.
   # Fiber applies one limit to every route.
-  bodyLimitMB: 42
+  bodyLimitMB: 52
   clientIPHeader: CF-Connecting-IP # real client IP behind Cloudflare; falls back to the socket address
 
 database:
@@ -39,6 +39,7 @@ revalidation:
 
 media:
   maxUploadMB: 10
+  maxDocumentMB: 50 # tour PDFs (purpose tour-pdf), so the PDF read by AI prefill fits. Below server.bodyLimitMB
   maxMegapixels: 50
   webpQuality: 82
   decodeConcurrency: 2
@@ -66,5 +67,5 @@ ai:
   requestTimeout: 180s # one extraction, retries included
   maxConcurrent: 2 # extractions at once; each holds the PDF in memory
   maxRetries: 3 # 429 / 529 only
-  maxPdfMB: 40 # hard cap; the admin setting maxPdfSizeMb can only be lower. Below server.bodyLimitMB
+  maxPdfMB: 50 # hard cap; the admin setting maxPdfSizeMb can only be lower. Below server.bodyLimitMB
   jobTTL: 30m # how long a finished result waits for the backoffice to fetch it

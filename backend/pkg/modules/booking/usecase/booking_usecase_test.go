@@ -112,11 +112,15 @@ func TestBookable(t *testing.T) {
 	if !bookable(tour, open(), today) {
 		t.Fatal("open period: want bookable")
 	}
+	noSeats := open()
+	noSeats.SeatsTotal, noSeats.SeatsAvailable = 0, 0
+	if !bookable(tour, noSeats, today) {
+		t.Fatal("0 seats means not specified: want bookable")
+	}
 	cases := map[string]func(p *domain.TourProgramPeriod, tp *domain.TourProgram){
 		"other tour":    func(p *domain.TourProgramPeriod, _ *domain.TourProgram) { p.TourProgramID = "t2" },
 		"deleted":       func(p *domain.TourProgramPeriod, _ *domain.TourProgram) { p.Status = false },
 		"departs today": func(p *domain.TourProgramPeriod, _ *domain.TourProgram) { p.StartDate = today },
-		"sold out":      func(p *domain.TourProgramPeriod, _ *domain.TourProgram) { p.SeatsAvailable = 0 },
 		"tour closed":   func(_ *domain.TourProgramPeriod, tp *domain.TourProgram) { tp.State = tourprogramstate.Closed },
 	}
 	for name, edit := range cases {

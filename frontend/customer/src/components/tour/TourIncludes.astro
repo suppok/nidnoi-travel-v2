@@ -1,0 +1,100 @@
+---
+// "ราคา รวม / ไม่รวม" on the tour detail page (design: ex/nidnoi-travel-v2/tour-app.jsx TourIncludes).
+// Static: no client JS. Renders nothing when the tour has no lists and no government-shop info.
+import Icon from '../ui/Icon.astro';
+
+type Props = {
+  includedItems: string[];
+  excludedItems: string[];
+  /** ลงร้านรัฐบาล: true / false; null = not specified (not shown). */
+  governmentShopStops: boolean | null;
+};
+
+const { includedItems, excludedItems, governmentShopStops } = Astro.props;
+const hasInc = includedItems.length > 0;
+const hasExc = excludedItems.length > 0;
+const show = hasInc || hasExc || governmentShopStops !== null;
+---
+
+{
+  show && (
+    <section class="mt-16" aria-labelledby="includes-title">
+      <p class="eyebrow mb-4">ราคา รวม / ไม่รวม</p>
+      <h2 id="includes-title" class="h-section mt-0 mb-6">
+        ราคานี้<em>ครอบคลุม</em>อะไรบ้าง
+      </h2>
+
+      {governmentShopStops !== null && (
+        <p
+          class:list={[
+            'mb-6 flex items-start gap-3 rounded-md border px-5 py-4 text-[15px]',
+            governmentShopStops ? 'border-line bg-cream text-ink-soft' : 'shop-free border-transparent text-ink',
+          ]}
+        >
+          <Icon name={governmentShopStops ? 'store' : 'shield'} size={18} class={governmentShopStops ? 'mt-0.5 text-ink-muted' : 'mt-0.5 text-success'} />
+          {governmentShopStops ? (
+            <span>
+              <strong class="font-semibold text-ink">มีแวะร้านรัฐบาล</strong> ตามนโยบายการท่องเที่ยวของประเทศปลายทาง
+            </span>
+          ) : (
+            <span>
+              <strong class="font-semibold">ทัวร์นี้ไม่ลงร้านรัฐบาล</strong> เที่ยวเต็มเวลา ไม่ต้องแวะร้านค้า
+            </span>
+          )}
+        </p>
+      )}
+
+      {(hasInc || hasExc) && (
+        <div class:list={['inc-grid grid gap-5', hasInc && hasExc && 'has-both']}>
+          {hasInc && (
+            <div class="rounded-md border border-line-soft bg-cream p-7">
+              <div class="mb-5 flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-success text-white">
+                  <Icon name="check" size={16} />
+                </span>
+                <h3 class="m-0 font-display text-xl font-semibold text-ink">รวมในราคา</h3>
+              </div>
+              <ul class="m-0 flex list-none flex-col gap-3 p-0">
+                {includedItems.map((item) => (
+                  <li class="flex gap-2.5 text-[15px] leading-relaxed text-ink-soft">
+                    <Icon name="check" size={16} class="mt-1 text-success" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {hasExc && (
+            <div class="rounded-md border border-line-soft bg-cream p-7">
+              <div class="mb-5 flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-ink-muted text-white">
+                  <Icon name="minus" size={16} />
+                </span>
+                <h3 class="m-0 font-display text-xl font-semibold text-ink">ไม่รวม</h3>
+              </div>
+              <ul class="m-0 flex list-none flex-col gap-3 p-0">
+                {excludedItems.map((item) => (
+                  <li class="flex gap-2.5 text-[15px] leading-relaxed text-ink-soft">
+                    <Icon name="minus" size={16} class="mt-1 text-ink-muted" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+<style>
+  .shop-free {
+    background: color-mix(in srgb, var(--color-success) 9%, white);
+  }
+  @media (min-width: 768px) {
+    .inc-grid.has-both {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+</style>

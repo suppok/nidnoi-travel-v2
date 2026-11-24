@@ -123,7 +123,7 @@ Every page is prerendered at build time (`output: 'static'`, no adapter).
 | Data | Where it lives | How it updates |
 |---|---|---|
 | Tour content, taxonomy, starting price, landing pages | Static HTML | Backend fires the deploy hook (debounced: 3 min quiet, max 15 min) → Workers Builds rebuilds → typically live within minutes |
-| Per-period dates, prices, seats left, sold-out | `PeriodTable` (inline script) | Fetched on view from `GET /tour-programs/public/:code/periods` (cached ~30 s) |
+| Per-period dates, prices, seats left (shown only when > 0), sold-out (closed tours only) | `PeriodTable` (inline script) | Fetched on view from `GET /tour-programs/public/:code/periods` (cached ~30 s) |
 | About / contact / terms | Static HTML | Rebuilt on every deploy |
 
 Build rules:
@@ -163,6 +163,14 @@ export default defineConfig({
 - Cards and JSON-LD show the **starting price** from build time, labelled "ราคาเริ่มต้น". On the detail page, the period table's numbers are the source of truth.
 
 ---
+
+## Day-by-day timeline
+
+`src/components/tour/TourTimeline.astro` (static) renders "ไทม์ไลน์การเดินทาง" between the description and the price inclusions, after the design mock's `TourItinerary`: a vertical line with a dot and "DAY 01" per day, the day's places joined by "–". Data: `itinerary` from the public tour detail; nothing is rendered when it is empty.
+
+## Price inclusions & government shops
+
+`src/components/tour/TourIncludes.astro` (static, no JS) renders "ราคา รวม / ไม่รวม" under the description on `/tour/<code>/`, after the design mock's `TourIncludes`: a "รวมในราคา" card (✓) and a "ไม่รวม" card (−), side by side from 768 px, stacked below. Data: `includedItems`, `excludedItems`, `governmentShopStops` from the public tour detail (written in the backoffice or prefilled by AI from the PDF). `governmentShopStops` (ลงร้านรัฐบาล) also shows as a header chip: `false` → green "ไม่ลงร้านรัฐบาล" (a selling point), `true` → plain "ลงร้านรัฐบาล", `null` → nothing. The section is not rendered when both lists are empty and the flag is null. Changing these fields rebuilds the site like any tour content edit.
 
 ## URL Strategy & Legacy Redirects
 
@@ -453,6 +461,7 @@ Design tokens (colors, spacing, font sizes, radii) live in the Tailwind theme. N
 
 - Like the period table, it is **not** a React island: build-time HTML plus a small inline script (~3.5 KB gzipped). Markup and display pricing live in `src/lib/booking-view.ts`, shared by the build and the script.
 - The script reads `?period=`, refreshes periods once (`fetchPublicPeriods`), keeps the traveller steppers and totals in sync and POSTs to `POST /api/v1/bookings/public` (`src/lib/api/bookings.ts`). The backend re-quotes every price; the page's totals are for display.
+- Seats: 0 means "not specified" — the period table and the booking form show no seat text and never treat it as sold out; only a closed tour's periods are `soldOut`. A seat count above 0 shows "ว่าง / เหลือ N ที่นั่ง" and the over-seats hint.
 - Rows: ผู้ใหญ่ (พักห้องคู่) always; พักห้องเดี่ยว, เด็ก (มีเตียง), เด็ก (ไม่มีเตียง) only when the period prices them. At least one adult, at most 50 travellers.
 - The page states up front that a web booking **does not guarantee seats** — staff confirm by phone/LINE first, and no payment is taken.
 - A hidden `website` honeypot field is sent with every request; bots that fill it get a fake success (a booking number that is never stored).

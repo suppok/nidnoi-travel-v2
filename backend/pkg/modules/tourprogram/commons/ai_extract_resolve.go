@@ -10,29 +10,33 @@ import (
 // plus the periods to create after it. It never carries a code (the backend generates it) and never
 // creates taxonomy or airlines: unmatched names are warnings. The wholesale is always left for staff.
 type AIDraft struct {
-	RefID             *int            `json:"refId"` // always null
-	Name              string          `json:"name"`
-	WholesaleID       *string         `json:"wholesaleId"` // always null: staff pick it
-	WholesaleTourCode string          `json:"wholesaleTourCode"`
-	State             int             `json:"state"` // always draft (10)
-	Days              *int            `json:"days"`
-	Nights            *int            `json:"nights"`
-	AirlineID         *string         `json:"airlineId"`
-	Highlight         string          `json:"highlight"`
-	Description       string          `json:"description"` // TBD: left empty for now
-	BannerImage       *string         `json:"bannerImage"`
-	CardImage         *string         `json:"cardImage"`
-	PDFFile           *string         `json:"pdfFile"`
-	DOCXFile          *string         `json:"docxFile"`
-	InternalNote      string          `json:"internalNote"`
-	CountryIDs        []string        `json:"countryIds"`
-	CityIDs           []string        `json:"cityIds"`
-	Images            []string        `json:"images"`
-	Periods           []AIDraftPeriod `json:"periods"`
+	RefID               *int            `json:"refId"` // always null
+	Name                string          `json:"name"`
+	WholesaleID         *string         `json:"wholesaleId"` // always null: staff pick it
+	WholesaleTourCode   string          `json:"wholesaleTourCode"`
+	State               int             `json:"state"` // always draft (10)
+	Days                *int            `json:"days"`
+	Nights              *int            `json:"nights"`
+	AirlineID           *string         `json:"airlineId"`
+	Highlight           string          `json:"highlight"`
+	Description         string          `json:"description"` // TBD: left empty for now
+	BannerImage         *string         `json:"bannerImage"`
+	CardImage           *string         `json:"cardImage"`
+	PDFFile             *string         `json:"pdfFile"`
+	DOCXFile            *string         `json:"docxFile"`
+	InternalNote        string          `json:"internalNote"`
+	GovernmentShopStops *bool           `json:"governmentShopStops"` // null = not stated
+	IncludedItems       []string        `json:"includedItems"`
+	ExcludedItems       []string        `json:"excludedItems"`
+	Itinerary           []AIDay         `json:"itinerary"`
+	CountryIDs          []string        `json:"countryIds"`
+	CityIDs             []string        `json:"cityIds"`
+	Images              []string        `json:"images"`
+	Periods             []AIDraftPeriod `json:"periods"`
 }
 
-// AIDraftPeriod is a period create body without tourProgramId. Seats are never in the PDFs and stay
-// null for staff to fill (no warning).
+// AIDraftPeriod is a period create body without tourProgramId. Seats are never in the PDFs: 0 / 0
+// (not specified), no warning.
 type AIDraftPeriod struct {
 	StartDate           string `json:"startDate"`
 	EndDate             string `json:"endDate"`
@@ -73,16 +77,20 @@ func ResolveAIDraft(t *NormalizedTour, lookup AILookup) (*AIDraft, []AIWarning) 
 	}
 
 	d := &AIDraft{
-		Name:              t.Name,
-		WholesaleTourCode: t.WholesaleTourCode,
-		State:             DraftStateDraft,
-		Days:              t.Days,
-		Nights:            t.Nights,
-		Highlight:         t.Highlight,
-		CountryIDs:        []string{},
-		CityIDs:           []string{},
-		Images:            []string{},
-		Periods:           []AIDraftPeriod{},
+		Name:                t.Name,
+		WholesaleTourCode:   t.WholesaleTourCode,
+		State:               DraftStateDraft,
+		Days:                t.Days,
+		Nights:              t.Nights,
+		Highlight:           t.Highlight,
+		GovernmentShopStops: t.GovernmentShopStops,
+		IncludedItems:       t.IncludedItems,
+		ExcludedItems:       t.ExcludedItems,
+		Itinerary:           t.Itinerary,
+		CountryIDs:          []string{},
+		CityIDs:             []string{},
+		Images:              []string{},
+		Periods:             []AIDraftPeriod{},
 	}
 
 	// Countries
@@ -174,6 +182,8 @@ func ResolveAIDraft(t *NormalizedTour, lookup AILookup) (*AIDraft, []AIWarning) 
 			InfantPrice:       p.InfantPrice,
 			SingleSupplement:  p.SingleSupplement,
 			Deposit:           t.DepositPerPerson,
+			SeatsTotal:        intPtr(0),
+			SeatsAvailable:    intPtr(0),
 			Note:              p.Note,
 		})
 	}

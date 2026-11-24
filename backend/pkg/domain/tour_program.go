@@ -33,38 +33,53 @@ Table: tour_program
 [20] update_by            UUID         null: false
 [21] card_image           TEXT         null: true   (tour cards on home/listing pages)
 [22] airline_id           UUID         null: true   (FK airline.id)
+[23] government_shop_stops BOOLEAN     null: true   (ลงร้านรัฐบาล; NULL = not specified)
+[24] included_items       TEXT[]       null: false  default: '{}'  (what the price includes)
+[25] excluded_items       TEXT[]       null: false  default: '{}'  (what it doesn't)
+[26] itinerary            JSONB        null: false  default: '[]'  (day-by-day places, TourItineraryDay)
 */
 
 // TourProgram is a row of the tour_program table.
 type TourProgram struct {
 	bun.BaseModel `bun:"table:tour_program,alias:tp" json:"-" swaggerignore:"true"`
 
-	ID                string      `bun:"id,pk"               json:"id"`                               // [ 0] UUID
-	RefID             null.Int    `bun:"ref_id"              json:"refId" swaggertype:"integer"`      // [ 1] INTEGER
-	Code              string      `bun:"code"                json:"code"`                             // [ 2] TEXT
-	Name              string      `bun:"name"                json:"name"`                             // [ 3] TEXT
-	WholesaleID       string      `bun:"wholesale_id"        json:"wholesaleId"`                      // [ 4] UUID
-	WholesaleTourCode string      `bun:"wholesale_tour_code" json:"wholesaleTourCode"`                // [ 5] TEXT
-	State             int         `bun:"state"               json:"state"`                            // [ 6] INTEGER
-	Days              int         `bun:"days"                json:"days"`                             // [ 7] INTEGER
-	Nights            int         `bun:"nights"              json:"nights"`                           // [ 8] INTEGER
-	AirlineID         null.String `bun:"airline_id"          json:"airlineId" swaggertype:"string"`   // [22] UUID
-	Highlight         string      `bun:"highlight"           json:"highlight"`                        // [10] TEXT
-	Description       string      `bun:"description"         json:"description"`                      // [11] TEXT
-	BannerImage       null.String `bun:"banner_image"        json:"bannerImage" swaggertype:"string"` // [12] TEXT
-	CardImage         null.String `bun:"card_image"          json:"cardImage" swaggertype:"string"`   // [21] TEXT
-	PDFFile           null.String `bun:"pdf_file"            json:"pdfFile" swaggertype:"string"`     // [13] TEXT
-	DOCXFile          null.String `bun:"docx_file"           json:"docxFile" swaggertype:"string"`    // [14] TEXT
-	InternalNote      string      `bun:"internal_note"       json:"internalNote"`                     // [15] TEXT
-	Status            bool        `bun:"status"              json:"status"`                           // [16] BOOLEAN
-	CreateDate        time.Time   `bun:"create_date"         json:"createDate"`                       // [17] TIMESTAMPTZ
-	UpdateDate        time.Time   `bun:"update_date"         json:"updateDate"`                       // [18] TIMESTAMPTZ
-	CreateBy          string      `bun:"create_by"           json:"createBy"`                         // [19] UUID
-	UpdateBy          string      `bun:"update_by"           json:"updateBy"`                         // [20] UUID
+	ID                  string             `bun:"id,pk"               json:"id"`                                          // [ 0] UUID
+	RefID               null.Int           `bun:"ref_id"              json:"refId" swaggertype:"integer"`                 // [ 1] INTEGER
+	Code                string             `bun:"code"                json:"code"`                                        // [ 2] TEXT
+	Name                string             `bun:"name"                json:"name"`                                        // [ 3] TEXT
+	WholesaleID         string             `bun:"wholesale_id"        json:"wholesaleId"`                                 // [ 4] UUID
+	WholesaleTourCode   string             `bun:"wholesale_tour_code" json:"wholesaleTourCode"`                           // [ 5] TEXT
+	State               int                `bun:"state"               json:"state"`                                       // [ 6] INTEGER
+	Days                int                `bun:"days"                json:"days"`                                        // [ 7] INTEGER
+	Nights              int                `bun:"nights"              json:"nights"`                                      // [ 8] INTEGER
+	AirlineID           null.String        `bun:"airline_id"          json:"airlineId" swaggertype:"string"`              // [22] UUID
+	Highlight           string             `bun:"highlight"           json:"highlight"`                                   // [10] TEXT
+	Description         string             `bun:"description"         json:"description"`                                 // [11] TEXT
+	BannerImage         null.String        `bun:"banner_image"        json:"bannerImage" swaggertype:"string"`            // [12] TEXT
+	CardImage           null.String        `bun:"card_image"          json:"cardImage" swaggertype:"string"`              // [21] TEXT
+	PDFFile             null.String        `bun:"pdf_file"            json:"pdfFile" swaggertype:"string"`                // [13] TEXT
+	DOCXFile            null.String        `bun:"docx_file"           json:"docxFile" swaggertype:"string"`               // [14] TEXT
+	InternalNote        string             `bun:"internal_note"       json:"internalNote"`                                // [15] TEXT
+	GovernmentShopStops null.Bool          `bun:"government_shop_stops" json:"governmentShopStops" swaggertype:"boolean"` // [23] BOOLEAN
+	IncludedItems       []string           `bun:"included_items,array" json:"includedItems"`                              // [24] TEXT[]
+	ExcludedItems       []string           `bun:"excluded_items,array" json:"excludedItems"`                              // [25] TEXT[]
+	Itinerary           []TourItineraryDay `bun:"itinerary,type:jsonb" json:"itinerary"`                                  // [26] JSONB
+	Status              bool               `bun:"status"              json:"status"`                                      // [16] BOOLEAN
+	CreateDate          time.Time          `bun:"create_date"         json:"createDate"`                                  // [17] TIMESTAMPTZ
+	UpdateDate          time.Time          `bun:"update_date"         json:"updateDate"`                                  // [18] TIMESTAMPTZ
+	CreateBy            string             `bun:"create_by"           json:"createBy"`                                    // [19] UUID
+	UpdateBy            string             `bun:"update_by"           json:"updateBy"`                                    // [20] UUID
 
 	Wholesale    *Wholesale           `bun:"rel:belongs-to,join:wholesale_id=id"   json:"wholesale,omitempty"`
 	Airline      *Airline             `bun:"rel:belongs-to,join:airline_id=id"     json:"airline,omitempty"`
 	CountryLinks []TourProgramCountry `bun:"rel:has-many,join:id=tour_program_id" json:"countryLinks,omitempty"`
 	CityLinks    []TourProgramCity    `bun:"rel:has-many,join:id=tour_program_id" json:"cityLinks,omitempty"`
 	Images       []TourProgramImage   `bun:"rel:has-many,join:id=tour_program_id" json:"images,omitempty"`
+}
+
+// TourItineraryDay is one day of the short timeline: the places visited, in order (airports,
+// sights, "โรงแรม" when the day ends at a hotel). Day is 1-based and always the position in the list.
+type TourItineraryDay struct {
+	Day    int      `json:"day"`
+	Places []string `json:"places"`
 }

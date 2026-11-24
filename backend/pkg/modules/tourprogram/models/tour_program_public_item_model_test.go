@@ -78,8 +78,9 @@ func TestPublicPeriodsSoldOut(t *testing.T) {
 		period("b", "2026-12-10", 100, null.Int{}, 0),
 	}
 	selling := NewTourPeriodPublicItems(tourprogramstate.Selling, periods)
-	if selling[0].SoldOut || !selling[1].SoldOut {
-		t.Errorf("selling: soldOut = %v, %v; want false, true", selling[0].SoldOut, selling[1].SoldOut)
+	// 0 seats = not specified: only a closed tour is sold out.
+	if selling[0].SoldOut || selling[1].SoldOut {
+		t.Errorf("selling: soldOut = %v, %v; want false, false", selling[0].SoldOut, selling[1].SoldOut)
 	}
 	if selling[0].StartDate != "2026-12-01" || selling[0].EndDate != "2026-12-05" {
 		t.Errorf("dates = %s – %s", selling[0].StartDate, selling[0].EndDate)

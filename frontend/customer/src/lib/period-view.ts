@@ -14,8 +14,10 @@ export function firstOpenId(periods: TourPeriodPublic[]): string | null {
   return (periods.find((p) => !p.soldOut) ?? periods[0])?.id ?? null;
 }
 
+// Sold out only when the tour is closed (soldOut). 0 seats = not specified: no seat text.
 function seatLabel(p: TourPeriodPublic): { text: string; tone: 'danger' | 'muted' | 'ok' } {
-  if (p.soldOut || p.seatsAvailable === 0) return { text: 'เต็มแล้ว', tone: 'muted' };
+  if (p.soldOut) return { text: 'เต็มแล้ว', tone: 'muted' };
+  if (p.seatsAvailable <= 0) return { text: '', tone: 'ok' };
   if (p.seatsAvailable <= LOW_SEATS) return { text: `เหลือ ${p.seatsAvailable} ที่นั่ง`, tone: 'danger' };
   return { text: `ว่าง ${p.seatsAvailable} ที่นั่ง`, tone: 'ok' };
 }
@@ -31,7 +33,7 @@ export function rowsHtml(periods: TourPeriodPublic[], selectedId: string | null)
       const pct = discountPercent(p.price, p.priceBeforeDiscount);
       return `<li><button type="button" class="period-row" data-id="${escapeHtml(p.id)}" aria-pressed="${p.id === selectedId}"${p.soldOut ? ' disabled' : ''}>`
         + `<span class="period-row-main"><span class="period-date">${formatDateRange(p.startDate, p.endDate)}</span>`
-        + `<span class="period-seat ${seat.tone}">${seat.text}</span></span>`
+        + (seat.text ? `<span class="period-seat ${seat.tone}">${seat.text}</span>` : '') + `</span>`
         + `<span class="period-row-price"><span class="period-amount">${formatPrice(p.price)} <small>บาท</small></span>`
         + (pct > 0 ? `<span class="period-pct">ลด ${pct}%</span>` : '')
         + `</span></button></li>`;

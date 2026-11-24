@@ -9,6 +9,7 @@ import { authorize, type MockHandler, MockFail, ok, validation } from './http.ts
 const IMAGE = ['image/jpeg', 'image/png', 'image/webp'];
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024; // tour-pdf, like backend media.maxDocumentMB
 
 const RULES: Record<MediaPurpose, { mimes: string[]; minWidth?: number; minHeight?: number; prefix: string }> = {
   'tour-banner': { mimes: IMAGE, minWidth: 1200, minHeight: 630, prefix: 'tours/banners/' },
@@ -32,7 +33,7 @@ async function upload(req: Parameters<MockHandler>[0]): Promise<Response> {
   if (!(file instanceof File) || file.size === 0) throw validation({ file: 'file is required' });
 
   const rule = RULES[purpose as MediaPurpose];
-  if (file.size > MAX_BYTES) throw new MockFail(413, ErrorCodes.MediaTooLarge, 'The file is too large');
+  if (file.size > (purpose === 'tour-pdf' ? MAX_DOCUMENT_BYTES : MAX_BYTES)) throw new MockFail(413, ErrorCodes.MediaTooLarge, 'The file is too large');
   if (!rule.mimes.includes(file.type)) throw new MockFail(400, ErrorCodes.MediaTypeNotAllowed, 'This file type is not allowed for this purpose');
 
   let width = 0;

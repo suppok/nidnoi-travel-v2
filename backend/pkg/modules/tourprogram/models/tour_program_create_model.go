@@ -4,6 +4,7 @@ import (
 	"github.com/guregu/null/v5"
 
 	coremodels "backend/pkg/core/api/models"
+	"backend/pkg/domain"
 )
 
 // TourProgramFields are the editable fields shared by create and update. Countries, cities and
@@ -24,9 +25,16 @@ type TourProgramFields struct {
 	PDFFile           null.String `json:"pdfFile" swaggertype:"string"`     // URL from POST /media/upload (tour-pdf), public
 	DOCXFile          null.String `json:"docxFile" swaggertype:"string"`    // URL from POST /media/upload (tour-docx), staff only
 	InternalNote      string      `json:"internalNote"`                     // staff only
-	CountryIDs        []string    `json:"countryIds"`                       // one or more, display order
-	CityIDs           []string    `json:"cityIds"`                          // each must belong to one of countryIds
-	Images            []string    `json:"images"`                           // gallery URLs (tour-gallery), display order
+	// GovernmentShopStops: the tour stops at government shops (ลงร้านรัฐบาล); null = not specified.
+	GovernmentShopStops null.Bool `json:"governmentShopStops" swaggertype:"boolean"`
+	IncludedItems       []string  `json:"includedItems"` // what the price includes, display order (max 50)
+	ExcludedItems       []string  `json:"excludedItems"` // what it doesn't include, display order (max 50)
+	// Itinerary: the short day-by-day timeline, in day order (max 60 days, 20 places a day). day is
+	// ignored on input and renumbered from the position; days without places are dropped.
+	Itinerary  []domain.TourItineraryDay `json:"itinerary"`
+	CountryIDs []string                  `json:"countryIds"` // one or more, display order
+	CityIDs    []string                  `json:"cityIds"`    // each must belong to one of countryIds
+	Images     []string                  `json:"images"`     // gallery URLs (tour-gallery), display order
 }
 
 type TourProgramCreateRequest struct {

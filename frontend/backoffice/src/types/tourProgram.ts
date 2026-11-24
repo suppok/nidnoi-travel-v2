@@ -6,6 +6,8 @@ export type TourProgramAirline = { id: string; code: string; name: string; logo:
 export type TourProgramCountry = { id: string; slug: string; nameTh: string; nameEn: string; status: boolean };
 export type TourProgramCity = TourProgramCountry & { countryId: string };
 export type TourProgramImage = { id: string; url: string };
+// One day of the short timeline: places in visiting order ("โรงแรม" when the day ends at a hotel).
+export type TourItineraryDay = { day: number; places: string[] };
 
 export type TourProgram = {
   id: string;
@@ -25,6 +27,10 @@ export type TourProgram = {
   pdfFile: string | null; // public itinerary
   docxFile: string | null; // staff only
   internalNote: string;
+  governmentShopStops: boolean | null; // ลงร้านรัฐบาล; null = not specified
+  includedItems: string[]; // what the price includes, display order
+  excludedItems: string[]; // what it doesn't include
+  itinerary: TourItineraryDay[]; // day-by-day places
   countries: TourProgramCountry[]; // display order; first = main country
   cities: TourProgramCity[];
   images: TourProgramImage[]; // gallery, display order
@@ -65,6 +71,10 @@ export type TourProgramCreateRequest = {
   pdfFile: string | null;
   docxFile: string | null;
   internalNote: string;
+  governmentShopStops: boolean | null;
+  includedItems: string[]; // max 50 lines, each up to 300 characters
+  excludedItems: string[];
+  itinerary: TourItineraryDay[]; // day is renumbered by the backend; max 60 days, 20 places a day
   countryIds: string[];
   cityIds: string[];
   images: string[]; // gallery URLs in order

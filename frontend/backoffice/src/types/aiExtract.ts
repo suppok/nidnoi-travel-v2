@@ -1,4 +1,5 @@
 import type { TourProgramState } from '../constants/tourProgramStates.ts';
+import type { TourItineraryDay } from './tourProgram.ts';
 
 // GET /tour-programs/ai-extract/config
 export type AIExtractConfig = { ready: boolean; maxPdfSizeMb: number };
@@ -7,12 +8,20 @@ export type AIExtractConfig = { ready: boolean; maxPdfSizeMb: number };
 export type AIExtractStart = { jobId: string; state: 'pending' };
 
 export type AIConfidenceLevel = 'high' | 'medium' | 'low';
-export type AIConfidence = { main: AIConfidenceLevel; taxonomy: AIConfidenceLevel; periods: AIConfidenceLevel; prices: AIConfidenceLevel; extras: AIConfidenceLevel };
+export type AIConfidence = {
+  main: AIConfidenceLevel;
+  taxonomy: AIConfidenceLevel;
+  periods: AIConfidenceLevel;
+  prices: AIConfidenceLevel;
+  extras: AIConfidenceLevel;
+  inclusions: AIConfidenceLevel; // government shops and the included / excluded lists
+  itinerary: AIConfidenceLevel;
+};
 
 // field = the form field it is about ("name", "countryIds", "periods[3].price"), '' = the whole file.
 export type AIWarning = { field: string; message: string };
 
-// A period create body without tourProgramId. Seats are never in the PDF (null until staff fill them, no warning).
+// A period create body without tourProgramId. Seats are never in the PDF: 0 / 0 (not specified).
 export type AIDraftPeriod = {
   startDate: string;
   endDate: string;
@@ -45,6 +54,10 @@ export type AIDraft = {
   pdfFile: string | null;
   docxFile: string | null;
   internalNote: string;
+  governmentShopStops: boolean | null;
+  includedItems: string[];
+  excludedItems: string[];
+  itinerary: TourItineraryDay[];
   countryIds: string[];
   cityIds: string[];
   images: string[];

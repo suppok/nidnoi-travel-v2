@@ -6,6 +6,10 @@ import { ApiError } from '../../../api/client.ts';
 import { ErrorCodes } from '../../../constants/errorCodes.ts';
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+// Tour PDFs may be larger (backend media.maxDocumentMB): brochures are often 20-50 MB.
+const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
+
+export const maxUploadBytes = (purpose: MediaPurpose) => (purpose === 'tour-pdf' ? MAX_DOCUMENT_BYTES : MAX_UPLOAD_BYTES);
 
 export const ACCEPT: Record<MediaPurpose, string> = {
   'tour-banner': 'image/jpeg,image/png,image/webp',
@@ -32,7 +36,8 @@ export const MIN_SIZE: Partial<Record<MediaPurpose, string>> = {
 
 // Client-side guard only; the backend re-checks type (by content), size and dimensions.
 export function checkFile(file: File, purpose: MediaPurpose): string | null {
-  if (file.size > MAX_UPLOAD_BYTES) return 'ไฟล์ใหญ่เกินไป (ไม่เกิน 10 MB)';
+  const limit = maxUploadBytes(purpose);
+  if (file.size > limit) return `ไฟล์ใหญ่เกินไป (ไม่เกิน ${limit / 1024 / 1024} MB)`;
   const accepted = ACCEPT[purpose].split(',');
   const ext = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
   if (!accepted.includes(file.type) && !accepted.includes(ext)) return 'ไฟล์ประเภทนี้อัปโหลดในช่องนี้ไม่ได้';

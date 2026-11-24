@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/guregu/null/v5"
 
@@ -28,6 +30,15 @@ const (
 	maxCities       = 50
 	maxImages       = 30
 	maxDays         = 60
+
+	// What the price includes / excludes: lines of text, each list replaced as a whole.
+	maxPriceItems     = 50
+	maxPriceItemRunes = 300
+
+	// Day-by-day timeline.
+	maxItineraryDays = 60
+	maxPlacesPerDay  = 20
+	maxPlaceRunes    = 100
 )
 
 // Storage key prefixes per media field; they must match the media module's purposes.
@@ -68,6 +79,9 @@ func normalize(f *models.TourProgramFields) {
 	f.Highlight = strings.TrimSpace(f.Highlight)
 	f.Description = strings.TrimSpace(f.Description)
 	f.InternalNote = strings.TrimSpace(f.InternalNote)
+	f.IncludedItems = cleanItems(f.IncludedItems)
+	f.ExcludedItems = cleanItems(f.ExcludedItems)
+	f.Itinerary = cleanItinerary(f.Itinerary)
 	for _, s := range []*null.String{&f.BannerImage, &f.CardImage, &f.PDFFile, &f.DOCXFile} {
 		if v := strings.TrimSpace(s.String); s.Valid && v != "" {
 			*s = null.StringFrom(v)
@@ -168,6 +182,9 @@ func (u *tourProgramUseCase) fieldsValidate(f *models.TourProgramFields) error {
 		validation.Field(&f.PDFFile, u.mediaURL(documentPrefix, ".pdf")),
 		validation.Field(&f.DOCXFile, u.mediaURL(documentPrefix, ".docx")),
 		validation.Field(&f.InternalNote, validation.RuneLength(0, 5000)),
+		validation.Field(&f.IncludedItems, validation.Length(0, maxPriceItems), validation.Each(validation.RuneLength(1, maxPriceItemRunes))),
+		validation.Field(&f.ExcludedItems, validation.Length(0, maxPriceItems), validation.Each(validation.RuneLength(1, maxPriceItemRunes))),
+		validation.Field(&f.Itinerary, validation.Length(0, maxItineraryDays), validation.By(itineraryRule)),
 		validation.Field(&f.CountryIDs, validation.Required.Error("select at least one country"),
 			validation.Length(1, maxCountries), validation.Each(validation.UUID), validation.By(uniqueIDs)),
 		validation.Field(&f.CityIDs, validation.Length(0, maxCities), validation.Each(validation.UUID), validation.By(uniqueIDs)),
@@ -297,11 +314,16 @@ func applyFields(t *domain.TourProgram, f *models.TourProgramFields) {
 	t.PDFFile = f.PDFFile
 	t.DOCXFile = f.DOCXFile
 	t.InternalNote = f.InternalNote
+	t.GovernmentShopStops = f.GovernmentShopStops
+	t.IncludedItems = f.IncludedItems
+	t.ExcludedItems = f.ExcludedItems
+	t.Itinerary = f.Itinerary
 }
 
 var editableColumns = []string{
 	"ref_id", "name", "wholesale_id", "wholesale_tour_code", "state", "days", "nights", "airline_id",
 	"highlight", "description", "banner_image", "card_image", "pdf_file", "docx_file", "internal_note",
+	"government_shop_stops", "included_items", "excluded_items", "itinerary",
 	"update_date", "update_by",
 }
 
@@ -332,4 +354,52 @@ func stripRelations(t *domain.TourProgram) {
 	t.CountryLinks = nil
 	t.CityLinks = nil
 	t.Images = nil
+}
+
+// cleanItems trims lines, drops empty and repeated ones and keeps the order; never nil.
+func cleanItems(items []string) []string {
+	out := make([]string, 0, len(items))
+	seen := map[string]bool{}
+	for _, it := range items {
+		it = strings.Join(strings.Fields(it), " ")
+		if it == "" || seen[it] {
+			continue
+		}
+		seen[it] = true
+		out = append(out, it)
+	}
+	return out
+}
+
+// cleanItinerary trims places, drops empty ones and empty days, renumbers days 1..n; never nil.
+func cleanItinerary(days []domain.TourItineraryDay) []domain.TourItineraryDay {
+	out := make([]domain.TourItineraryDay, 0, len(days))
+	for _, d := range days {
+		places := make([]string, 0, len(d.Places))
+		for _, p := range d.Places {
+			if p = strings.Join(strings.Fields(p), " "); p != "" {
+				places = append(places, p)
+			}
+		}
+		if len(places) == 0 {
+			continue
+		}
+		out = append(out, domain.TourItineraryDay{Day: len(out) + 1, Places: places})
+	}
+	return out
+}
+
+func itineraryRule(value any) error {
+	days, _ := value.([]domain.TourItineraryDay)
+	for _, d := range days {
+		if len(d.Places) > maxPlacesPerDay {
+			return fmt.Errorf("day %d: at most %d places", d.Day, maxPlacesPerDay)
+		}
+		for _, p := range d.Places {
+			if utf8.RuneCountInString(p) > maxPlaceRunes {
+				return fmt.Errorf("day %d: a place can be at most %d characters", d.Day, maxPlaceRunes)
+			}
+		}
+	}
+	return nil
 }

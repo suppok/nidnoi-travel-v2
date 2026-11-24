@@ -13,6 +13,7 @@ type purposeRule struct {
 	minWidth  int // images only
 	minHeight int
 	keyPrefix string
+	document  bool // size limit media.maxDocumentMB instead of media.maxUploadMB
 }
 
 var imageMimes = []string{commons.MimeJPEG, commons.MimePNG, commons.MimeWebP}
@@ -21,7 +22,7 @@ var purposeRules = map[string]purposeRule{
 	models.PurposeTourBanner:  {mimes: imageMimes, minWidth: 1200, minHeight: 630, keyPrefix: "tours/banners/"},
 	models.PurposeTourCard:    {mimes: imageMimes, minWidth: 800, minHeight: 600, keyPrefix: "tours/cards/"},
 	models.PurposeTourGallery: {mimes: imageMimes, minWidth: 800, minHeight: 600, keyPrefix: "tours/gallery/"},
-	models.PurposeTourPDF:     {mimes: []string{commons.MimePDF}, keyPrefix: "tours/documents/"},
+	models.PurposeTourPDF:     {mimes: []string{commons.MimePDF}, keyPrefix: "tours/documents/", document: true},
 	models.PurposeTourDOCX:    {mimes: []string{commons.MimeDOCX}, keyPrefix: "tours/documents/"},
 	models.PurposeCountryHero: {mimes: imageMimes, minWidth: 1600, minHeight: 900, keyPrefix: "countries/heroes/"},
 	models.PurposeCityHero:    {mimes: imageMimes, minWidth: 1600, minHeight: 900, keyPrefix: "cities/heroes/"},

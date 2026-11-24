@@ -2,6 +2,7 @@ import { FilePdfOutlined, InboxOutlined, RobotOutlined } from '@ant-design/icons
 import { Alert, Button, Card, Progress, Upload } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api/client.ts';
+import { mediaApi } from '../../../api/media.ts';
 import { aiExtractApi } from '../../../api/tourPrograms.ts';
 import { ErrorCodes } from '../../../constants/errorCodes.ts';
 import { errorMessage } from '../../../lib/errors.ts';
@@ -13,9 +14,12 @@ const GIVE_UP_MS = 4 * 60 * 1000;
 // A rough progress bar: most PDFs take 30-90 s.
 const EXPECTED_MS = 75 * 1000;
 
+// The same file uploaded as the tour's PDF (purpose tour-pdf), for the form's "ไฟล์ PDF" field.
+export type AIPdfUpload = { url: string } | { error: unknown };
+
 type Props = {
   maxPdfSizeMb: number;
-  onResult: (result: AIExtractResult) => void;
+  onResult: (result: AIExtractResult, pdf: AIPdfUpload) => void;
 };
 
 type Phase = { kind: 'idle' } | { kind: 'reading'; fileName: string; startedAt: number } | { kind: 'error'; message: string };
@@ -46,6 +50,11 @@ export default function AIExtractPanel({ maxPdfSizeMb, onResult }: Props) {
     const startedAt = Date.now();
     setNow(startedAt);
     setPhase({ kind: 'reading', fileName: file.name, startedAt });
+    // In parallel with the AI: an upload that fails never stops the prefill.
+    const pdf: Promise<AIPdfUpload> = mediaApi.upload(file, 'tour-pdf').then(
+      (res) => ({ url: res.url }),
+      (error: unknown) => ({ error }),
+    );
     try {
       const { jobId } = await aiExtractApi.start(file);
       while (!cancelled.current) {
@@ -53,8 +62,10 @@ export default function AIExtractPanel({ maxPdfSizeMb, onResult }: Props) {
         if (cancelled.current) return;
         const job = await aiExtractApi.result(jobId);
         if (job.state === 'done' && job.result) {
+          const upload = await pdf;
+          if (cancelled.current) return;
           setPhase({ kind: 'idle' });
-          onResult(job.result);
+          onResult(job.result, upload);
           return;
         }
         if (job.state === 'failed') {

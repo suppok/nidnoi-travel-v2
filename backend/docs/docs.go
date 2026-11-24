@@ -3344,7 +3344,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "file",
-                        "description": "File (max media.maxUploadMB)",
+                        "description": "File (max media.maxUploadMB; tour-pdf media.maxDocumentMB)",
                         "name": "file",
                         "in": "formData",
                         "required": true
@@ -4946,6 +4946,20 @@ const docTemplate = `{
                 },
                 "to": {
                     "type": "string"
+                }
+            }
+        },
+        "backend_pkg_domain.TourItineraryDay": {
+            "type": "object",
+            "properties": {
+                "day": {
+                    "type": "integer"
+                },
+                "places": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -11269,6 +11283,13 @@ const docTemplate = `{
                 "extras": {
                     "type": "string"
                 },
+                "inclusions": {
+                    "description": "government shops and the included / excluded lists",
+                    "type": "string"
+                },
+                "itinerary": {
+                    "type": "string"
+                },
                 "main": {
                     "type": "string"
                 },
@@ -11280,6 +11301,20 @@ const docTemplate = `{
                 },
                 "taxonomy": {
                     "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_commons.AIDay": {
+            "type": "object",
+            "properties": {
+                "day": {
+                    "type": "integer"
+                },
+                "places": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -11317,6 +11352,16 @@ const docTemplate = `{
                 "docxFile": {
                     "type": "string"
                 },
+                "excludedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "null = not stated",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "type": "string"
                 },
@@ -11326,8 +11371,20 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "includedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "type": "string"
+                },
+                "itinerary": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_commons.AIDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -11499,7 +11556,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "soldOut": {
-                    "description": "SoldOut is true when no seat is left or the tour is closed.",
+                    "description": "SoldOut is true when the tour is closed (ปิดรับ). Seats never make a period sold out: 0 = not specified.",
                     "type": "boolean"
                 },
                 "startDate": {
@@ -11733,6 +11790,17 @@ const docTemplate = `{
                     "description": "URL from POST /media/upload (tour-docx), staff only",
                     "type": "string"
                 },
+                "excludedItems": {
+                    "description": "what it doesn't include, display order (max 50)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "GovernmentShopStops: the tour stops at government shops (ลงร้านรัฐบาล); null = not specified.",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "description": "short summary for tour cards",
                     "type": "string"
@@ -11744,9 +11812,23 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "includedItems": {
+                    "description": "what the price includes, display order (max 50)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "description": "staff only",
                     "type": "string"
+                },
+                "itinerary": {
+                    "description": "Itinerary: the short day-by-day timeline, in day order (max 60 days, 20 places a day). day is\nignored on input and renumbered from the position; days without places are dropped.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -11824,6 +11906,16 @@ const docTemplate = `{
                 "docxFile": {
                     "type": "string"
                 },
+                "excludedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "null = not specified",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "type": "string"
                 },
@@ -11837,8 +11929,21 @@ const docTemplate = `{
                         "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
                     }
                 },
+                "includedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "type": "string"
+                },
+                "itinerary": {
+                    "description": "day-by-day places",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -11920,6 +12025,16 @@ const docTemplate = `{
                 "docxFile": {
                     "type": "string"
                 },
+                "excludedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "null = not specified",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "type": "string"
                 },
@@ -11933,8 +12048,21 @@ const docTemplate = `{
                         "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
                     }
                 },
+                "includedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "type": "string"
+                },
+                "itinerary": {
+                    "description": "day-by-day places",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -12122,6 +12250,17 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "excludedItems": {
+                    "description": "what it doesn't include",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "GovernmentShopStops: stops at government shops (ลงร้านรัฐบาล); null = not specified.",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "type": "string"
                 },
@@ -12129,6 +12268,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "includedItems": {
+                    "description": "what the price includes",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itinerary": {
+                    "description": "day-by-day places, may be empty",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
                     }
                 },
                 "name": {
@@ -12294,6 +12447,17 @@ const docTemplate = `{
                     "description": "URL from POST /media/upload (tour-docx), staff only",
                     "type": "string"
                 },
+                "excludedItems": {
+                    "description": "what it doesn't include, display order (max 50)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "GovernmentShopStops: the tour stops at government shops (ลงร้านรัฐบาล); null = not specified.",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "description": "short summary for tour cards",
                     "type": "string"
@@ -12308,9 +12472,23 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "includedItems": {
+                    "description": "what the price includes, display order (max 50)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "description": "staff only",
                     "type": "string"
+                },
+                "itinerary": {
+                    "description": "Itinerary: the short day-by-day timeline, in day order (max 60 days, 20 places a day). day is\nignored on input and renumbered from the position; days without places are dropped.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -12388,6 +12566,16 @@ const docTemplate = `{
                 "docxFile": {
                     "type": "string"
                 },
+                "excludedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "governmentShopStops": {
+                    "description": "null = not specified",
+                    "type": "boolean"
+                },
                 "highlight": {
                     "type": "string"
                 },
@@ -12401,8 +12589,21 @@ const docTemplate = `{
                         "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramImage"
                     }
                 },
+                "includedItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "internalNote": {
                     "type": "string"
+                },
+                "itinerary": {
+                    "description": "day-by-day places",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_domain.TourItineraryDay"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -12497,7 +12698,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "seatsAvailable": {
-                    "description": "0..seatsTotal; 0 = sold out",
+                    "description": "0..seatsTotal; 0 of 0 = not specified (the customer site never shows sold out from seats)",
                     "type": "integer"
                 },
                 "seatsTotal": {
@@ -12701,7 +12902,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "seatsAvailable": {
-                    "description": "0..seatsTotal; 0 = sold out",
+                    "description": "0..seatsTotal; 0 of 0 = not specified (the customer site never shows sold out from seats)",
                     "type": "integer"
                 },
                 "seatsTotal": {
