@@ -1,3 +1,4 @@
+import type { AIExtractConfig, AIExtractJob, AIExtractStart } from '../types/aiExtract.ts';
 import type { ListResponse } from '../types/api.ts';
 import type {
   PeriodCreateRequest,
@@ -19,6 +20,17 @@ export const tourProgramsApi = {
   create: (body: TourProgramCreateRequest) => request<TourProgram>('POST', '/tour-programs', body),
   update: (body: TourProgramUpdateRequest) => request<TourProgram>('PUT', '/tour-programs', body),
   updateStatus: (body: StatusRequest) => request<null>('PUT', '/tour-programs/status', body),
+};
+
+// AI prefill of the create form from a PDF. Nothing is saved: staff review and save the form.
+export const aiExtractApi = {
+  config: () => request<AIExtractConfig>('GET', '/tour-programs/ai-extract/config'),
+  start: (file: File) => {
+    const body = new FormData();
+    body.append('file', file);
+    return request<AIExtractStart>('POST', '/tour-programs/ai-extract', body);
+  },
+  result: (jobId: string) => request<AIExtractJob>('GET', `/tour-programs/ai-extract/${encodeURIComponent(jobId)}`),
 };
 
 export const periodsApi = {

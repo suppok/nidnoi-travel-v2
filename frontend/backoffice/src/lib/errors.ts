@@ -35,6 +35,11 @@ const MESSAGES: Record<string, string> = {
   [ErrorCodes.PeriodUnavailable]: 'รอบเดินทางนี้ปิดรับจองหรือที่นั่งเต็มแล้ว กรุณาเลือกรอบใหม่',
   [ErrorCodes.LineBookingDocumentsNotReady]: 'เอกสารนี้ไม่ได้รอตรวจแล้ว (อาจถูกยืนยันหรือส่งกลับไปแล้ว)',
   [ErrorCodes.LineBookingBalanceNotPending]: 'ไม่มียอดคงเหลือรอยืนยันแล้ว (อาจถูกยืนยันไปแล้ว)',
+  [ErrorCodes.AINotConfigured]: 'ยังไม่ได้ตั้งค่า AI หรือปิดใช้งานอยู่ กรุณาติดต่อผู้ดูแลระบบ',
+  [ErrorCodes.AIInvalidApiKey]: 'API key ของ Anthropic ไม่ถูกต้องหรือถูกยกเลิกแล้ว',
+  [ErrorCodes.AIModelUnavailable]: 'API key นี้ใช้โมเดลที่เลือกไม่ได้',
+  [ErrorCodes.AIBusy]: 'ระบบ AI ไม่ว่างในขณะนี้ กรุณาลองใหม่ในอีกสักครู่',
+  [ErrorCodes.AIRequestFailed]: 'AI อ่านไฟล์ไม่สำเร็จ กรุณาลองใหม่ หรือกรอกข้อมูลเอง',
   [ErrorCodes.Validation]: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
 };
 

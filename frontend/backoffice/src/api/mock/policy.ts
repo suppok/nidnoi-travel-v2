@@ -7,6 +7,7 @@ const POLICY: Record<Role, readonly Permission[]> = {
   [Roles.Admin]: Object.values(Permissions),
   [Roles.Sales]: [
     Permissions.TourProgramCreate,
+    Permissions.TourProgramAIExtract,
     Permissions.TourProgramUpdate,
     Permissions.TourProgramList,
     Permissions.TourProgramGet,

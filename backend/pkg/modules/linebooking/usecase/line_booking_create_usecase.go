@@ -199,9 +199,6 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 			return validation.Errors{fmt.Sprintf("charges.%d", i): err}
 		}
 	}
-	if request.Infant > 0 && !request.InfantPrice.Valid {
-		return validation.Errors{"infantPrice": errors.New("required when there are infants")}
-	}
 	if request.IsDeposit && request.DepositPerPerson <= 0 {
 		return validation.Errors{"depositPerPerson": errors.New("required for a deposit")}
 	}
@@ -215,7 +212,7 @@ func (u *lineBookingUseCase) CreateValidate(request *models.LineBookingCreateReq
 }
 
 // quoteLine prices the request like the backoffice summary tool (summary.ts computeTotals). Unit
-// prices default to the period's; total = price rows - discount per traveller + charges + card fee,
+// prices (child with bed, child no bed and infant included) default to the period's; total = price rows - discount per traveller + charges + card fee,
 // where the card fee is on the deposit when there is one, otherwise on the whole amount.
 func quoteLine(p *domain.TourProgramPeriod, r *models.LineBookingCreateRequest) (*domain.LineBooking, error) {
 	or := func(v, fallback null.Int) null.Int {
@@ -234,7 +231,7 @@ func quoteLine(p *domain.TourProgramPeriod, r *models.LineBookingCreateRequest) 
 	childNoBed := or(r.ChildNoBedPrice, p.ChildNoBedPrice)
 	infant := null.Int{}
 	if r.Infant > 0 {
-		infant = r.InfantPrice
+		infant = or(r.InfantPrice, p.InfantPrice)
 	}
 
 	fields := validation.Errors{}
@@ -245,6 +242,7 @@ func quoteLine(p *domain.TourProgramPeriod, r *models.LineBookingCreateRequest) 
 		"adultSingle":  {r.AdultSingle, single},
 		"childWithBed": {r.ChildWithBed, childWithBed},
 		"childNoBed":   {r.ChildNoBed, childNoBed},
+		"infant":       {r.Infant, infant},
 	} {
 		if row.count > 0 && !row.price.Valid {
 			fields[name] = errors.New("this period has no such price; enter one")

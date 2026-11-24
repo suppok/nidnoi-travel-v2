@@ -25,16 +25,20 @@ import (
 	"backend/pkg/core/database"
 	"backend/pkg/core/database/query"
 	corelogger "backend/pkg/core/logger"
+	"backend/pkg/modules/shared/client/anthropic"
 	"backend/pkg/modules/shared/client/deployhook"
 	"backend/pkg/modules/shared/client/line"
 	"backend/pkg/modules/shared/client/mailer"
 	"backend/pkg/modules/shared/client/objectstorage"
+	"backend/pkg/modules/shared/services/aisettings"
+	"backend/pkg/modules/shared/services/asyncjob"
 	"backend/pkg/modules/shared/services/emailoutbox"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/registry"
 
 	airlineusecase "backend/pkg/modules/airline/usecase"
+	aisettingusecase "backend/pkg/modules/aisetting/usecase"
 	appconfigusecase "backend/pkg/modules/appconfig/usecase"
 	authusecase "backend/pkg/modules/auth/usecase"
 	bookingusecase "backend/pkg/modules/booking/usecase"
@@ -64,6 +68,7 @@ type App struct {
 	logger      *zap.Logger
 	db          *bun.DB
 	revalidator revalidation.Worker
+	asyncJobs   asyncjob.Runner
 	emailSender *emailoutbox.Sender
 }
 
@@ -109,9 +114,20 @@ func New(ctx context.Context) (*App, error) {
 	mailClient := mailer.New(cfg.Mail, log)
 	storage := objectstorage.New(cfg.R2)
 	emailSender := emailoutbox.NewSender(repositoryRegistry.EmailOutboxRepository, mailClient, storage, log, cfg.Mail.Outbox)
+	asyncJobs := asyncjob.New(cfg.AI.JobTTL, log)
+	aiSettings, err := aisettings.New(repositoryRegistry.AppConfigRepository, cfg.AI)
+	if err != nil {
+		return nil, err
+	}
 	shareRegistry := &registry.ShareRegistry{
-		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator},
-		ClientRegistry:  registry.ClientRegistry{ObjectStorage: storage, DeployHook: deployHook, LINE: lineClient, Mailer: mailClient},
+		ServiceRegistry: registry.ServiceRegistry{Password: passwords, Revalidator: revalidator, AISettings: aiSettings, AsyncJobs: asyncJobs},
+		ClientRegistry: registry.ClientRegistry{
+			ObjectStorage: storage, DeployHook: deployHook, LINE: lineClient, Mailer: mailClient,
+			Anthropic: anthropic.New(cfg.AI, log),
+		},
+	}
+	if !cfg.AI.Enabled() {
+		log.Warn("AI_SETTINGS_ENCRYPTION_KEY is not set: AI tour prefill is off and the AI settings page can't save a key")
 	}
 	if !cfg.R2.Configured() {
 		log.Warn("R2 is not configured: media uploads return STORAGE_UNAVAILABLE until every R2_* variable is set")
@@ -143,6 +159,7 @@ func New(ctx context.Context) (*App, error) {
 	periodUseCase := periodusecase.NewTourProgramPeriodUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	siteUseCase := siteusecase.NewSiteUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	appConfigUseCase := appconfigusecase.NewAppConfigUseCase(coreRegistry, shareRegistry, repositoryRegistry)
+	aiSettingUseCase := aisettingusecase.NewAISettingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	bookingUseCase := bookingusecase.NewBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineBookingUseCase := linebookingusecase.NewLineBookingUseCase(coreRegistry, shareRegistry, repositoryRegistry)
 	lineContactUseCase := linecontactusecase.NewLineContactUseCase(coreRegistry, shareRegistry, repositoryRegistry)
@@ -191,12 +208,13 @@ func New(ctx context.Context) (*App, error) {
 	handler.NewTourProgramPeriodAPIHandler(v1, apiHandler, periodUseCase).Init(jwtAuth, authPermissions)
 	handler.NewSiteAPIHandler(v1, apiHandler, siteUseCase).Init(jwtAuth, authPermissions)
 	handler.NewAppConfigAPIHandler(v1, apiHandler, appConfigUseCase).Init(jwtAuth, authPermissions)
+	handler.NewAISettingAPIHandler(v1, apiHandler, aiSettingUseCase).Init(jwtAuth, authPermissions)
 	handler.NewBookingAPIHandler(v1, apiHandler, cfg, bookingUseCase).Init(jwtAuth, authPermissions)
 	handler.NewLineBookingAPIHandler(v1, apiHandler, lineBookingUseCase, mediaUseCase, cfg.Media.MaxUploadMB).Init(jwtAuth, authPermissions)
 	handler.NewLineContactAPIHandler(v1, apiHandler, lineContactUseCase).Init(jwtAuth, authPermissions)
 	handler.NewDashboardAPIHandler(v1, apiHandler, dashboardUseCase).Init(jwtAuth)
 
-	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator, emailSender: emailSender}, nil
+	return &App{fiber: f, config: cfg, logger: log, db: db, revalidator: revalidator, asyncJobs: asyncJobs, emailSender: emailSender}, nil
 }
 
 // Run serves until ctx is cancelled, then shuts down gracefully.
@@ -214,6 +232,7 @@ func (a *App) Run(ctx context.Context) error {
 	go func() { a.revalidator.Run(workerCtx); close(workerDone) }()
 	go func() { a.emailSender.Run(workerCtx); close(senderDone) }()
 	defer func() {
+		a.asyncJobs.Shutdown() // running AI extractions are dropped; staff retry
 		stopWorker()
 		<-workerDone
 		<-senderDone

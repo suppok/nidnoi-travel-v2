@@ -3,6 +3,12 @@
 // booking entry page to prefill the form. It relies on that text's "• <label> : <value>" lines and
 // its payment sentences: change a label there, update this parser in the same change.
 
+import { CHILD_NO_BED_LABEL, CHILD_WITH_BED_LABEL, INFANT_LABEL } from '../../sales-tool/booking-summary/summary.ts';
+
+// Child labels of texts made before the with-bed / no-bed split (still pasted from old chats).
+const OLD_CHILD_LABEL = 'ราคาเด็กอายุต่ำกว่า 20 ปี/ท่าน';
+const OLD_CHILD_NO_BED_LABEL = 'ราคาเด็กอายุต่ำกว่า 20 ปี (ไม่เสริมเตียง)/ท่าน';
+
 export type PricedLine = { price: number; count: number };
 
 export type ParsedSummary = {
@@ -16,7 +22,8 @@ export type ParsedSummary = {
   travellers: number | null;
   adultPrice: number | null;
   adultPriceBeforeDiscount: number | null;
-  child: PricedLine | null;
+  childWithBed: PricedLine | null;
+  childNoBed: PricedLine | null;
   infant: PricedLine | null;
   singleRoom: PricedLine | null; // count = rooms
   visa: PricedLine | null;
@@ -88,8 +95,11 @@ function deadline(line: string): { date: string | null; time: string | null } {
 // Labels the summary writes itself; any other "<name>/ท่าน" priced line is an option.
 const KNOWN_LABELS = new Set([
   'ราคาทัวร์ผู้ใหญ่/ท่าน',
-  'ราคาเด็กอายุต่ำกว่า 20 ปี/ท่าน',
-  'ราคาเด็กทารก/ท่าน',
+  CHILD_WITH_BED_LABEL,
+  CHILD_NO_BED_LABEL,
+  OLD_CHILD_LABEL,
+  OLD_CHILD_NO_BED_LABEL,
+  INFANT_LABEL,
   'ค่า visa/ท่าน',
   'ค่า passport ต่างชาติ/ท่าน',
   'ค่าห้องพักเดี่ยว/ห้อง',
@@ -171,8 +181,9 @@ export function parseSummary(text: string): ParsedSummary | null {
     travellers: Number(/\d+/.exec(get('จำนวนผู้เดินทาง') ?? '')?.[0]) || null,
     adultPrice: amount(adultLine ?? undefined),
     adultPriceBeforeDiscount: amount(/\(จาก\s*([^)]*)\)/.exec(adultLine ?? '')?.[1]),
-    child: priced(fields.get('ราคาเด็กอายุต่ำกว่า 20 ปี/ท่าน')),
-    infant: priced(fields.get('ราคาเด็กทารก/ท่าน')),
+    childWithBed: priced(fields.get(CHILD_WITH_BED_LABEL) ?? fields.get(OLD_CHILD_LABEL)),
+    childNoBed: priced(fields.get(CHILD_NO_BED_LABEL) ?? fields.get(OLD_CHILD_NO_BED_LABEL)),
+    infant: priced(fields.get(INFANT_LABEL)),
     singleRoom: priced(fields.get('ค่าห้องพักเดี่ยว/ห้อง')),
     visa: priced(fields.get('ค่า visa/ท่าน')),
     foreignPassport: priced(fields.get('ค่า passport ต่างชาติ/ท่าน')),

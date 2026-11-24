@@ -22,7 +22,8 @@ export type SummaryInput = {
 
   adult: PriceLine;
   adultPriceBeforeDiscount: number | null; // shown as "(จาก …)" when higher than the price
-  child: PriceLine;
+  childWithBed: PriceLine;
+  childNoBed: PriceLine;
   infant: PriceLine;
   visa: PriceLine;
   foreignPassport: PriceLine;
@@ -59,6 +60,12 @@ export type SummaryTotals = {
   grandTotal: number; // what the customer pays in total
 };
 
+// Labels of the child and infant lines. The booking entry page parses them back (parseSummary.ts) and the
+// backend writes the same text for wholesale emails (notification/booking_summary.go): keep all three in step.
+export const CHILD_WITH_BED_LABEL = 'ราคาเด็กอายุต่ำกว่า 20 ปี (มีเตียง)/ท่าน';
+export const CHILD_NO_BED_LABEL = 'ราคาเด็กอายุต่ำกว่า 20 ปี (ไม่มีเตียง)/ท่าน';
+export const INFANT_LABEL = 'ราคาเด็กทารก/ท่าน';
+
 const n = (v: number | null | undefined) => (Number.isFinite(v) ? Number(v) : 0);
 const lineTotal = (l: PriceLine) => n(l.count) * n(l.price);
 
@@ -73,12 +80,13 @@ function cardFee(amount: number, percent: number): number {
 }
 
 export function computeTotals(input: SummaryInput): SummaryTotals {
-  const travellers = n(input.adult.count) + n(input.child.count) + n(input.infant.count);
+  const travellers = n(input.adult.count) + n(input.childWithBed.count) + n(input.childNoBed.count) + n(input.infant.count);
   const discount = n(input.discountPerPerson);
 
   const subtotal =
     n(input.adult.count) * (n(input.adult.price) - discount) +
-    n(input.child.count) * (n(input.child.price) - discount) +
+    n(input.childWithBed.count) * (n(input.childWithBed.price) - discount) +
+    n(input.childNoBed.count) * (n(input.childNoBed.price) - discount) +
     n(input.infant.count) * (n(input.infant.price) - discount) +
     lineTotal(input.visa) +
     lineTotal(input.foreignPassport) +
@@ -163,8 +171,12 @@ export function buildSummaryText(input: SummaryInput, totals: SummaryTotals = co
   const adultPrice = n(input.adult.price);
   const before = n(input.adultPriceBeforeDiscount);
   push(`• ราคาทัวร์ผู้ใหญ่/ท่าน : ${adultPrice > 0 ? money(adultPrice) : '-'}${before > adultPrice && adultPrice > 0 ? ` (จาก ${money(before)})` : ''}`);
-  if (n(input.child.count) > 0) push(`• ราคาเด็กอายุต่ำกว่า 20 ปี/ท่าน : ${n(input.child.price) > 0 ? `${money(n(input.child.price))} (จำนวน ${n(input.child.count)} ท่าน)` : '-'}`);
-  if (n(input.infant.count) > 0) push(`• ราคาเด็กทารก/ท่าน : ${n(input.infant.price) > 0 ? `${money(n(input.infant.price))} (จำนวน ${n(input.infant.count)} ท่าน)` : '-'}`);
+  const traveller = (label: string, line: PriceLine) => {
+    if (n(line.count) > 0) push(`• ${label} : ${n(line.price) > 0 ? `${money(n(line.price))} (จำนวน ${n(line.count)} ท่าน)` : '-'}`);
+  };
+  traveller(CHILD_WITH_BED_LABEL, input.childWithBed);
+  traveller(CHILD_NO_BED_LABEL, input.childNoBed);
+  traveller(INFANT_LABEL, input.infant);
   extra('ค่า visa/ท่าน', input.visa);
   extra('ค่า passport ต่างชาติ/ท่าน', input.foreignPassport);
   extra('ค่าห้องพักเดี่ยว/ห้อง', input.singleRoom, 'ห้อง');

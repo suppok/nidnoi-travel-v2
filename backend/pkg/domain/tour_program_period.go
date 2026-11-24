@@ -29,6 +29,7 @@ Table: tour_program_period
 [15] update_date            TIMESTAMPTZ  null: false
 [16] create_by              UUID         null: false
 [17] update_by              UUID         null: false
+[18] infant_price           INTEGER      null: true   (child under 2, no seat)
 */
 
 // TourProgramPeriod is a departure of a tour with its prices and seats.
@@ -53,4 +54,5 @@ type TourProgramPeriod struct {
 	UpdateDate          time.Time `bun:"update_date"           json:"updateDate"`                                // [15] TIMESTAMPTZ
 	CreateBy            string    `bun:"create_by"             json:"createBy"`                                  // [16] UUID
 	UpdateBy            string    `bun:"update_by"             json:"updateBy"`                                  // [17] UUID
+	InfantPrice         null.Int  `bun:"infant_price"          json:"infantPrice" swaggertype:"integer"`         // [18] INTEGER
 }

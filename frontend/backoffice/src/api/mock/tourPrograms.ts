@@ -211,6 +211,7 @@ function parsePeriod(body: Record<string, unknown>) {
     priceBeforeDiscount,
     childWithBedPrice: optionalNumber(body.childWithBedPrice),
     childNoBedPrice: optionalNumber(body.childNoBedPrice),
+    infantPrice: optionalNumber(body.infantPrice),
     singleSupplement: optionalNumber(body.singleSupplement),
     deposit: optionalNumber(body.deposit),
     seatsTotal,

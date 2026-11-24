@@ -85,6 +85,7 @@ export type TourProgramPeriod = {
   priceBeforeDiscount: number | null;
   childWithBedPrice: number | null;
   childNoBedPrice: number | null;
+  infantPrice: number | null; // child under 2, no seat
   singleSupplement: number | null;
   deposit: number | null;
   seatsTotal: number;

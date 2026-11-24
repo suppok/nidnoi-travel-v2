@@ -20,7 +20,7 @@ const SAVED_CONTENT = 'บันทึกแล้ว — หน้าเว็�
 type Row = { key: string; period: TourProgramPeriod | null; draft: TourProgramPeriodFields };
 type FieldErrors = Partial<Record<keyof TourProgramPeriodFields, string>>;
 
-const PRICE_KEYS = ['price', 'priceBeforeDiscount', 'childWithBedPrice', 'childNoBedPrice', 'singleSupplement', 'deposit'] as const;
+const PRICE_KEYS = ['price', 'priceBeforeDiscount', 'childWithBedPrice', 'childNoBedPrice', 'infantPrice', 'singleSupplement', 'deposit'] as const;
 
 function toFields(p: TourProgramPeriod): TourProgramPeriodFields {
   return {
@@ -30,6 +30,7 @@ function toFields(p: TourProgramPeriod): TourProgramPeriodFields {
     priceBeforeDiscount: p.priceBeforeDiscount,
     childWithBedPrice: p.childWithBedPrice,
     childNoBedPrice: p.childNoBedPrice,
+    infantPrice: p.infantPrice ?? null,
     singleSupplement: p.singleSupplement,
     deposit: p.deposit,
     seatsTotal: p.seatsTotal,
@@ -129,7 +130,7 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
     // New departures usually repeat the latest one's prices and seats.
     const draft: TourProgramPeriodFields = last
       ? { ...toFields(last), startDate: '', endDate: '', seatsAvailable: last.seatsTotal, note: '' }
-      : { startDate: '', endDate: '', price: 0, priceBeforeDiscount: null, childWithBedPrice: null, childNoBedPrice: null, singleSupplement: null, deposit: null, seatsTotal: 0, seatsAvailable: 0, note: '' };
+      : { startDate: '', endDate: '', price: 0, priceBeforeDiscount: null, childWithBedPrice: null, childNoBedPrice: null, infantPrice: null, singleSupplement: null, deposit: null, seatsTotal: 0, seatsAvailable: 0, note: '' };
     setDrafts((prev) => ({ ...prev, [key]: draft }));
     setNewKeys((keys) => [...keys, key]);
   };
@@ -285,6 +286,7 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
     },
     priceColumn('childWithBedPrice', 'เด็ก (มีเตียง)'),
     priceColumn('childNoBedPrice', 'เด็ก (ไม่มีเตียง)'),
+    priceColumn('infantPrice', 'ทารก (Infant)'),
     priceColumn('singleSupplement', 'พักเดี่ยวเพิ่ม'),
     priceColumn('deposit', 'มัดจำ'),
     {

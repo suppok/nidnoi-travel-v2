@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+
+	"backend/pkg/core/crypto"
 )
 
 const (
@@ -41,7 +43,31 @@ type Config struct {
 
 	Revalidation RevalidationConfig `mapstructure:"revalidation"`
 	Mail         MailConfig         `mapstructure:"mail"`
+	AI           AIConfig           `mapstructure:"ai"`
 }
+
+// AIConfig: the Claude API used to prefill tour programs from PDFs. The API key, model and on/off
+// switch live in app config AI_SETTINGS (admin page); the key is encrypted there with
+// AI_SETTINGS_ENCRYPTION_KEY. Without that variable the AI features stay off.
+type AIConfig struct {
+	// SettingsEncryptionKey is AI_SETTINGS_ENCRYPTION_KEY decoded (32 bytes, AES-256-GCM); nil = not set.
+	SettingsEncryptionKey []byte `mapstructure:"-"`
+
+	// RequestTimeout bounds one extraction (the Claude API call, retries included).
+	RequestTimeout time.Duration `mapstructure:"requestTimeout"`
+	// MaxConcurrent extractions at once; more wait for a slot (each holds the PDF in memory).
+	MaxConcurrent int `mapstructure:"maxConcurrent"`
+	// MaxRetries on 429 (rate limited) and 529 (overloaded) only.
+	MaxRetries int `mapstructure:"maxRetries"`
+	// MaxPdfMB is the hard cap for an uploaded PDF; the admin setting maxPdfSizeMb can only be lower.
+	// Must stay below server.bodyLimitMB.
+	MaxPdfMB int `mapstructure:"maxPdfMB"`
+	// JobTTL: how long a finished extraction result is kept for the backoffice to fetch.
+	JobTTL time.Duration `mapstructure:"jobTTL"`
+}
+
+// Enabled reports whether AI_SETTINGS_ENCRYPTION_KEY is set.
+func (a AIConfig) Enabled() bool { return len(a.SettingsEncryptionKey) > 0 }
 
 // MailConfig: outgoing email (Resend). The outbox settings come from config_api.yml; the API key, the
 // From address and dry-run come from MAIL_* environment variables. Reply-To/Cc live in app_config.
@@ -210,6 +236,13 @@ func read(path string) (*Config, error) {
 		LoginChannelID:     strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_ID")),
 		LoginChannelSecret: strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_SECRET")),
 	}
+	if s := strings.TrimSpace(os.Getenv("AI_SETTINGS_ENCRYPTION_KEY")); s != "" {
+		key, err := crypto.ParseKey(s)
+		if err != nil {
+			return nil, fmt.Errorf("AI_SETTINGS_ENCRYPTION_KEY must be 32 random bytes in base64: %w", err)
+		}
+		cfg.AI.SettingsEncryptionKey = key
+	}
 	cfg.Mail.APIKey = strings.TrimSpace(os.Getenv("MAIL_API_KEY"))
 	cfg.Mail.From = strings.TrimSpace(os.Getenv("MAIL_FROM"))
 	if s := strings.TrimSpace(os.Getenv("MAIL_DRY_RUN")); s != "" {
@@ -276,6 +309,15 @@ func (c *Config) validate() error {
 		}
 	}
 	problems = append(problems, c.Mail.problems()...)
+	if c.AI.RequestTimeout <= 0 || c.AI.JobTTL <= 0 {
+		problems = append(problems, "ai.requestTimeout and ai.jobTTL must be positive")
+	}
+	if c.AI.MaxConcurrent < 1 || c.AI.MaxRetries < 0 {
+		problems = append(problems, "ai.maxConcurrent must be at least 1 and ai.maxRetries at least 0")
+	}
+	if c.AI.MaxPdfMB < 1 || c.AI.MaxPdfMB >= c.Server.BodyLimitMB {
+		problems = append(problems, "ai.maxPdfMB must be at least 1 and below server.bodyLimitMB")
+	}
 	if len(problems) > 0 {
 		return errors.New("config: " + strings.Join(problems, "; "))
 	}

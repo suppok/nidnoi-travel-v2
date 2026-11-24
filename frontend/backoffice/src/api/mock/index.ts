@@ -3,6 +3,8 @@
 import { env } from '../../config/env.ts';
 import { ErrorCodes } from '../../constants/errorCodes.ts';
 import { airlineRoutes } from './airlines.ts';
+import { aiExtractRoutes } from './aiExtract.ts';
+import { aiSettingRoutes } from './aiSettings.ts';
 import { appConfigRoutes } from './appConfig.ts';
 import { authRoutes } from './auth.ts';
 import { bookingRoutes } from './bookings.ts';
@@ -26,6 +28,7 @@ const routes: Record<string, MockHandler> = {
   ...airlineRoutes,
   ...bookingSourceRoutes,
   ...mediaRoutes,
+  ...aiExtractRoutes,
   ...tourProgramRoutes,
   ...siteRoutes,
   ...bookingRoutes,
@@ -33,6 +36,7 @@ const routes: Record<string, MockHandler> = {
   ...lineBookingRoutes,
   ...dashboardRoutes,
   ...appConfigRoutes,
+  ...aiSettingRoutes,
 };
 
 const LATENCY_MS = 300;

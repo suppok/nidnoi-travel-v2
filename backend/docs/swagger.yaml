@@ -1,5 +1,12 @@
 basePath: /api/v1
 definitions:
+  backend_pkg_constants_aimodel.Model:
+    properties:
+      id:
+        type: string
+      label:
+        type: string
+    type: object
   backend_pkg_domain.LineBookingCharge:
     properties:
       count:
@@ -170,6 +177,75 @@ definitions:
       status:
         description: false = soft delete
         type: boolean
+    type: object
+  backend_pkg_modules_aisetting_models.AISettingResponse:
+    properties:
+      apiKeyLast4:
+        description: '"" when no key'
+        type: string
+      enabled:
+        type: boolean
+      encryptionConfigured:
+        description: EncryptionConfigured is false while AI_SETTINGS_ENCRYPTION_KEY
+          is not set on the server (AI stays off).
+        type: boolean
+      hasApiKey:
+        type: boolean
+      keyUnreadable:
+        description: 'KeyUnreadable: a key is stored but can''t be decrypted (AI_SETTINGS_ENCRYPTION_KEY
+          changed); enter it again.'
+        type: boolean
+      maxPdfSizeMb:
+        type: integer
+      maxPdfSizeMbLimit:
+        description: highest maxPdfSizeMb the server accepts
+        type: integer
+      model:
+        type: string
+      models:
+        description: selectable models, default first
+        items:
+          $ref: '#/definitions/backend_pkg_constants_aimodel.Model'
+        type: array
+      ready:
+        description: 'Ready: enabled, a usable key and encryption configured — the
+          AI prefill is offered to staff.'
+        type: boolean
+      updateBy:
+        description: name; "" for none
+        type: string
+      updateDate:
+        description: null until an admin saves
+        type: string
+    type: object
+  backend_pkg_modules_aisetting_models.AISettingTestRequest:
+    properties:
+      apiKey:
+        type: string
+      model:
+        type: string
+    type: object
+  backend_pkg_modules_aisetting_models.AISettingTestResponse:
+    properties:
+      model:
+        description: the model that was checked
+        type: string
+      ok:
+        type: boolean
+    type: object
+  backend_pkg_modules_aisetting_models.AISettingUpdateRequest:
+    properties:
+      apiKey:
+        description: a new Anthropic API key (sk-ant-…)
+        type: string
+      clearApiKey:
+        type: boolean
+      enabled:
+        type: boolean
+      maxPdfSizeMb:
+        type: integer
+      model:
+        type: string
     type: object
   backend_pkg_modules_appconfig_models.AppConfigAppSettingsGetResponse:
     properties:
@@ -4410,6 +4486,106 @@ definitions:
       triggered:
         type: boolean
     type: object
+  backend_pkg_modules_tourprogram_commons.AIConfidence:
+    properties:
+      extras:
+        type: string
+      main:
+        type: string
+      periods:
+        type: string
+      prices:
+        type: string
+      taxonomy:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_commons.AIDraft:
+    properties:
+      airlineId:
+        type: string
+      bannerImage:
+        type: string
+      cardImage:
+        type: string
+      cityIds:
+        items:
+          type: string
+        type: array
+      countryIds:
+        items:
+          type: string
+        type: array
+      days:
+        type: integer
+      description:
+        description: 'TBD: left empty for now'
+        type: string
+      docxFile:
+        type: string
+      highlight:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      internalNote:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      pdfFile:
+        type: string
+      periods:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_commons.AIDraftPeriod'
+        type: array
+      refId:
+        description: always null
+        type: integer
+      state:
+        description: always draft (10)
+        type: integer
+      wholesaleId:
+        description: 'always null: staff pick it'
+        type: string
+      wholesaleTourCode:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_commons.AIDraftPeriod:
+    properties:
+      childNoBedPrice:
+        type: integer
+      childWithBedPrice:
+        type: integer
+      deposit:
+        type: integer
+      endDate:
+        type: string
+      infantPrice:
+        type: integer
+      note:
+        type: string
+      price:
+        type: integer
+      priceBeforeDiscount:
+        type: integer
+      seatsAvailable:
+        type: integer
+      seatsTotal:
+        type: integer
+      singleSupplement:
+        type: integer
+      startDate:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_commons.AIWarning:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
   backend_pkg_modules_tourprogram_models.AirlinePublic:
     properties:
       code:
@@ -4475,6 +4651,83 @@ definitions:
       startDate:
         example: "2026-12-01"
         type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIExtractConfigResponse:
+    properties:
+      maxPdfSizeMb:
+        description: the upload limit
+        type: integer
+      ready:
+        description: AI on, a usable key, encryption configured
+        type: boolean
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIExtractFailure:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIExtractResult:
+    properties:
+      confidence:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_commons.AIConfidence'
+        description: 'per section: high | medium | low'
+      draft:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_commons.AIDraft'
+      durationMs:
+        type: integer
+      fileName:
+        type: string
+      model:
+        description: the model that answered
+        type: string
+      usage:
+        $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIUsage'
+      warnings:
+        items:
+          $ref: '#/definitions/backend_pkg_modules_tourprogram_commons.AIWarning'
+        type: array
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIExtractResultResponse:
+    properties:
+      error:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractFailure'
+        description: set when failed
+      jobId:
+        type: string
+      result:
+        allOf:
+        - $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractResult'
+        description: set when done
+      state:
+        enum:
+        - pending
+        - done
+        - failed
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIExtractStartResponse:
+    properties:
+      jobId:
+        type: string
+      state:
+        enum:
+        - pending
+        type: string
+    type: object
+  backend_pkg_modules_tourprogram_models.TourProgramAIUsage:
+    properties:
+      cacheCreationInputTokens:
+        type: integer
+      cacheReadInputTokens:
+        type: integer
+      inputTokens:
+        type: integer
+      outputTokens:
+        type: integer
     type: object
   backend_pkg_modules_tourprogram_models.TourProgramAirline:
     properties:
@@ -5061,6 +5314,9 @@ definitions:
         description: YYYY-MM-DD, on or after startDate
         example: "2026-12-05"
         type: string
+      infantPrice:
+        description: child under 2, no seat
+        type: integer
       note:
         type: string
       price:
@@ -5099,6 +5355,9 @@ definitions:
         type: string
       id:
         type: string
+      infantPrice:
+        description: child under 2, no seat
+        type: integer
       note:
         description: staff only
         type: string
@@ -5140,6 +5399,9 @@ definitions:
         type: string
       id:
         type: string
+      infantPrice:
+        description: child under 2, no seat
+        type: integer
       note:
         description: staff only
         type: string
@@ -5194,6 +5456,9 @@ definitions:
         type: string
       id:
         type: string
+      infantPrice:
+        description: child under 2, no seat
+        type: integer
       note:
         type: string
       price:
@@ -5230,6 +5495,9 @@ definitions:
         type: string
       id:
         type: string
+      infantPrice:
+        description: child under 2, no seat
+        type: integer
       note:
         description: staff only
         type: string
@@ -5731,6 +5999,99 @@ info:
   title: nidnoi travel API
   version: "1.0"
 paths:
+  /ai-settings:
+    get:
+      description: 'The API key is never returned: hasApiKey and apiKeyLast4 only.
+        ready = AI prefill is offered to staff.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_aisetting_models.AISettingResponse'
+      security:
+      - BearerAuth: []
+      summary: Get the AI settings
+      tags:
+      - ai-setting
+    put:
+      consumes:
+      - application/json
+      description: |-
+        apiKey omitted, null or "" keeps the stored key; clearApiKey removes it. The key is stored
+        encrypted (AES-256-GCM). enabled needs a key. AI_NOT_CONFIGURED when the server has no
+        AI_SETTINGS_ENCRYPTION_KEY.
+      parameters:
+      - description: Settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_aisetting_models.AISettingUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_aisetting_models.AISettingResponse'
+        "400":
+          description: VALIDATION
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: AI_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change the AI settings
+      tags:
+      - ai-setting
+  /ai-settings/test:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Checks the key typed on the page (apiKey) or the stored one (apiKey empty) against the model
+        with GET /v1/models/{model} — no tokens billed, nothing saved.
+      parameters:
+      - description: Key and model to test
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/backend_pkg_modules_aisetting_models.AISettingTestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_aisetting_models.AISettingTestResponse'
+        "400":
+          description: VALIDATION, AI_INVALID_API_KEY, AI_MODEL_UNAVAILABLE
+          schema:
+            additionalProperties: true
+            type: object
+        "502":
+          description: AI_REQUEST_FAILED
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: AI_BUSY, AI_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Test an Anthropic API key
+      tags:
+      - ai-setting
   /airlines:
     post:
       consumes:
@@ -8281,6 +8642,92 @@ paths:
       summary: Get a tour program with its countries, cities and gallery
       tags:
       - tour-programs
+  /tour-programs/ai-extract:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Checks the PDF (by content, at most AI setting maxPdfSizeMb) and starts reading it in the
+        background — it takes about 30-90 seconds. Poll GET /tour-programs/ai-extract/{jobId}.
+        Nothing is saved: the result prefills the create form.
+      parameters:
+      - description: Tour program PDF
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractStartResponse'
+        "400":
+          description: VALIDATION, MEDIA_TYPE_NOT_ALLOWED
+          schema:
+            additionalProperties: true
+            type: object
+        "413":
+          description: MEDIA_TOO_LARGE
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: AI_NOT_CONFIGURED
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Read a tour program PDF with AI (start)
+      tags:
+      - tour-program
+  /tour-programs/ai-extract/{jobId}:
+    get:
+      description: |-
+        state pending → keep polling (every few seconds); done → result.draft prefills the create
+        form, with warnings and per-section confidence; failed → error {code, message}.
+        Only the user who started the job can read it; results are kept for config ai.jobTTL.
+      parameters:
+      - description: Job id from POST /tour-programs/ai-extract
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractResultResponse'
+        "404":
+          description: NOT_FOUND (unknown, expired or someone else's job)
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Result of a PDF read with AI
+      tags:
+      - tour-program
+  /tour-programs/ai-extract/config:
+    get:
+      description: ready = AI is on with a usable key; the create page offers "Upload
+        PDF" only then.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractConfigResponse'
+      security:
+      - BearerAuth: []
+      summary: Is the AI prefill available?
+      tags:
+      - tour-program
   /tour-programs/list:
     post:
       consumes:

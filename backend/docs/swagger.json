@@ -7,6 +7,142 @@
     },
     "basePath": "/api/v1",
     "paths": {
+        "/ai-settings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "The API key is never returned: hasApiKey and apiKeyLast4 only. ready = AI prefill is offered to staff.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-setting"
+                ],
+                "summary": "Get the AI settings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_aisetting_models.AISettingResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "apiKey omitted, null or \"\" keeps the stored key; clearApiKey removes it. The key is stored\nencrypted (AES-256-GCM). enabled needs a key. AI_NOT_CONFIGURED when the server has no\nAI_SETTINGS_ENCRYPTION_KEY.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-setting"
+                ],
+                "summary": "Change the AI settings",
+                "parameters": [
+                    {
+                        "description": "Settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_aisetting_models.AISettingUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_aisetting_models.AISettingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "AI_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-settings/test": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checks the key typed on the page (apiKey) or the stored one (apiKey empty) against the model\nwith GET /v1/models/{model} — no tokens billed, nothing saved.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-setting"
+                ],
+                "summary": "Test an Anthropic API key",
+                "parameters": [
+                    {
+                        "description": "Key and model to test",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_aisetting_models.AISettingTestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_aisetting_models.AISettingTestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION, AI_INVALID_API_KEY, AI_MODEL_UNAVAILABLE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "502": {
+                        "description": "AI_REQUEST_FAILED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "AI_BUSY, AI_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/airlines": {
             "put": {
                 "security": [
@@ -3811,6 +3947,130 @@
                 }
             }
         },
+        "/tour-programs/ai-extract": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checks the PDF (by content, at most AI setting maxPdfSizeMb) and starts reading it in the\nbackground — it takes about 30-90 seconds. Poll GET /tour-programs/ai-extract/{jobId}.\nNothing is saved: the result prefills the create form.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program"
+                ],
+                "summary": "Read a tour program PDF with AI (start)",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Tour program PDF",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractStartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION, MEDIA_TYPE_NOT_ALLOWED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "413": {
+                        "description": "MEDIA_TOO_LARGE",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "AI_NOT_CONFIGURED",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/ai-extract/config": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "ready = AI is on with a usable key; the create page offers \"Upload PDF\" only then.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program"
+                ],
+                "summary": "Is the AI prefill available?",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractConfigResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tour-programs/ai-extract/{jobId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "state pending → keep polling (every few seconds); done → result.draft prefills the create\nform, with warnings and per-section confidence; failed → error {code, message}.\nOnly the user who started the job can read it; results are kept for config ai.jobTTL.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tour-program"
+                ],
+                "summary": "Result of a PDF read with AI",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job id from POST /tour-programs/ai-extract",
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractResultResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND (unknown, expired or someone else's job)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/tour-programs/list": {
             "post": {
                 "security": [
@@ -4636,6 +4896,17 @@
         }
     },
     "definitions": {
+        "backend_pkg_constants_aimodel.Model": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_domain.LineBookingCharge": {
             "type": "object",
             "properties": {
@@ -4884,6 +5155,102 @@
                 "status": {
                     "description": "false = soft delete",
                     "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_aisetting_models.AISettingResponse": {
+            "type": "object",
+            "properties": {
+                "apiKeyLast4": {
+                    "description": "\"\" when no key",
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "encryptionConfigured": {
+                    "description": "EncryptionConfigured is false while AI_SETTINGS_ENCRYPTION_KEY is not set on the server (AI stays off).",
+                    "type": "boolean"
+                },
+                "hasApiKey": {
+                    "type": "boolean"
+                },
+                "keyUnreadable": {
+                    "description": "KeyUnreadable: a key is stored but can't be decrypted (AI_SETTINGS_ENCRYPTION_KEY changed); enter it again.",
+                    "type": "boolean"
+                },
+                "maxPdfSizeMb": {
+                    "type": "integer"
+                },
+                "maxPdfSizeMbLimit": {
+                    "description": "highest maxPdfSizeMb the server accepts",
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "models": {
+                    "description": "selectable models, default first",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_constants_aimodel.Model"
+                    }
+                },
+                "ready": {
+                    "description": "Ready: enabled, a usable key and encryption configured — the AI prefill is offered to staff.",
+                    "type": "boolean"
+                },
+                "updateBy": {
+                    "description": "name; \"\" for none",
+                    "type": "string"
+                },
+                "updateDate": {
+                    "description": "null until an admin saves",
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_aisetting_models.AISettingTestRequest": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_aisetting_models.AISettingTestResponse": {
+            "type": "object",
+            "properties": {
+                "model": {
+                    "description": "the model that was checked",
+                    "type": "string"
+                },
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_aisetting_models.AISettingUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
+                    "description": "a new Anthropic API key (sk-ant-…)",
+                    "type": "string"
+                },
+                "clearApiKey": {
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "maxPdfSizeMb": {
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
                 }
             }
         },
@@ -10888,6 +11255,156 @@
                 }
             }
         },
+        "backend_pkg_modules_tourprogram_commons.AIConfidence": {
+            "type": "object",
+            "properties": {
+                "extras": {
+                    "type": "string"
+                },
+                "main": {
+                    "type": "string"
+                },
+                "periods": {
+                    "type": "string"
+                },
+                "prices": {
+                    "type": "string"
+                },
+                "taxonomy": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_commons.AIDraft": {
+            "type": "object",
+            "properties": {
+                "airlineId": {
+                    "type": "string"
+                },
+                "bannerImage": {
+                    "type": "string"
+                },
+                "cardImage": {
+                    "type": "string"
+                },
+                "cityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countryIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "TBD: left empty for now",
+                    "type": "string"
+                },
+                "docxFile": {
+                    "type": "string"
+                },
+                "highlight": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "pdfFile": {
+                    "type": "string"
+                },
+                "periods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_commons.AIDraftPeriod"
+                    }
+                },
+                "refId": {
+                    "description": "always null",
+                    "type": "integer"
+                },
+                "state": {
+                    "description": "always draft (10)",
+                    "type": "integer"
+                },
+                "wholesaleId": {
+                    "description": "always null: staff pick it",
+                    "type": "string"
+                },
+                "wholesaleTourCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_commons.AIDraftPeriod": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "infantPrice": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "seatsTotal": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_commons.AIWarning": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "backend_pkg_modules_tourprogram_models.AirlinePublic": {
             "type": "object",
             "properties": {
@@ -10980,6 +11497,128 @@
                 "startDate": {
                     "type": "string",
                     "example": "2026-12-01"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIExtractConfigResponse": {
+            "type": "object",
+            "properties": {
+                "maxPdfSizeMb": {
+                    "description": "the upload limit",
+                    "type": "integer"
+                },
+                "ready": {
+                    "description": "AI on, a usable key, encryption configured",
+                    "type": "boolean"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIExtractFailure": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIExtractResult": {
+            "type": "object",
+            "properties": {
+                "confidence": {
+                    "description": "per section: high | medium | low",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_commons.AIConfidence"
+                        }
+                    ]
+                },
+                "draft": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_commons.AIDraft"
+                },
+                "durationMs": {
+                    "type": "integer"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "model": {
+                    "description": "the model that answered",
+                    "type": "string"
+                },
+                "usage": {
+                    "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIUsage"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_commons.AIWarning"
+                    }
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIExtractResultResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "set when failed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractFailure"
+                        }
+                    ]
+                },
+                "jobId": {
+                    "type": "string"
+                },
+                "result": {
+                    "description": "set when done",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourProgramAIExtractResult"
+                        }
+                    ]
+                },
+                "state": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "done",
+                        "failed"
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIExtractStartResponse": {
+            "type": "object",
+            "properties": {
+                "jobId": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string",
+                    "enum": [
+                        "pending"
+                    ]
+                }
+            }
+        },
+        "backend_pkg_modules_tourprogram_models.TourProgramAIUsage": {
+            "type": "object",
+            "properties": {
+                "cacheCreationInputTokens": {
+                    "type": "integer"
+                },
+                "cacheReadInputTokens": {
+                    "type": "integer"
+                },
+                "inputTokens": {
+                    "type": "integer"
+                },
+                "outputTokens": {
+                    "type": "integer"
                 }
             }
         },
@@ -11834,6 +12473,10 @@
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "infantPrice": {
+                    "description": "child under 2, no seat",
+                    "type": "integer"
+                },
                 "note": {
                     "type": "string"
                 },
@@ -11887,6 +12530,10 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "infantPrice": {
+                    "description": "child under 2, no seat",
+                    "type": "integer"
                 },
                 "note": {
                     "description": "staff only",
@@ -11946,6 +12593,10 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "infantPrice": {
+                    "description": "child under 2, no seat",
+                    "type": "integer"
                 },
                 "note": {
                     "description": "staff only",
@@ -12026,6 +12677,10 @@
                 "id": {
                     "type": "string"
                 },
+                "infantPrice": {
+                    "description": "child under 2, no seat",
+                    "type": "integer"
+                },
                 "note": {
                     "type": "string"
                 },
@@ -12076,6 +12731,10 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "infantPrice": {
+                    "description": "child under 2, no seat",
+                    "type": "integer"
                 },
                 "note": {
                     "description": "staff only",

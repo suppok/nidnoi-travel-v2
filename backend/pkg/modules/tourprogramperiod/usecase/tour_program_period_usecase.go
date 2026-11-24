@@ -73,6 +73,7 @@ func fieldsValidate(f *models.TourProgramPeriodFields) error {
 		})),
 		validation.Field(&f.ChildWithBedPrice, validation.By(optionalPrice)),
 		validation.Field(&f.ChildNoBedPrice, validation.By(optionalPrice)),
+		validation.Field(&f.InfantPrice, validation.By(optionalPrice)),
 		validation.Field(&f.SingleSupplement, validation.By(optionalPrice)),
 		validation.Field(&f.Deposit, validation.By(optionalPrice)),
 		validation.Field(&f.SeatsTotal, validation.Min(0), validation.Max(maxSeats)),
@@ -102,6 +103,7 @@ func applyFields(p *domain.TourProgramPeriod, f *models.TourProgramPeriodFields)
 	p.PriceBeforeDiscount = f.PriceBeforeDiscount
 	p.ChildWithBedPrice = f.ChildWithBedPrice
 	p.ChildNoBedPrice = f.ChildNoBedPrice
+	p.InfantPrice = f.InfantPrice
 	p.SingleSupplement = f.SingleSupplement
 	p.Deposit = f.Deposit
 	p.SeatsTotal = f.SeatsTotal
@@ -110,7 +112,7 @@ func applyFields(p *domain.TourProgramPeriod, f *models.TourProgramPeriodFields)
 }
 
 var editableColumns = []string{
-	"start_date", "end_date", "price", "price_before_discount", "child_with_bed_price", "child_no_bed_price",
+	"start_date", "end_date", "price", "price_before_discount", "child_with_bed_price", "child_no_bed_price", "infant_price",
 	"single_supplement", "deposit", "seats_total", "seats_available", "note", "update_date", "update_by",
 }
 

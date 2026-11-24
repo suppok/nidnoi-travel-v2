@@ -21,6 +21,7 @@ type TourProgramPeriodItem struct {
 	PriceBeforeDiscount null.Int  `json:"priceBeforeDiscount" swaggertype:"integer"`
 	ChildWithBedPrice   null.Int  `json:"childWithBedPrice" swaggertype:"integer"`
 	ChildNoBedPrice     null.Int  `json:"childNoBedPrice" swaggertype:"integer"`
+	InfantPrice         null.Int  `json:"infantPrice" swaggertype:"integer"` // child under 2, no seat
 	SingleSupplement    null.Int  `json:"singleSupplement" swaggertype:"integer"`
 	Deposit             null.Int  `json:"deposit" swaggertype:"integer"`
 	SeatsTotal          int       `json:"seatsTotal"`
@@ -41,6 +42,7 @@ func NewTourProgramPeriodItem(p *domain.TourProgramPeriod) TourProgramPeriodItem
 		PriceBeforeDiscount: p.PriceBeforeDiscount,
 		ChildWithBedPrice:   p.ChildWithBedPrice,
 		ChildNoBedPrice:     p.ChildNoBedPrice,
+		InfantPrice:         p.InfantPrice,
 		SingleSupplement:    p.SingleSupplement,
 		Deposit:             p.Deposit,
 		SeatsTotal:          p.SeatsTotal,
@@ -60,6 +62,7 @@ type TourProgramPeriodFields struct {
 	PriceBeforeDiscount null.Int `json:"priceBeforeDiscount" swaggertype:"integer"` // must be above price
 	ChildWithBedPrice   null.Int `json:"childWithBedPrice" swaggertype:"integer"`
 	ChildNoBedPrice     null.Int `json:"childNoBedPrice" swaggertype:"integer"`
+	InfantPrice         null.Int `json:"infantPrice" swaggertype:"integer"` // child under 2, no seat
 	SingleSupplement    null.Int `json:"singleSupplement" swaggertype:"integer"`
 	Deposit             null.Int `json:"deposit" swaggertype:"integer"`
 	SeatsTotal          int      `json:"seatsTotal"`

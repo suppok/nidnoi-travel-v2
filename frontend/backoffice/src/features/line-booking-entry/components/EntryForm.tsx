@@ -387,7 +387,8 @@ export default function EntryForm({ booking, initialSummary, lookups, onSaved, o
             <span className="text-[13px] text-ink-muted">จำนวน</span>
             <span className="text-[13px] text-ink-muted">ราคา/หน่วย (บาท)</span>
             <PriceRow label="ผู้ใหญ่" count="adultCount" price="adultPrice" />
-            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี" count="childCount" price="childPrice" />
+            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี (มีเตียง)" count="childWithBedCount" price="childWithBedPrice" />
+            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี (ไม่มีเตียง)" count="childNoBedCount" price="childNoBedPrice" />
             <PriceRow label="ทารก" count="infantCount" price="infantPrice" />
             <PriceRow label="วีซ่า" count="visaCount" price="visaPrice" />
             <PriceRow label="พาสปอร์ตต่างชาติ" count="foreignCount" price="foreignPrice" />

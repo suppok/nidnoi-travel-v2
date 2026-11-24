@@ -8,10 +8,13 @@ import (
 	"backend/pkg/core/auth/permission"
 	"backend/pkg/core/config"
 	"backend/pkg/core/database/query"
+	"backend/pkg/modules/shared/client/anthropic"
 	"backend/pkg/modules/shared/client/deployhook"
 	"backend/pkg/modules/shared/client/line"
 	"backend/pkg/modules/shared/client/mailer"
 	"backend/pkg/modules/shared/client/objectstorage"
+	"backend/pkg/modules/shared/services/aisettings"
+	"backend/pkg/modules/shared/services/asyncjob"
 	"backend/pkg/modules/shared/services/password"
 	"backend/pkg/modules/shared/services/revalidation"
 	"backend/pkg/repository"
@@ -66,6 +69,8 @@ type ShareRegistry struct {
 type ServiceRegistry struct {
 	Password    password.Service
 	Revalidator revalidation.Revalidator
+	AISettings  aisettings.Service
+	AsyncJobs   asyncjob.Runner
 }
 
 type ClientRegistry struct {
@@ -73,4 +78,5 @@ type ClientRegistry struct {
 	DeployHook    deployhook.DeployHook
 	LINE          line.Client
 	Mailer        mailer.Mailer
+	Anthropic     anthropic.Client
 }

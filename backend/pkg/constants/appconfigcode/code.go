@@ -43,4 +43,9 @@ var (
 	// Email
 	// EMAIL_CONTACT_CARD: the contact card image in email footers (admin page). Missing = the built-in card.
 	AppConfigEmailContactCard = NewAppConfig[models.AppConfigEmailContactCard]("EMAIL_CONTACT_CARD", false, "wholesale-email")
+
+	// AI
+	// AI_SETTINGS: Claude API key (encrypted), model and on/off for AI tour prefill (admin page
+	// "ตั้งค่า AI", PUT /ai-settings). Missing = AI off.
+	AppConfigAISettings = NewAppConfig[models.AppConfigAISettings]("AI_SETTINGS", false, "ai-extract")
 )

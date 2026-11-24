@@ -117,3 +117,7 @@ export const airlineRoutes: Record<string, MockHandler> = {
 export function mockAirline(id: string): Airline | undefined {
   return airlines.find((a) => a.id === id);
 }
+
+export function mockFindAirlineByCode(code: string): Airline | undefined {
+  return airlines.find((a) => a.code === code && a.status);
+}
