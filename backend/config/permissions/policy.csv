@@ -1,6 +1,7 @@
 p, super_admin, *, *
 p, admin, *, *
 p, sales, tour-program, create
+p, sales, tour-program, ai-extract
 p, sales, tour-program, update
 p, sales, tour-program, list
 p, sales, tour-program, get

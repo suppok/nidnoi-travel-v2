@@ -40,6 +40,10 @@ func (h *TourProgramAPIHandler) Init(jwtAuth middleware.Auth, authPermissions mi
 	r.Put("/tour-programs", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramUpdate), h.TourProgramUpdate)
 	r.Post("/tour-programs/list", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramList), h.TourProgramList)
 	r.Put("/tour-programs/status", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramStatus), h.TourProgramUpdateStatus)
+	// AI prefill from a PDF — before "/:id" so "ai-extract" isn't taken as an id.
+	r.Get("/tour-programs/ai-extract/config", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramAIExtract), h.TourProgramAIExtractConfig)
+	r.Post("/tour-programs/ai-extract", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramAIExtract), h.TourProgramAIExtract)
+	r.Get("/tour-programs/ai-extract/:jobId", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramAIExtract), h.TourProgramAIExtractResult)
 	r.Get("/tour-programs/:id", jwtAuth.Auth, authPermissions.RequiresPermissions(apicode.TourProgramGet), h.TourProgramGet)
 }
 

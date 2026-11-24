@@ -63,8 +63,8 @@ func BookingSummaryText(b *domain.LineBooking, tour *domain.TourProgram) string 
 			push(fmt.Sprintf("• %s : %s (จำนวน %d %s)", label, money(price), count, unit))
 		}
 	}
-	priced("ราคาเด็กอายุต่ำกว่า 20 ปี/ท่าน", b.ChildWithBedCount, int(b.ChildWithBedPrice.Int64), "ท่าน")
-	priced("ราคาเด็กอายุต่ำกว่า 20 ปี (ไม่เสริมเตียง)/ท่าน", b.ChildNoBedCount, int(b.ChildNoBedPrice.Int64), "ท่าน")
+	priced("ราคาเด็กอายุต่ำกว่า 20 ปี (มีเตียง)/ท่าน", b.ChildWithBedCount, int(b.ChildWithBedPrice.Int64), "ท่าน")
+	priced("ราคาเด็กอายุต่ำกว่า 20 ปี (ไม่มีเตียง)/ท่าน", b.ChildNoBedCount, int(b.ChildNoBedPrice.Int64), "ท่าน")
 	priced("ราคาเด็กทารก/ท่าน", b.InfantCount, int(b.InfantPrice.Int64), "ท่าน")
 
 	charge := func(kind string) (int, int) {

@@ -260,3 +260,11 @@ export function mockCountry(id: string): Country | undefined {
 export function mockCity(id: string): StoredCity | undefined {
   return db.cities.find((c) => c.id === id);
 }
+
+export function mockFindCountryBySlug(slug: string): Country | undefined {
+  return db.countries.find((c) => c.slug === slug && c.status);
+}
+
+export function mockFindCityBySlug(slug: string): StoredCity | undefined {
+  return db.cities.find((c) => c.slug === slug && c.status);
+}

@@ -5,6 +5,7 @@ export const Permissions = {
   TourProgramList: 'tour-program:list',
   TourProgramGet: 'tour-program:get',
   TourProgramStatus: 'tour-program:status',
+  TourProgramAIExtract: 'tour-program:ai-extract', // prefill the create form from a PDF with AI
   PeriodCreate: 'tour-program-period:create',
   PeriodUpdate: 'tour-program-period:update',
   PeriodList: 'tour-program-period:list',
@@ -40,6 +41,8 @@ export const Permissions = {
   AppConfigVerify: 'app-config:verify',
   AppConfigAppSettings: 'app-config:app-settings',
   AppConfigEmailContactCard: 'app-config:email-contact-card', // admins: the contact card in email footers
+  AISettingGet: 'ai-setting:get', // admins: Claude API key, model, on/off
+  AISettingUpdate: 'ai-setting:update', // admins: change the AI settings and test the key
   UserCreate: 'user:create',
   UserUpdate: 'user:update',
   UserList: 'user:list',

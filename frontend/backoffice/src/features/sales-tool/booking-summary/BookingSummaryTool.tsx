@@ -35,8 +35,10 @@ type FormValues = {
   periodId?: string;
   adultCount: Num;
   adultPrice: Num;
-  childCount: Num;
-  childPrice: Num;
+  childWithBedCount: Num;
+  childWithBedPrice: Num;
+  childNoBedCount: Num;
+  childNoBedPrice: Num;
   infantCount: Num;
   infantPrice: Num;
   visaCount: Num;
@@ -73,8 +75,10 @@ const INITIAL: FormValues = {
   refBookingNo: '',
   adultCount: 1,
   adultPrice: null,
-  childCount: null,
-  childPrice: null,
+  childWithBedCount: null,
+  childWithBedPrice: null,
+  childNoBedCount: null,
+  childNoBedPrice: null,
   infantCount: null,
   infantPrice: null,
   visaCount: null,
@@ -197,7 +201,9 @@ export default function BookingSummaryTool() {
     patch({
       periodId,
       adultPrice: p.price,
-      childPrice: p.childWithBedPrice ?? p.price,
+      childWithBedPrice: p.childWithBedPrice ?? p.price,
+      childNoBedPrice: p.childNoBedPrice,
+      infantPrice: p.infantPrice ?? null,
       singleRoomPrice: p.singleSupplement,
       depositPerPerson: p.deposit,
       isDeposit: deposit && p.deposit !== null,
@@ -235,7 +241,8 @@ export default function BookingSummaryTool() {
       period: period && { startDate: period.startDate, endDate: period.endDate },
       adult: { count: num(values.adultCount), price: num(values.adultPrice) },
       adultPriceBeforeDiscount: period?.priceBeforeDiscount ?? null,
-      child: { count: num(values.childCount), price: num(values.childPrice) },
+      childWithBed: { count: num(values.childWithBedCount), price: num(values.childWithBedPrice) },
+      childNoBed: { count: num(values.childNoBedCount), price: num(values.childNoBedPrice) },
       infant: { count: num(values.infantCount), price: num(values.infantPrice) },
       visa: { count: num(values.visaCount), price: num(values.visaPrice) },
       foreignPassport: { count: num(values.foreignCount), price: num(values.foreignPrice) },
@@ -333,7 +340,8 @@ export default function BookingSummaryTool() {
             <span className="text-[13px] text-ink-muted">จำนวน</span>
             <span className="text-[13px] text-ink-muted">ราคา/หน่วย (บาท)</span>
             <PriceRow label="ผู้ใหญ่" count="adultCount" price="adultPrice" />
-            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี" count="childCount" price="childPrice" />
+            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี (มีเตียง)" count="childWithBedCount" price="childWithBedPrice" />
+            <PriceRow label="เด็กอายุต่ำกว่า 20 ปี (ไม่มีเตียง)" count="childNoBedCount" price="childNoBedPrice" />
             <PriceRow label="ทารก" count="infantCount" price="infantPrice" />
             <PriceRow label="วีซ่า" count="visaCount" price="visaPrice" />
             <PriceRow label="พาสปอร์ตต่างชาติ" count="foreignCount" price="foreignPrice" />

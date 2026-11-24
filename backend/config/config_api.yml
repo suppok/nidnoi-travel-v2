@@ -3,7 +3,9 @@
 server:
   readTimeout: 15s
   writeTimeout: 30s
-  bodyLimitMB: 12 # Fiber default is 4 MB; uploads are up to 10 MB
+  # Fiber default is 4 MB. Media uploads are up to 10 MB; tour PDFs for AI prefill up to ai.maxPdfMB.
+  # Fiber applies one limit to every route.
+  bodyLimitMB: 42
   clientIPHeader: CF-Connecting-IP # real client IP behind Cloudflare; falls back to the socket address
 
 database:
@@ -58,3 +60,11 @@ mail:
     tickInterval: 10s # how often the sender picks due emails
     batchSize: 20
     maxAttempts: 5 # then the email is failed; resend from the backoffice
+
+ai:
+  # Tour program prefill from a PDF (Claude API). Key, model and on/off: app config AI_SETTINGS (admin page).
+  requestTimeout: 180s # one extraction, retries included
+  maxConcurrent: 2 # extractions at once; each holds the PDF in memory
+  maxRetries: 3 # 429 / 529 only
+  maxPdfMB: 40 # hard cap; the admin setting maxPdfSizeMb can only be lower. Below server.bodyLimitMB
+  jobTTL: 30m # how long a finished result waits for the backoffice to fetch it

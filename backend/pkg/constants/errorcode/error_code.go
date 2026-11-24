@@ -99,3 +99,17 @@ var (
 	SiteRebuildUnavailable = ErrCode("SITE_REBUILD_UNAVAILABLE", "The site rebuild hook is not configured")
 	SiteRebuildFailed      = ErrCode("SITE_REBUILD_FAILED", "Could not start the site rebuild")
 )
+
+// AI (Claude API)
+var (
+	// AINotConfigured: AI is switched off, has no usable API key, or AI_SETTINGS_ENCRYPTION_KEY is not set (503).
+	AINotConfigured = ErrCode("AI_NOT_CONFIGURED", "AI is not configured")
+	// AIInvalidAPIKey: Anthropic rejected the API key.
+	AIInvalidAPIKey = ErrCode("AI_INVALID_API_KEY", "The Anthropic API key was rejected")
+	// AIModelUnavailable: the selected model doesn't exist or this key can't use it.
+	AIModelUnavailable = ErrCode("AI_MODEL_UNAVAILABLE", "The selected model is not available for this API key")
+	// AIBusy: Anthropic is rate limiting or overloaded; try again later (503).
+	AIBusy = ErrCode("AI_BUSY", "The AI service is busy; try again in a few minutes")
+	// AIRequestFailed: any other failure calling the AI (502); the message carries the reason.
+	AIRequestFailed = ErrCode("AI_REQUEST_FAILED", "The AI request failed")
+)

@@ -57,7 +57,28 @@ func TestQuoteLineSummaryDeal(t *testing.T) {
 	}
 }
 
+func TestQuoteLineInfantFromPeriod(t *testing.T) {
+	p := period()
+	p.ChildNoBedPrice = null.IntFrom(27000)
+	p.InfantPrice = null.IntFrom(6000)
+	b, err := quoteLine(p, &models.LineBookingCreateRequest{AdultTwin: 2, ChildNoBed: 1, Infant: 1, PaymentMethod: linebookingpayment.Transfer})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b.InfantPrice.Int64 != 6000 || b.ChildNoBedPrice.Int64 != 27000 || b.TotalPrice != 2*30000+27000+6000 {
+		t.Fatalf("infant %v child no bed %v total %d", b.InfantPrice, b.ChildNoBedPrice, b.TotalPrice)
+	}
+	// An entered price wins over the period's.
+	b, err = quoteLine(p, &models.LineBookingCreateRequest{AdultTwin: 1, Infant: 1, InfantPrice: null.IntFrom(4500)})
+	if err != nil || b.InfantPrice.Int64 != 4500 {
+		t.Fatalf("infant = %v, err %v", b.InfantPrice, err)
+	}
+}
+
 func TestQuoteLineErrors(t *testing.T) {
+	if _, err := quoteLine(period(), &models.LineBookingCreateRequest{AdultTwin: 1, Infant: 1}); err == nil {
+		t.Fatal("want an error for infants without a price when the period has none")
+	}
 	if _, err := quoteLine(period(), &models.LineBookingCreateRequest{AdultTwin: 1, ChildNoBed: 1}); err == nil {
 		t.Fatal("want an error for a child-no-bed count without a price")
 	}

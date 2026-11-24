@@ -17,7 +17,7 @@ import type { ParsedSummary, PricedLine } from './parseSummary.ts';
 // totals come from its computeTotals (summary.ts). The backend recomputes the total with quoteLine
 // (backend/pkg/modules/linebooking/usecase) — keep both in sync. dealRequest maps the rows to the
 // backend's room types: single rooms → adults in single rooms (supplement = the room price), the
-// other adults → twin, children → "with bed".
+// other adults → twin, children with bed / no bed and infants one to one.
 
 export type Num = number | null;
 
@@ -26,8 +26,10 @@ export type DealOption = { name?: string; qty?: Num; price?: Num };
 export type DealValues = {
   adultCount: Num;
   adultPrice: Num;
-  childCount: Num; // under 20
-  childPrice: Num;
+  childWithBedCount: Num; // under 20, with a bed
+  childWithBedPrice: Num;
+  childNoBedCount: Num; // under 20, no bed
+  childNoBedPrice: Num;
   infantCount: Num;
   infantPrice: Num;
   visaCount: Num;
@@ -60,8 +62,10 @@ export const DEFAULT_CREDIT_FEE_PERCENT = 2.6;
 export const EMPTY_DEAL: DealValues = {
   adultCount: 1,
   adultPrice: null,
-  childCount: null,
-  childPrice: null,
+  childWithBedCount: null,
+  childWithBedPrice: null,
+  childNoBedCount: null,
+  childNoBedPrice: null,
   infantCount: null,
   infantPrice: null,
   visaCount: null,
@@ -106,7 +110,8 @@ export function dealTotals(v: DealValues): SummaryTotals {
     period: null,
     adult: line(v.adultCount, v.adultPrice),
     adultPriceBeforeDiscount: null,
-    child: line(v.childCount, v.childPrice),
+    childWithBed: line(v.childWithBedCount, v.childWithBedPrice),
+    childNoBed: line(v.childNoBedCount, v.childNoBedPrice),
     infant: line(v.infantCount, v.infantPrice),
     visa: line(v.visaCount, v.visaPrice),
     foreignPassport: line(v.foreignCount, v.foreignPrice),
@@ -134,12 +139,15 @@ export function dealTotals(v: DealValues): SummaryTotals {
 }
 
 // Picking a departure fills its prices and the payment defaults, like the summary tool. Everything
-// stays editable.
+// stays editable. A child with bed falls back to the adult price; no-bed and infant prices only come
+// from the period.
 export function periodPatch(p: TourProgramPeriod): Partial<DealValues> {
   const deposit = defaultIsDeposit(p.startDate) && n(p.deposit) > 0;
   return {
     adultPrice: p.price,
-    childPrice: p.childWithBedPrice ?? p.price,
+    childWithBedPrice: p.childWithBedPrice ?? p.price,
+    childNoBedPrice: p.childNoBedPrice,
+    infantPrice: p.infantPrice ?? null,
     singleRoomPrice: p.singleSupplement,
     isDeposit: deposit,
     ...(deposit ? { depositPerPerson: p.deposit } : {}),
@@ -153,7 +161,8 @@ export function dealError(v: DealValues, totals: SummaryTotals): string | null {
   if (adults < 1) return 'กรุณาระบุผู้ใหญ่อย่างน้อย 1 ท่าน';
   if (totals.travellers > 50) return 'ผู้เดินทางได้ไม่เกิน 50 ท่านต่อการจอง';
   if (v.adultPrice === null || v.adultPrice === undefined) return 'กรุณาระบุราคาผู้ใหญ่';
-  if (n(v.childCount) > 0 && v.childPrice == null) return 'กรุณาระบุราคาเด็ก';
+  if (n(v.childWithBedCount) > 0 && v.childWithBedPrice == null) return 'กรุณาระบุราคาเด็ก (มีเตียง)';
+  if (n(v.childNoBedCount) > 0 && v.childNoBedPrice == null) return 'กรุณาระบุราคาเด็ก (ไม่มีเตียง)';
   if (n(v.infantCount) > 0 && v.infantPrice == null) return 'กรุณาระบุราคาทารก';
   if (n(v.singleRoomCount) > adults) return 'ห้องพักเดี่ยวมากกว่าจำนวนผู้ใหญ่';
   if (n(v.singleRoomCount) > 0 && v.singleRoomPrice == null) return 'กรุณาระบุราคาห้องพักเดี่ยว';
@@ -185,19 +194,20 @@ function chargeLines(v: DealValues, travellers: number): LineBookingCharge[] {
 export function dealRequest(v: DealValues, adultPriceBeforeDiscount: number | null): LineBookingDeal {
   const adults = n(v.adultCount);
   const single = Math.min(n(v.singleRoomCount), adults);
-  const children = n(v.childCount);
+  const withBed = n(v.childWithBedCount);
+  const noBed = n(v.childNoBedCount);
   const infants = n(v.infantCount);
-  const travellers = adults + children + infants;
+  const travellers = adults + withBed + noBed + infants;
   return {
     adultTwin: adults - single,
     adultSingle: single,
-    childWithBed: children,
-    childNoBed: 0,
+    childWithBed: withBed,
+    childNoBed: noBed,
     infant: infants,
     adultPrice: n(v.adultPrice),
     singleSupplement: single > 0 ? n(v.singleRoomPrice) : null,
-    childWithBedPrice: children > 0 ? n(v.childPrice) : null,
-    childNoBedPrice: null,
+    childWithBedPrice: withBed > 0 ? n(v.childWithBedPrice) : null,
+    childNoBedPrice: noBed > 0 ? n(v.childNoBedPrice) : null,
     infantPrice: infants > 0 ? n(v.infantPrice) : null,
     adultPriceBeforeDiscount,
     discountPerPerson: n(v.discountPerPerson),
@@ -218,7 +228,8 @@ const priced = (line: PricedLine | null): [Num, Num] => (line ? [line.count || n
 
 // The deal from a pasted summary: the same rows, so it maps one to one.
 export function dealFromSummary(s: ParsedSummary): DealValues {
-  const [childCount, childPrice] = priced(s.child);
+  const [childWithBedCount, childWithBedPrice] = priced(s.childWithBed);
+  const [childNoBedCount, childNoBedPrice] = priced(s.childNoBed);
   const [infantCount, infantPrice] = priced(s.infant);
   const [singleRoomCount, singleRoomPrice] = priced(s.singleRoom);
   const [visaCount, visaPrice] = priced(s.visa);
@@ -226,12 +237,14 @@ export function dealFromSummary(s: ParsedSummary): DealValues {
   const [joinLandCount, joinLandPrice] = priced(s.joinLand);
   const [fuelTaxCount, fuelTaxPrice] = priced(s.fuelTax);
   const [airportTaxCount, airportTaxPrice] = priced(s.airportTax);
-  const adults = Math.max(0, (s.travellers ?? 0) - n(childCount) - n(infantCount));
+  const adults = Math.max(0, (s.travellers ?? 0) - n(childWithBedCount) - n(childNoBedCount) - n(infantCount));
   return {
     adultCount: adults || null,
     adultPrice: s.adultPrice,
-    childCount,
-    childPrice,
+    childWithBedCount,
+    childWithBedPrice,
+    childNoBedCount,
+    childNoBedPrice,
     infantCount,
     infantPrice,
     visaCount,
@@ -261,11 +274,10 @@ export function dealFromSummary(s: ParsedSummary): DealValues {
 }
 
 // The deal of a reopened booking: the backend's room types back to the summary rows (the reverse
-// of dealRequest). Adults = twin + single, single room price = the supplement, children = with + no
-// bed. The payment plan (full or deposit) is kept.
+// of dealRequest). Adults = twin + single, single room price = the supplement, children and infants
+// one to one. The payment plan (full or deposit) is kept.
 export function dealFromBooking(b: LineBooking): DealValues {
   const adults = b.adultTwinCount + b.adultSingleCount;
-  const children = b.childWithBedCount + b.childNoBedCount;
   const adultPrice = b.adultTwinPrice;
   const charge = (kind: LineBookingCharge['kind']): [Num, Num] => {
     const c = b.charges.find((x) => x.kind === kind);
@@ -279,8 +291,10 @@ export function dealFromBooking(b: LineBooking): DealValues {
   return {
     adultCount: adults || null,
     adultPrice,
-    childCount: children || null,
-    childPrice: b.childWithBedPrice ?? b.childNoBedPrice ?? (children > 0 ? adultPrice : null),
+    childWithBedCount: b.childWithBedCount || null,
+    childWithBedPrice: b.childWithBedPrice,
+    childNoBedCount: b.childNoBedCount || null,
+    childNoBedPrice: b.childNoBedPrice,
     infantCount: b.infantCount || null,
     infantPrice: b.infantPrice,
     visaCount,

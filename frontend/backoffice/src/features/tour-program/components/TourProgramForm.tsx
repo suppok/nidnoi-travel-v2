@@ -1,4 +1,4 @@
-import { App, Button, Card, Form, Input, InputNumber, Select } from 'antd';
+import { App, Button, Card, Form, Input, InputNumber, Select, Tag, Tooltip } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../api/client.ts';
 import { ErrorCodes } from '../../../constants/errorCodes.ts';
@@ -13,7 +13,7 @@ import DocumentUploadField from './DocumentUploadField.tsx';
 import GalleryField, { MAX_GALLERY_IMAGES } from './GalleryField.tsx';
 import ImageUploadField from './ImageUploadField.tsx';
 
-type FormValues = Omit<TourProgramCreateRequest, 'refId' | 'days' | 'nights'> & {
+export type FormValues = Omit<TourProgramCreateRequest, 'refId' | 'days' | 'nights'> & {
   refId: number | null;
   days: number | null;
   nights: number | null;
@@ -63,13 +63,46 @@ function toValues(tour: TourProgram): FormValues {
   };
 }
 
+/** Values read from a PDF by AI (create page). A new version re-applies them over the form. */
+export type AIPrefill = {
+  version: number;
+  values: Partial<FormValues>;
+  aiFields: ReadonlySet<string>; // filled by AI: labelled "AI"
+  attentionFields: ReadonlySet<string>; // empty, warned about or low confidence: labelled "ตรวจสอบ"
+};
+
 type Props = {
   tour: TourProgram | null; // null = create
   readOnly?: boolean;
   submitText: string;
   onSubmit: (body: TourProgramCreateRequest) => Promise<void>;
   extraActions?: ReactNode;
+  prefill?: AIPrefill | null;
+  /** Checked before onSubmit; a message blocks the save. */
+  beforeSubmit?: () => string | null;
+  /** Rendered after the form sections, above the save bar. */
+  extraSections?: ReactNode;
 };
+
+function FieldLabel({ text, ai, attention }: { text: string; ai: boolean; attention: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {text}
+      {ai && (
+        <Tooltip title="AI กรอกจาก PDF — ตรวจกับไฟล์ต้นฉบับ">
+          <Tag color="purple" className="m-0 px-1 text-[11px] leading-4">
+            AI
+          </Tag>
+        </Tooltip>
+      )}
+      {attention && (
+        <Tag color="orange" className="m-0 px-1 text-[11px] leading-4">
+          ตรวจสอบ
+        </Tag>
+      )}
+    </span>
+  );
+}
 
 function Section({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
   return (
@@ -79,7 +112,7 @@ function Section({ title, extra, children }: { title: string; extra?: ReactNode;
   );
 }
 
-export default function TourProgramForm({ tour, readOnly = false, submitText, onSubmit, extraActions }: Props) {
+export default function TourProgramForm({ tour, readOnly = false, submitText, onSubmit, extraActions, prefill = null, beforeSubmit, extraSections }: Props) {
   const { message } = App.useApp();
   const [form] = Form.useForm<FormValues>();
   const [submitting, setSubmitting] = useState(false);
@@ -94,6 +127,14 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
     form.resetFields();
     form.setFieldsValue(tour ? toValues(tour) : EMPTY);
   }, [tour, form]);
+
+  useEffect(() => {
+    if (prefill) form.setFieldsValue({ ...EMPTY, ...prefill.values });
+  }, [prefill, form]);
+
+  const lbl = (name: keyof FormValues, text: string) => (
+    <FieldLabel text={text} ai={!!prefill?.aiFields.has(name)} attention={!!prefill?.attentionFields.has(name)} />
+  );
 
   // Deleted options stay selectable only when the tour already uses them.
   const initialCountries = useMemo(() => new Set(tour?.countries.map((c) => c.id)), [tour]);
@@ -139,6 +180,11 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
   };
 
   const onFinish = async (values: FormValues) => {
+    const blocked = beforeSubmit?.();
+    if (blocked) {
+      message.error(blocked);
+      return;
+    }
     setSubmitting(true);
     try {
       await onSubmit({
@@ -179,7 +225,7 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
       className="flex flex-col gap-6"
     >
       <Section title="ข้อมูลโปรแกรม">
-        <Form.Item label="ชื่อโปรแกรม" name="name" rules={[{ required: true, whitespace: true, message: 'กรุณากรอกชื่อโปรแกรม' }, { max: 200, message: 'ยาวได้ไม่เกิน 200 ตัวอักษร' }]}>
+        <Form.Item label={lbl('name', 'ชื่อโปรแกรม')} name="name" rules={[{ required: true, whitespace: true, message: 'กรุณากรอกชื่อโปรแกรม' }, { max: 200, message: 'ยาวได้ไม่เกิน 200 ตัวอักษร' }]}>
           <Input placeholder="เช่น ทัวร์ญี่ปุ่น โตเกียว ฟูจิ 5 วัน 3 คืน" autoComplete="off" showCount maxLength={200} />
         </Form.Item>
 
@@ -198,11 +244,11 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
               labelRender={({ value }) => TOUR_PROGRAM_STATE_INFO.find((s) => s.value === value)?.label ?? String(value)}
             />
           </Form.Item>
-          <Form.Item label="จำนวนวัน" name="days" rules={[{ required: true, message: 'กรุณากรอกจำนวนวัน' }]}>
+          <Form.Item label={lbl('days', 'จำนวนวัน')} name="days" rules={[{ required: true, message: 'กรุณากรอกจำนวนวัน' }]}>
             <InputNumber min={1} max={60} precision={0} className="w-full" suffix="วัน" />
           </Form.Item>
           <Form.Item
-            label="จำนวนคืน"
+            label={lbl('nights', 'จำนวนคืน')}
             name="nights"
             dependencies={['days']}
             rules={[
@@ -218,13 +264,13 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
         </div>
 
         <div className="grid grid-cols-3 gap-x-4 max-lg:grid-cols-2 max-sm:grid-cols-1">
-          <Form.Item label="โฮลเซลล์" name="wholesaleId" rules={[{ required: true, message: 'กรุณาเลือกโฮลเซลล์' }]}>
+          <Form.Item label={lbl('wholesaleId', 'โฮลเซลล์')} name="wholesaleId" rules={[{ required: true, message: 'กรุณาเลือกโฮลเซลล์' }]}>
             <Select showSearch optionFilterProp="label" options={wholesaleOptions} loading={wholesalesLoading} placeholder="เลือกโฮลเซลล์" />
           </Form.Item>
-          <Form.Item label="รหัสทัวร์ของโฮลเซลล์" name="wholesaleTourCode" rules={[{ max: 50, message: 'ยาวได้ไม่เกิน 50 ตัวอักษร' }]} extra="เห็นเฉพาะพนักงาน">
+          <Form.Item label={lbl('wholesaleTourCode', 'รหัสทัวร์ของโฮลเซลล์')} name="wholesaleTourCode" rules={[{ max: 50, message: 'ยาวได้ไม่เกิน 50 ตัวอักษร' }]} extra="เห็นเฉพาะพนักงาน">
             <Input autoComplete="off" spellCheck={false} className="font-mono" placeholder="เช่น GO1TYO-XJ001" />
           </Form.Item>
-          <Form.Item label="สายการบิน" name="airlineId" extra="ไม่บังคับ (เว้นว่างได้ถ้าไม่มีเที่ยวบิน)">
+          <Form.Item label={lbl('airlineId', 'สายการบิน')} name="airlineId" extra="ไม่บังคับ (เว้นว่างได้ถ้าไม่มีเที่ยวบิน)">
             <Select
               showSearch
               allowClear
@@ -252,14 +298,14 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
       <Section title="ปลายทาง">
         <div className="grid grid-cols-2 gap-x-4 max-md:grid-cols-1">
           <Form.Item
-            label="ประเทศ"
+            label={lbl('countryIds', 'ประเทศ')}
             name="countryIds"
             extra="ประเทศแรกคือประเทศหลักของทัวร์"
             rules={[{ required: true, type: 'array', min: 1, message: 'กรุณาเลือกอย่างน้อย 1 ประเทศ' }]}
           >
             <Select mode="multiple" showSearch optionFilterProp="label" options={countryOptions} loading={countriesLoading} placeholder="เลือกประเทศ" />
           </Form.Item>
-          <Form.Item label="เมือง" name="cityIds" extra={countryIds.length === 0 ? 'เลือกประเทศก่อน' : 'ไม่บังคับ'}>
+          <Form.Item label={lbl('cityIds', 'เมือง')} name="cityIds" extra={countryIds.length === 0 ? 'เลือกประเทศก่อน' : 'ไม่บังคับ'}>
             <Select
               mode="multiple"
               showSearch
@@ -274,13 +320,13 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
       </Section>
 
       <Section title="รายละเอียด">
-        <Form.Item label="ไฮไลต์" name="highlight" extra="สรุปสั้น ๆ แสดงบนการ์ดทัวร์และผลการค้นหา Google" rules={[{ max: 500, message: 'ยาวได้ไม่เกิน 500 ตัวอักษร' }]}>
+        <Form.Item label={lbl('highlight', 'ไฮไลต์')} name="highlight" extra="สรุปสั้น ๆ แสดงบนการ์ดทัวร์และผลการค้นหา Google" rules={[{ max: 500, message: 'ยาวได้ไม่เกิน 500 ตัวอักษร' }]}>
           <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} showCount maxLength={500} />
         </Form.Item>
-        <Form.Item label="รายละเอียดโปรแกรม" name="description" rules={[{ max: 20000, message: 'ยาวได้ไม่เกิน 20,000 ตัวอักษร' }]}>
+        <Form.Item label={lbl('description', 'รายละเอียดโปรแกรม')} name="description" rules={[{ max: 20000, message: 'ยาวได้ไม่เกิน 20,000 ตัวอักษร' }]}>
           <Input.TextArea autoSize={{ minRows: 6, maxRows: 20 }} showCount maxLength={20000} />
         </Form.Item>
-        <Form.Item label="บันทึกภายใน" name="internalNote" extra="เห็นเฉพาะพนักงาน ไม่แสดงบนหน้าเว็บ" rules={[{ max: 5000, message: 'ยาวได้ไม่เกิน 5,000 ตัวอักษร' }]}>
+        <Form.Item label={lbl('internalNote', 'บันทึกภายใน')} name="internalNote" extra="เห็นเฉพาะพนักงาน ไม่แสดงบนหน้าเว็บ" rules={[{ max: 5000, message: 'ยาวได้ไม่เกิน 5,000 ตัวอักษร' }]}>
           <Input.TextArea autoSize={{ minRows: 2, maxRows: 8 }} />
         </Form.Item>
       </Section>
@@ -314,6 +360,8 @@ export default function TourProgramForm({ tour, readOnly = false, submitText, on
           </Form.Item>
         </div>
       </Section>
+
+      {extraSections}
 
       {!readOnly && (
         <div className="sticky bottom-0 z-10 -mx-8 flex justify-end gap-2.5 border-t border-line bg-white/90 px-8 py-3 backdrop-blur max-md:-mx-4 max-md:px-4">

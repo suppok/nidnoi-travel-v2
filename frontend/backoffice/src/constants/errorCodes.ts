@@ -34,6 +34,11 @@ export const ErrorCodes = {
   PeriodUnavailable: 'PERIOD_UNAVAILABLE', // the departure can't be booked any more
   LineBookingNotEditable: 'LINE_BOOKING_NOT_EDITABLE',
   LineAlreadyLinked: 'LINE_ALREADY_LINKED',
+  AINotConfigured: 'AI_NOT_CONFIGURED',
+  AIInvalidApiKey: 'AI_INVALID_API_KEY',
+  AIModelUnavailable: 'AI_MODEL_UNAVAILABLE',
+  AIBusy: 'AI_BUSY',
+  AIRequestFailed: 'AI_REQUEST_FAILED',
   // Client-side only: the request never reached the backend.
   Network: 'NETWORK',
   Unknown: 'UNKNOWN',
