@@ -46,6 +46,15 @@ type TourPeriodPublicItem struct {
 	SeatsAvailable      int      `json:"seatsAvailable"`
 	// SoldOut is true when the tour is closed (ปิดรับ). Seats never make a period sold out: 0 = not specified.
 	SoldOut bool `json:"soldOut"`
+	// FireSale marks a โปรไฟไหม้ departure (never on a closed tour).
+	FireSale bool `json:"fireSale"`
+}
+
+// TourFireSalePublicItem is a โปรไฟไหม้ departure of the tour, for the home page.
+type TourFireSalePublicItem struct {
+	TourPeriodPublicItem
+	// Order is the staff-set home page order (lowest first); ties go to the earliest departure.
+	Order int `json:"order"`
 }
 
 // TourProgramPublicItem is the card / listing shape.
@@ -65,7 +74,9 @@ type TourProgramPublicItem struct {
 	StartingPriceBeforeDiscount null.Int    `json:"startingPriceBeforeDiscount" swaggertype:"integer"`
 	NextDepartureDate           null.String `json:"nextDepartureDate" swaggertype:"string" example:"2026-12-01"`
 	PeriodCount                 int         `json:"periodCount"`
-	UpdateDate                  time.Time   `json:"updateDate"`
+	// FireSales are the tour's โปรไฟไหม้ departures in departure order; empty for a closed tour.
+	FireSales  []TourFireSalePublicItem `json:"fireSales"`
+	UpdateDate time.Time                `json:"updateDate"`
 }
 
 // TourProgramPublicDetail is the tour page shape.
@@ -100,6 +111,7 @@ func NewTourPeriodPublicItems(state int, periods []domain.TourProgramPeriod) []T
 			Deposit:             p.Deposit,
 			SeatsAvailable:      p.SeatsAvailable,
 			SoldOut:             closed,
+			FireSale:            !closed && domainmodels.IsFireSale(&p),
 		}
 	}
 	return items
@@ -118,6 +130,7 @@ func NewTourProgramPublicItem(t *domain.TourProgram, periods []domain.TourProgra
 		Countries:   []TaxonomyPublicRef{},
 		Cities:      []CityPublicRef{},
 		PeriodCount: len(periods),
+		FireSales:   []TourFireSalePublicItem{},
 		UpdateDate:  t.UpdateDate,
 	}
 	if t.Airline != nil {
@@ -143,6 +156,11 @@ func NewTourProgramPublicItem(t *domain.TourProgram, periods []domain.TourProgra
 	item.StartingPriceBeforeDiscount = summary.StartingPriceBeforeDiscount
 	if summary.NextDepartureDate != "" {
 		item.NextDepartureDate = null.StringFrom(summary.NextDepartureDate)
+	}
+	for i, p := range NewTourPeriodPublicItems(t.State, periods) {
+		if p.FireSale {
+			item.FireSales = append(item.FireSales, TourFireSalePublicItem{TourPeriodPublicItem: p, Order: periods[i].FireSaleOrder})
+		}
 	}
 	return item
 }

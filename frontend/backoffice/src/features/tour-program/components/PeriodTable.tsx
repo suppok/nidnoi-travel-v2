@@ -37,6 +37,8 @@ function toFields(p: TourProgramPeriod): TourProgramPeriodFields {
     seatsTotal: p.seatsTotal,
     seatsAvailable: p.seatsAvailable,
     note: p.note,
+    fireSale: p.fireSale ?? false,
+    fireSaleOrder: p.fireSaleOrder ?? 0,
   };
 }
 
@@ -60,6 +62,7 @@ function checkDraft(d: TourProgramPeriodFields): FieldErrors {
   if (!Number.isInteger(d.price) || d.price < 0) errors.price = 'กรอกราคา';
   if (d.priceBeforeDiscount !== null && d.priceBeforeDiscount <= d.price) errors.priceBeforeDiscount = 'ต้องมากกว่าราคาขาย';
   if (d.seatsAvailable > d.seatsTotal) errors.seatsAvailable = 'ที่ว่างต้องไม่เกินที่นั่งทั้งหมด';
+  if (d.fireSale && d.priceBeforeDiscount === null) errors.fireSale = 'โปรไฟไหม้ต้องมีราคาก่อนลด';
   return errors;
 }
 
@@ -130,8 +133,8 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
     const key = `${NEW_PREFIX}${crypto.randomUUID()}`;
     // New departures usually repeat the latest one's prices and seats.
     const draft: TourProgramPeriodFields = last
-      ? { ...toFields(last), startDate: '', endDate: '', seatsAvailable: last.seatsTotal, note: '' }
-      : { startDate: '', endDate: '', price: 0, priceBeforeDiscount: null, childWithBedPrice: null, childNoBedPrice: null, infantPrice: null, singleSupplement: null, deposit: null, seatsTotal: 0, seatsAvailable: 0, note: '' };
+      ? { ...toFields(last), startDate: '', endDate: '', seatsAvailable: last.seatsTotal, note: '', fireSale: false, fireSaleOrder: 0 }
+      : { startDate: '', endDate: '', price: 0, priceBeforeDiscount: null, childWithBedPrice: null, childNoBedPrice: null, infantPrice: null, singleSupplement: null, deposit: null, seatsTotal: 0, seatsAvailable: 0, note: '', fireSale: false, fireSaleOrder: 0 };
     setDrafts((prev) => ({ ...prev, [key]: draft }));
     setNewKeys((keys) => [...keys, key]);
   };
@@ -245,6 +248,42 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
     },
     priceColumn('price', 'ราคา (ผู้ใหญ่)', 120),
     priceColumn('priceBeforeDiscount', 'ราคาก่อนลด'),
+    {
+      title: (
+        <Tooltip title="แสดงรอบนี้ในโปรไฟไหม้หน้าแรกของเว็บ (สูงสุด 4 รอบ เรียงตามลำดับน้อยไปมาก) ต้องมีราคาก่อนลด">
+          <span>โปรไฟไหม้ · ลำดับ</span>
+        </Tooltip>
+      ),
+      key: 'fireSale',
+      width: 150,
+      render: (_, row) => (
+        <Tooltip title={rowErrors[row.key]?.fireSale ?? rowErrors[row.key]?.fireSaleOrder ?? (row.draft.priceBeforeDiscount === null ? 'ใส่ราคาก่อนลดก่อน' : undefined)}>
+          <div className="flex items-center gap-1.5">
+            <Switch
+              size="small"
+              checked={row.draft.fireSale}
+              disabled={!editable(row) || (!row.draft.fireSale && row.draft.priceBeforeDiscount === null)}
+              onChange={(on) => setDraft(row.key, { fireSale: on }, row.draft)}
+              aria-label="โปรไฟไหม้"
+            />
+            {row.draft.fireSale && (
+              <InputNumber<number>
+                size="small"
+                min={0}
+                max={9999}
+                precision={0}
+                value={row.draft.fireSaleOrder}
+                status={status(row, 'fireSaleOrder')}
+                disabled={!editable(row)}
+                onChange={(v) => setDraft(row.key, { fireSaleOrder: v ?? 0 }, row.draft)}
+                className="w-[64px]"
+                aria-label="ลำดับโปรไฟไหม้"
+              />
+            )}
+          </div>
+        </Tooltip>
+      ),
+    },
     {
       title: 'ที่นั่ง ว่าง / ทั้งหมด',
       key: 'seats',
@@ -373,7 +412,7 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
         dataSource={rows}
         loading={periods === null && loadError === null}
         pagination={false}
-        scroll={{ x: 1600 }}
+        scroll={{ x: 1750 }}
         rowClassName={(row) => (row.period && !row.period.status ? 'opacity-50' : '')}
         locale={{ emptyText: canCreate ? 'ยังไม่มีรอบเดินทาง — กด "เพิ่มรอบ"' : 'ยังไม่มีรอบเดินทาง' }}
       />

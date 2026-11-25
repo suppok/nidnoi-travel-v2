@@ -30,6 +30,8 @@ Table: tour_program_period
 [16] create_by              UUID         null: false
 [17] update_by              UUID         null: false
 [18] infant_price           INTEGER      null: true   (child under 2, no seat)
+[19] fire_sale              BOOLEAN      null: false  default: false  (โปรไฟไหม้ on the home page; needs price_before_discount > price)
+[20] fire_sale_order        INTEGER      null: false  default: 0  (home page order, lowest first)
 */
 
 // TourProgramPeriod is a departure of a tour with its prices and seats.
@@ -55,4 +57,6 @@ type TourProgramPeriod struct {
 	CreateBy            string    `bun:"create_by"             json:"createBy"`                                  // [16] UUID
 	UpdateBy            string    `bun:"update_by"             json:"updateBy"`                                  // [17] UUID
 	InfantPrice         null.Int  `bun:"infant_price"          json:"infantPrice" swaggertype:"integer"`         // [18] INTEGER
+	FireSale            bool      `bun:"fire_sale"             json:"fireSale"`                                  // [19] BOOLEAN
+	FireSaleOrder       int       `bun:"fire_sale_order"       json:"fireSaleOrder"`                             // [20] INTEGER
 }

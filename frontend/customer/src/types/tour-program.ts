@@ -21,7 +21,12 @@ export type TourPeriodPublic = {
   deposit: number | null;
   seatsAvailable: number;
   soldOut: boolean;
+  /** โปรไฟไหม้ departure picked by staff (never on a closed tour). */
+  fireSale: boolean;
 };
+
+/** A โปรไฟไหม้ departure of a tour; `order` is the staff-set home page order (lowest first). */
+export type TourFireSalePublic = TourPeriodPublic & { order: number };
 
 /** One day of the short timeline: places in visiting order ("โรงแรม" last when the night is at a hotel). */
 export type TourItineraryDay = { day: number; places: string[] };
@@ -44,6 +49,8 @@ export type TourProgramPublicItem = {
   startingPriceBeforeDiscount: number | null;
   nextDepartureDate: string | null;
   periodCount: number;
+  /** The tour's โปรไฟไหม้ departures in departure order (always discounted). */
+  fireSales: TourFireSalePublic[];
   updateDate: string;
 };
 

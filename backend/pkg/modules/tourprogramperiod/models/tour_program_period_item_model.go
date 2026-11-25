@@ -26,7 +26,9 @@ type TourProgramPeriodItem struct {
 	Deposit             null.Int  `json:"deposit" swaggertype:"integer"`
 	SeatsTotal          int       `json:"seatsTotal"`
 	SeatsAvailable      int       `json:"seatsAvailable"`
-	Note                string    `json:"note"` // staff only
+	Note                string    `json:"note"`          // staff only
+	FireSale            bool      `json:"fireSale"`      // โปรไฟไหม้ on the customer home page
+	FireSaleOrder       int       `json:"fireSaleOrder"` // home page order, lowest first
 	Status              bool      `json:"status"`
 	CreateDate          time.Time `json:"createDate"`
 	UpdateDate          time.Time `json:"updateDate"`
@@ -48,6 +50,8 @@ func NewTourProgramPeriodItem(p *domain.TourProgramPeriod) TourProgramPeriodItem
 		SeatsTotal:          p.SeatsTotal,
 		SeatsAvailable:      p.SeatsAvailable,
 		Note:                p.Note,
+		FireSale:            p.FireSale,
+		FireSaleOrder:       p.FireSaleOrder,
 		Status:              p.Status,
 		CreateDate:          p.CreateDate,
 		UpdateDate:          p.UpdateDate,
@@ -68,4 +72,6 @@ type TourProgramPeriodFields struct {
 	SeatsTotal          int      `json:"seatsTotal"`
 	SeatsAvailable      int      `json:"seatsAvailable"` // 0..seatsTotal; 0 of 0 = not specified (the customer site never shows sold out from seats)
 	Note                string   `json:"note"`
+	FireSale            bool     `json:"fireSale"`      // needs priceBeforeDiscount (above price)
+	FireSaleOrder       int      `json:"fireSaleOrder"` // 0..9999, lowest first on the home page
 }

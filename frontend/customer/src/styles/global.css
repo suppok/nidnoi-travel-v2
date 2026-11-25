@@ -97,6 +97,37 @@
   }
 }
 
+/* Scroll reveal (BaseLayout script). Only active under html.js-reveal, so no-JS and reduced-motion visitors see everything.
+   The attribute value picks the side it comes from: bottom (default), top, left, right. */
+.js-reveal body {
+  overflow-x: clip; /* items sliding in from the sides must not widen the page */
+}
+.js-reveal [data-reveal],
+.js-reveal [data-reveal-stagger] > * {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.js-reveal [data-reveal='top'],
+.js-reveal [data-reveal-stagger='top'] > * {
+  transform: translateY(-28px);
+}
+.js-reveal [data-reveal='left'],
+.js-reveal [data-reveal-stagger='left'] > * {
+  transform: translateX(-48px);
+}
+.js-reveal [data-reveal='right'],
+.js-reveal [data-reveal-stagger='right'] > * {
+  transform: translateX(48px);
+}
+.js-reveal .is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
 /* Shared building blocks from the design. Component-specific styles stay in scoped <style>. */
 @layer components {
   .container-site {

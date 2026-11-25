@@ -226,6 +226,10 @@ function parsePeriod(body: Record<string, unknown>) {
   if (priceBeforeDiscount !== null && priceBeforeDiscount <= price) fields.priceBeforeDiscount = 'must be higher than the price';
   if (!Number.isInteger(seatsTotal) || seatsTotal < 0 || seatsTotal > 999) fields.seatsTotal = 'must be between 0 and 999';
   if (!Number.isInteger(seatsAvailable) || seatsAvailable < 0 || seatsAvailable > seatsTotal) fields.seatsAvailable = 'must not be more than total seats';
+  const fireSale = body.fireSale === true;
+  const fireSaleOrder = Number(body.fireSaleOrder ?? 0);
+  if (!Number.isInteger(fireSaleOrder) || fireSaleOrder < 0 || fireSaleOrder > 9999) fields.fireSaleOrder = 'must be between 0 and 9999';
+  if (fireSale && priceBeforeDiscount === null && !fields.priceBeforeDiscount) fields.fireSale = 'needs a price before discount';
   if (Object.keys(fields).length) throw validation(fields);
 
   return {
@@ -241,6 +245,8 @@ function parsePeriod(body: Record<string, unknown>) {
     seatsTotal,
     seatsAvailable,
     note: str(body.note),
+    fireSale,
+    fireSaleOrder,
   };
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"backend/pkg/constants/tourprogramstate"
 	"backend/pkg/domain"
+	"backend/pkg/domain/domainmodels"
 )
 
 func day(s string) time.Time {
@@ -89,5 +90,30 @@ func TestPublicPeriodsSoldOut(t *testing.T) {
 		if !p.SoldOut {
 			t.Errorf("closed tour: period %s not sold out", p.ID)
 		}
+	}
+}
+
+func TestPublicItemFireSales(t *testing.T) {
+	promo := period("p1", "2026-12-01", 29900, null.IntFrom(35900), 0)
+	promo.FireSale, promo.FireSaleOrder = true, 2
+	plain := period("p2", "2026-12-10", 31900, null.IntFrom(35900), 0)
+	noDiscount := period("p3", "2026-12-20", 29900, null.Int{}, 0)
+	noDiscount.FireSale = true // stale flag: never shown without a struck-through price
+	periods := []domain.TourProgramPeriod{promo, plain, noDiscount}
+
+	item := NewTourProgramPublicItem(tour(tourprogramstate.Selling), periods)
+	if len(item.FireSales) != 1 || item.FireSales[0].ID != "p1" || item.FireSales[0].Order != 2 || !item.FireSales[0].FireSale {
+		t.Fatalf("fire sales = %+v, want p1 with order 2", item.FireSales)
+	}
+
+	closed := NewTourProgramPublicItem(tour(tourprogramstate.Closed), periods)
+	if len(closed.FireSales) != 0 {
+		t.Errorf("closed tour shows fire sales: %+v", closed.FireSales)
+	}
+
+	before := domainmodels.SummarizePublicPeriods(periods)
+	periods[0].FireSaleOrder = 5
+	if domainmodels.SummarizePublicPeriods(periods) == before {
+		t.Error("changing a fire sale's order does not change the summary (no rebuild)")
 	}
 }

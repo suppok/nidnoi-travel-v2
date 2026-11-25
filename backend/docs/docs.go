@@ -11524,6 +11524,55 @@ const docTemplate = `{
                 }
             }
         },
+        "backend_pkg_modules_tourprogram_models.TourFireSalePublicItem": {
+            "type": "object",
+            "properties": {
+                "childNoBedPrice": {
+                    "type": "integer"
+                },
+                "childWithBedPrice": {
+                    "type": "integer"
+                },
+                "deposit": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2026-12-05"
+                },
+                "fireSale": {
+                    "description": "FireSale marks a โปรไฟไหม้ departure (never on a closed tour).",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "order": {
+                    "description": "Order is the staff-set home page order (lowest first); ties go to the earliest departure.",
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "priceBeforeDiscount": {
+                    "type": "integer"
+                },
+                "seatsAvailable": {
+                    "type": "integer"
+                },
+                "singleSupplement": {
+                    "type": "integer"
+                },
+                "soldOut": {
+                    "description": "SoldOut is true when the tour is closed (ปิดรับ). Seats never make a period sold out: 0 = not specified.",
+                    "type": "boolean"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2026-12-01"
+                }
+            }
+        },
         "backend_pkg_modules_tourprogram_models.TourPeriodPublicItem": {
             "type": "object",
             "properties": {
@@ -11539,6 +11588,10 @@ const docTemplate = `{
                 "endDate": {
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "fireSale": {
+                    "description": "FireSale marks a โปรไฟไหม้ departure (never on a closed tour).",
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
@@ -12257,6 +12310,13 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "fireSales": {
+                    "description": "FireSales are the tour's โปรไฟไหม้ departures in departure order; empty for a closed tour.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourFireSalePublicItem"
+                    }
+                },
                 "governmentShopStops": {
                     "description": "GovernmentShopStops: stops at government shops (ลงร้านรัฐบาล); null = not specified.",
                     "type": "boolean"
@@ -12346,6 +12406,13 @@ const docTemplate = `{
                 },
                 "days": {
                     "type": "integer"
+                },
+                "fireSales": {
+                    "description": "FireSales are the tour's โปรไฟไหม้ departures in departure order; empty for a closed tour.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_pkg_modules_tourprogram_models.TourFireSalePublicItem"
+                    }
                 },
                 "highlight": {
                     "type": "string"
@@ -12682,6 +12749,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fireSale": {
+                    "description": "needs priceBeforeDiscount (above price)",
+                    "type": "boolean"
+                },
+                "fireSaleOrder": {
+                    "description": "0..9999, lowest first on the home page",
+                    "type": "integer"
+                },
                 "infantPrice": {
                     "description": "child under 2, no seat",
                     "type": "integer"
@@ -12736,6 +12811,14 @@ const docTemplate = `{
                     "description": "YYYY-MM-DD",
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "fireSale": {
+                    "description": "โปรไฟไหม้ on the customer home page",
+                    "type": "boolean"
+                },
+                "fireSaleOrder": {
+                    "description": "home page order, lowest first",
+                    "type": "integer"
                 },
                 "id": {
                     "type": "string"
@@ -12799,6 +12882,14 @@ const docTemplate = `{
                     "description": "YYYY-MM-DD",
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "fireSale": {
+                    "description": "โปรไฟไหม้ on the customer home page",
+                    "type": "boolean"
+                },
+                "fireSaleOrder": {
+                    "description": "home page order, lowest first",
+                    "type": "integer"
                 },
                 "id": {
                     "type": "string"
@@ -12883,6 +12974,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2026-12-05"
                 },
+                "fireSale": {
+                    "description": "needs priceBeforeDiscount (above price)",
+                    "type": "boolean"
+                },
+                "fireSaleOrder": {
+                    "description": "0..9999, lowest first on the home page",
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -12937,6 +13036,14 @@ const docTemplate = `{
                     "description": "YYYY-MM-DD",
                     "type": "string",
                     "example": "2026-12-05"
+                },
+                "fireSale": {
+                    "description": "โปรไฟไหม้ on the customer home page",
+                    "type": "boolean"
+                },
+                "fireSaleOrder": {
+                    "description": "home page order, lowest first",
+                    "type": "integer"
                 },
                 "id": {
                     "type": "string"

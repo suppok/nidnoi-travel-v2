@@ -335,6 +335,15 @@ function timeline(t: TourSeed): TourProgramPublicDetail['itinerary'] {
   });
 }
 
+// โปรไฟไหม้ samples: period id → staff order. Five upcoming ones, so the home page shows the first four.
+const FIRE_SALES: Record<string, number> = {
+  'nidn261690-p2': 1,
+  'nidn255120-p2': 2,
+  'nidn248801-p3': 3,
+  'nidn261702-p3': 4,
+  'nidn271110-p1': 5,
+};
+
 function toDetail(t: TourSeed, index: number): TourProgramPublicDetail {
   const periods: TourPeriodPublic[] = t.periods.map(([startDate, endDate, price, before, seats], i) => ({
     id: `${t.code}-p${i + 1}`,
@@ -348,6 +357,7 @@ function toDetail(t: TourSeed, index: number): TourProgramPublicDetail {
     deposit: price >= 60000 ? 20000 : 10000,
     seatsAvailable: seats,
     soldOut: false, // like the backend: only a closed tour is sold out; 0 seats = not specified
+    fireSale: `${t.code}-p${i + 1}` in FIRE_SALES && before !== null && before > price,
   }));
   // Backend rule: starting price = lowest active period price (sold-out periods still count as active).
   const cheapest = periods.reduce((a, b) => (b.price < a.price ? b : a));
@@ -365,6 +375,7 @@ function toDetail(t: TourSeed, index: number): TourProgramPublicDetail {
     startingPriceBeforeDiscount: cheapest.priceBeforeDiscount,
     nextDepartureDate: periods[0]?.startDate ?? null,
     periodCount: periods.length,
+    fireSales: periods.filter((p) => p.fireSale).map((p) => ({ ...p, order: FIRE_SALES[p.id] })),
     updateDate: UPDATED,
     description: [
       `${t.name} ${t.days} วัน ${t.nights} คืน บินกับ ${AIRLINES[t.airline]?.name ?? 'สายการบินชั้นนำ'} ไฮไลท์ของทริป ${t.highlight.replaceAll(' · ', ' ')}`,
