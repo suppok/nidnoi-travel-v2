@@ -62,3 +62,10 @@ export function paragraphs(text: string): string[] {
     .map((p) => p.trim())
     .filter(Boolean);
 }
+
+const monthYear = new Intl.DateTimeFormat('th-TH', { month: 'long', year: 'numeric', timeZone: 'Asia/Bangkok' });
+
+/** "ธันวาคม 2569" for a `YYYY-MM` month key. */
+export function formatMonth(key: string): string {
+  return monthYear.format(parseDate(`${key}-01`));
+}

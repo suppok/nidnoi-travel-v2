@@ -1,4 +1,5 @@
 // Build-time taxonomy reads.
+import { PLACEHOLDER_COUNTRY_IMAGES } from '../../config/site';
 import type { CityPublic, CountryPublic } from '../../types/taxonomy';
 import { apiGet } from './client';
 import { USE_MOCK_DATA } from './mock-mode';
@@ -22,7 +23,10 @@ async function fetchCountries(): Promise<CountryPublic[]> {
     const { mockCountries } = await import('./mock-data');
     return [...mockCountries].sort(bySortOrder);
   }
-  return (await apiGet<Items<CountryPublic>>('/countries/public')).items.sort(bySortOrder);
+  const { items } = await apiGet<Items<CountryPublic>>('/countries/public');
+  return items
+    .map((c) => (c.heroImage ? c : { ...c, heroImage: PLACEHOLDER_COUNTRY_IMAGES[c.slug] ?? null }))
+    .sort(bySortOrder);
 }
 
 /** All active cities across countries. */

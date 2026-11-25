@@ -8,7 +8,8 @@ import Icon from '../components/ui/Icon.astro';
 import LineCta from '../components/ui/LineCta.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { heroCampaign } from '../config/home';
-import { pickFireSales } from '../lib/fire-sales';
+import { env } from '../config/env';
+import { mockFireSales, pickFireSales } from '../lib/fire-sales';
 import { byNextDeparture, listPublicTours } from '../lib/api/tour-programs';
 import { listPublicCities, listPublicCountries } from '../lib/api/taxonomy';
 import { ogImageUrl } from '../lib/image';
@@ -22,9 +23,12 @@ const activeCountries = countries.filter((c) => c.tourCount > 0);
 const activeCities = cities.filter((c) => c.tourCount > 0 && activeCountries.some((x) => x.slug === c.countrySlug));
 // Without tours in the campaign country the hero drops its price and links to the destination list.
 const heroCountry = activeCountries.find((c) => c.slug === heroCampaign.countrySlug);
-const fireSales = pickFireSales(tours);
+const realFireSales = pickFireSales(tours);
 // โปรไฟไหม้ replaces the upcoming-tours row; that row returns only while staff have no promo switched on.
-const featured = fireSales.length === 0 ? [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT) : [];
+const featured = realFireSales.length === 0 ? [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT) : [];
+// Off prd, preview the section with mock promos (fake discounts) until staff flag real ones.
+// It never runs on prd, and the upcoming-tours row stays visible on dev so both can be reviewed.
+const fireSales = realFireSales.length === 0 && env.SITE_ENV !== 'prd' ? await mockFireSales(tours) : realFireSales;
 ---
 
 <PageLayout
@@ -43,7 +47,7 @@ const featured = fireSales.length === 0 ? [...tours].sort(byNextDeparture).slice
 
   {
     featured.length > 0 && (
-      <section class="section bg-white pt-10 md:pt-12">
+      <section class="section bg-deco pt-10 md:pt-12">
         <div class="container-site">
           <SectionHeader>
             <Fragment slot="title">ทัวร์ที่<em>กำลังจะออกเดินทาง</em></Fragment>

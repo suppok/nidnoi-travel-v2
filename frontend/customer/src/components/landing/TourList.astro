@@ -1,26 +1,82 @@
 ---
 // Every active tour of the destination, rendered in the initial HTML (lazy images, never lazy markup).
+// ?month=YYYY-MM&price=min-max (from the home hero filter) hides tours without a matching open departure;
+// the HTML always contains every tour, so bots and no-JS visitors see the full list.
+import { getPublicTour } from '../../lib/api/tour-programs';
+import { encodeDepartures } from '../../lib/tour-filter';
 import type { TourProgramPublicItem } from '../../types/tour-program';
 import TourCard from '../tour/TourCard.astro';
+import Icon from '../ui/Icon.astro';
 
 type Props = { heading: string; tours: TourProgramPublicItem[] };
 const { heading, tours } = Astro.props;
+// Cached per build (the tour pages fetch the same details), so this adds no API calls.
+const departures = await Promise.all(tours.map(async (t) => encodeDepartures((await getPublicTour(t.code)).periods)));
 ---
 
-<section id="tours" class="scroll-mt-20 bg-cream pt-14 pb-24">
+<section id="tours" class="bg-deco scroll-mt-20 pt-14 pb-24">
   <div class="container-site">
     <div class="mb-8 flex flex-wrap items-baseline justify-between gap-4">
       <h2 class="h-section m-0 text-[clamp(24px,3vw,36px)]">{heading}</h2>
-      <span class="text-[15px] text-ink-soft">พบ <b class="font-semibold text-ink">{tours.length}</b> โปรแกรม</span>
+      <span class="text-[15px] text-ink-soft">พบ <b class="font-semibold text-ink" data-tour-count>{tours.length}</b> โปรแกรม</span>
     </div>
-    <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+
+    <div data-tour-filter hidden class="mb-8 flex flex-wrap items-center gap-2">
+      <span class="text-sm text-ink-muted">กรองตาม:</span>
+      <span data-filter-month hidden class="chip chip-tint"><Icon name="calendar" size={11} /> <span></span></span>
+      <span data-filter-price hidden class="chip chip-tint"><Icon name="wallet" size={11} /> <span></span></span>
+      <a href={Astro.url.pathname} data-filter-clear class="ml-1 text-sm font-semibold text-primary-deep hover:text-primary-darker">ล้างตัวกรอง</a>
+    </div>
+
+    <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8" data-tour-list>
       {
-        tours.map((t) => (
-          <li class="flex">
+        tours.map((t, i) => (
+          <li class="flex" data-departures={departures[i]}>
             <TourCard tour={t} columns={3} />
           </li>
         ))
       }
     </ul>
+
+    <div data-tour-empty hidden class="rounded-lg border border-line bg-white px-6 py-14 text-center">
+      <p class="m-0 mb-2 font-display text-xl font-semibold text-ink">ไม่พบโปรแกรมที่ตรงกับตัวกรอง</p>
+      <p class="m-0 mb-6 text-[15px] text-ink-soft">ลองเปลี่ยนเดือนหรืองบประมาณ หรือดูโปรแกรมทั้งหมดของปลายทางนี้</p>
+      <a href={Astro.url.pathname} class="btn btn-primary btn-sm">ดูโปรแกรมทั้งหมด</a>
+    </div>
   </div>
 </section>
+
+<script>
+  import { formatMonth } from '../../lib/format';
+  import { matchesDepartures, parsePriceRange, priceRangeLabel } from '../../lib/tour-filter';
+
+  const params = new URLSearchParams(location.search);
+  const month = /^\d{4}-\d{2}$/.test(params.get('month') ?? '') ? (params.get('month') as string) : '';
+  const priceValue = params.get('price') ?? '';
+  const range = parsePriceRange(priceValue);
+  const priceLabel = range ? priceRangeLabel(priceValue) : null;
+
+  if (month || range) {
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-tour-list] > li'));
+    let shown = 0;
+    for (const li of items) {
+      const match = matchesDepartures(li.dataset.departures ?? '', month, range);
+      li.hidden = !match;
+      if (match) shown++;
+    }
+
+    const count = document.querySelector('[data-tour-count]');
+    if (count) count.textContent = String(shown);
+    document.querySelector<HTMLElement>('[data-tour-empty]')!.hidden = shown > 0;
+
+    const bar = document.querySelector<HTMLElement>('[data-tour-filter]')!;
+    const setChip = (selector: string, text: string | null) => {
+      const chip = bar.querySelector<HTMLElement>(selector)!;
+      chip.hidden = !text;
+      if (text) chip.querySelector('span')!.textContent = text;
+    };
+    setChip('[data-filter-month]', month ? `เดินทาง${formatMonth(month)}` : null);
+    setChip('[data-filter-price]', priceLabel);
+    bar.hidden = false;
+  }
+</script>

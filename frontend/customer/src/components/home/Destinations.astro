@@ -1,4 +1,5 @@
 ---
+import { DEFAULT_HERO_IMAGE } from '../../config/site';
 import type { CountryPublic } from '../../types/taxonomy';
 import DestinationCard from '../tour/DestinationCard.astro';
 import SectionHeader from '../ui/SectionHeader.astro';
@@ -9,7 +10,7 @@ const { countries } = Astro.props;
 const featured = countries.slice(0, 7);
 ---
 
-<section id="destinations" class="section scroll-mt-20 bg-cream pt-10 md:pt-12">
+<section id="destinations" class="section bg-deco scroll-mt-20 pt-10 md:pt-12">
   <div class="container-site">
     <SectionHeader
       sub="เลือกประเทศที่อยากไป แล้วดูโปรแกรม วันเดินทาง และราคาเริ่มต้นของทุกทัวร์ในประเทศนั้น"
@@ -25,7 +26,7 @@ const featured = countries.slice(0, 7);
               href={`/tours/${c.slug}/`}
               nameTh={c.nameTh}
               nameEn={c.nameEn}
-              image={c.heroImage}
+              image={c.heroImage ?? DEFAULT_HERO_IMAGE}
               tourCount={c.tourCount}
               startingPrice={c.startingPrice}
               size={i === 0 ? 'lg' : 'md'}

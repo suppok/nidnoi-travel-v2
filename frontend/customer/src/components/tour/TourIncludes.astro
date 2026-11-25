@@ -19,16 +19,17 @@ const show = hasInc || hasExc || governmentShopStops !== null;
 {
   show && (
     <section class="mt-16" aria-labelledby="includes-title">
-      <p class="eyebrow mb-4">ราคา รวม / ไม่รวม</p>
-      <h2 id="includes-title" class="h-section mt-0 mb-6">
+      <p data-reveal class="eyebrow mb-4">ราคา รวม / ไม่รวม</p>
+      <h2 data-reveal id="includes-title" class="h-section mt-0 mb-6">
         ราคานี้<em>ครอบคลุม</em>อะไรบ้าง
       </h2>
 
       {governmentShopStops !== null && (
         <p
+          data-reveal
           class:list={[
             'mb-6 flex items-start gap-3 rounded-md border px-5 py-4 text-[15px]',
-            governmentShopStops ? 'border-line bg-cream text-ink-soft' : 'shop-free border-transparent text-ink',
+            governmentShopStops ? 'border-line bg-white text-ink-soft' : 'shop-free border-transparent text-ink',
           ]}
         >
           <Icon name={governmentShopStops ? 'store' : 'shield'} size={18} class={governmentShopStops ? 'mt-0.5 text-ink-muted' : 'mt-0.5 text-success'} />
@@ -45,9 +46,9 @@ const show = hasInc || hasExc || governmentShopStops !== null;
       )}
 
       {(hasInc || hasExc) && (
-        <div class:list={['inc-grid grid gap-5', hasInc && hasExc && 'has-both']}>
+        <div data-reveal-stagger class:list={['inc-grid grid gap-5', hasInc && hasExc && 'has-both']}>
           {hasInc && (
-            <div class="rounded-md border border-line-soft bg-cream p-7">
+            <div class="rounded-md border border-line-soft bg-white p-7">
               <div class="mb-5 flex items-center gap-3">
                 <span class="flex h-8 w-8 items-center justify-center rounded-full bg-success text-white">
                   <Icon name="check" size={16} />
@@ -65,7 +66,7 @@ const show = hasInc || hasExc || governmentShopStops !== null;
             </div>
           )}
           {hasExc && (
-            <div class="rounded-md border border-line-soft bg-cream p-7">
+            <div class="rounded-md border border-line-soft bg-white p-7">
               <div class="mb-5 flex items-center gap-3">
                 <span class="flex h-8 w-8 items-center justify-center rounded-full bg-ink-muted text-white">
                   <Icon name="minus" size={16} />
