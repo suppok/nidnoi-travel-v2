@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Segmented, Table, type TableProps, Tag, Tooltip, Typography } from 'antd';
+import { Alert, Button, Card, Segmented, type TableProps, Tag, Tooltip, Typography } from 'antd';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { siteApi } from '../../api/site.ts';
@@ -10,6 +10,7 @@ import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import type { SiteBuild } from '../../types/siteBuild.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 type TriggerFilter = SiteBuildTrigger | 'all';
 const DEFAULT_PAGE_SIZE = 20;
@@ -160,7 +161,7 @@ export default function SiteBuildListPage() {
 
           {error !== null && <Alert type="error" showIcon title={errorMessage(error)} />}
 
-          <Table<SiteBuild>
+          <DataTable<SiteBuild>
             rowKey="id"
             columns={columns}
             dataSource={data?.items ?? []}

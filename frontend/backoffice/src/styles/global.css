@@ -37,3 +37,32 @@ body {
   color: var(--color-ink);
   background: var(--color-page);
 }
+
+/* Slim scrollbar with no track (no white box behind it): the page itself, and panels with their own scroll
+   like the sidebar menu (scroll-slim). */
+@utility scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink-muted) 35%, transparent) transparent;
+}
+@layer base {
+  html {
+    @apply scroll-slim;
+  }
+}
+
+/* DataTable: freshly loaded rows fade in quickly, top to bottom (--row = row index, capped; see components/DataTable.tsx). */
+.data-table-fade .ant-table-tbody > tr {
+  animation: data-table-fade 120ms ease-out both;
+  animation-delay: calc(var(--row, 0) * 12ms);
+}
+@keyframes data-table-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .data-table-fade .ant-table-tbody > tr {
+    animation: none;
+  }
+}

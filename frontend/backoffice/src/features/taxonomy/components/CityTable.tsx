@@ -1,10 +1,11 @@
 import { EditOutlined, MoreOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { App, Button, Dropdown, type MenuProps, Table, type TableProps, Tag, Typography } from 'antd';
+import { App, Button, Dropdown, type MenuProps, type TableProps, Tag, Typography } from 'antd';
 import { citiesApi } from '../../../api/taxonomy.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
 import { Permissions } from '../../../constants/permissions.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import type { City } from '../../../types/taxonomy.ts';
+import DataTable from '../../../components/DataTable.tsx';
 
 type Props = {
   cities: City[];
@@ -106,7 +107,7 @@ export default function CityTable({ cities, loading, pagination, showCountry = t
   ];
 
   return (
-    <Table<City>
+    <DataTable<City>
       rowKey="id"
       columns={columns}
       dataSource={cities}

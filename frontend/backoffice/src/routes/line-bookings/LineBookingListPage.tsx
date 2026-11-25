@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button, Card, Input, Segmented, Switch, Table, type TableProps, Tag } from 'antd';
+import { Alert, Badge, Button, Card, Input, Segmented, Switch, type TableProps, Tag } from 'antd';
 import { useSearchParams } from 'react-router';
 import { lineBookingsApi } from '../../api/lineBookings.ts';
 import PageHeader from '../../components/PageHeader.tsx';
@@ -11,6 +11,7 @@ import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../lib/format.ts';
 import type { LineBooking } from '../../types/lineBooking.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 const DEFAULT_PAGE_SIZE = 20;
 const STATES = new Set<number>(LINE_BOOKING_STATE_INFO.map((s) => s.value));
@@ -295,7 +296,7 @@ export default function LineBookingListPage({ finance = false }: { finance?: boo
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<LineBooking>
+        <DataTable<LineBooking>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

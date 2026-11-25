@@ -1,5 +1,5 @@
 import { EditOutlined, MoreOutlined, PictureOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Table, type TableProps, Tag } from 'antd';
+import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, type TableProps, Tag } from 'antd';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { airlinesApi } from '../../api/airlines.ts';
@@ -10,6 +10,7 @@ import AirlineFormModal from '../../features/airline/components/AirlineFormModal
 import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import type { Airline } from '../../types/airline.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 const DEFAULT_PAGE_SIZE = 20;
@@ -177,7 +178,7 @@ export default function AirlineListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<Airline>
+        <DataTable<Airline>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

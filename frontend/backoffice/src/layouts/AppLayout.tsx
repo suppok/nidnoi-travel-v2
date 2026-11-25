@@ -1,7 +1,7 @@
 import { AccountBookOutlined, BellOutlined, ExportOutlined, FormOutlined, CloudSyncOutlined, CompassOutlined, FileDoneOutlined, DownOutlined, EnvironmentOutlined, GlobalOutlined, HomeOutlined, MessageOutlined, SendOutlined, ShareAltOutlined, ShopOutlined, KeyOutlined, LinkOutlined, LogoutOutlined, MailOutlined, RobotOutlined, TeamOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, type MenuProps, Tag, Tooltip } from 'antd';
-import { type ReactNode, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { type ReactNode, useLayoutEffect, useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router';
 import { useAuth } from '../auth/useAuth.ts';
 import BrandMark from '../components/BrandMark.tsx';
 import { env } from '../config/env.ts';
@@ -31,8 +31,8 @@ const NAV: NavGroup[] = [
     label: 'ฝ่ายขาย',
     roles: [Roles.Sales],
     items: [
-      { path: '/bookings', label: 'ใบจอง', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
       { path: LINE_BOOKING_ENTRY_PATH, label: 'บันทึกใบจอง LINE', icon: <FormOutlined />, permission: Permissions.LineBookingCreate, newTab: true },
+      { path: '/bookings', label: 'ใบจองหน้าเว็บ', icon: <FileDoneOutlined />, permission: Permissions.BookingList },
       { path: '/line-bookings', label: 'ใบจอง LINE', icon: <MessageOutlined />, permission: Permissions.LineBookingList },
       { path: '/tour-programs', label: 'โปรแกรมทัวร์', icon: <CompassOutlined />, permission: Permissions.TourProgramList },
       { path: '/taxonomy/countries', label: 'ประเทศ', icon: <GlobalOutlined />, permission: Permissions.CountryList },
@@ -97,6 +97,15 @@ function Shell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [lineLinkOpen, setLineLinkOpen] = useState(false);
+  const navigationType = useNavigationType();
+
+  // A new page opens at the top. Only a path change counts, so filters or a drawer (?open=) on the same page
+  // keep the scroll; back/forward (POP) is left to the browser. Not ScrollRestoration keyed by path: that
+  // also restores a page's old position on a normal menu click. (#periods is scrolled by the edit page.)
+  useLayoutEffect(() => {
+    if (navigationType !== 'POP') window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a path change scrolls
+  }, [location.pathname]);
 
   const menuItems: MenuProps['items'] = NAV.filter((group) => !group.roles || worksAs(user?.roles, ...group.roles)).map((group) => ({
     type: 'group' as const,
@@ -142,14 +151,16 @@ function Shell() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Layout.Sider width={248} breakpoint="lg" collapsedWidth={0}>
-        <div className="flex h-full flex-col gap-7 px-4 py-6">
-          <Link to="/dashboard" className="px-2 no-underline">
+      {/* Sticky at full screen height: the logo stays put and the menu scrolls on its own, apart from the page. */}
+      <Layout.Sider width={264} breakpoint="lg" collapsedWidth={0} style={{ position: 'sticky', top: 0, height: '100vh' }}>
+        <div className="flex h-full flex-col gap-7 py-6">
+          <Link to="/dashboard" className="mx-4 shrink-0 px-2 no-underline">
             <BrandMark caption="BACKOFFICE" />
           </Link>
 
-          <Menu mode="inline" selectedKeys={selected} items={menuItems} style={{ borderInlineEnd: 'none' }} />
-
+          <div className="scroll-slim min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1.5 pl-3">
+            <Menu mode="inline" selectedKeys={selected} items={menuItems} style={{ borderInlineEnd: 'none' }} />
+          </div>
         </div>
       </Layout.Sider>
 

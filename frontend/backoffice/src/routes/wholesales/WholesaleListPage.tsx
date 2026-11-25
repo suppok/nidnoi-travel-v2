@@ -1,5 +1,5 @@
 import { EditOutlined, MailOutlined, MoreOutlined, PhoneOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, Table, type TableProps, Tag } from 'antd';
+import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, type TableProps, Tag } from 'antd';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { wholesalesApi } from '../../api/wholesales.ts';
@@ -11,6 +11,7 @@ import WholesaleFormModal from '../../features/wholesale/components/WholesaleFor
 import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import type { Wholesale, WholesaleContact } from '../../types/wholesale.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 const DEFAULT_PAGE_SIZE = 20;
@@ -235,7 +236,7 @@ export default function WholesaleListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<Wholesale>
+        <DataTable<Wholesale>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

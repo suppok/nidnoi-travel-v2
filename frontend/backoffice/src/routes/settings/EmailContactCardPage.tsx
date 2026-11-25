@@ -1,5 +1,5 @@
 import { RollbackOutlined, SaveOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Image, Spin, Tag, Typography } from 'antd';
+import { Alert, App, Button, Card, Image, Skeleton, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { appConfigApi } from '../../api/appConfig.ts';
 import PageHeader from '../../components/PageHeader.tsx';
@@ -54,7 +54,7 @@ export default function EmailContactCardPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="รูปติดต่อท้ายอีเมล" subtitle="รูปที่แสดงท้ายอีเมลยืนยันการจองที่ส่งถึงโฮลเซลล์ ใต้เส้น --" />
       {loadError && <Alert type="error" showIcon message={loadError} />}
-      {!card && !loadError && <Spin />}
+      {!card && !loadError && <Skeleton active paragraph={{ rows: 4 }} />}
 
       {card && (
         <div className="grid gap-6 lg:grid-cols-2">

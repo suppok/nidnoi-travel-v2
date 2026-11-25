@@ -1,5 +1,5 @@
 import { EditOutlined, KeyOutlined, MoreOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, Table, type TableProps, Tag } from 'antd';
+import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, type TableProps, Tag } from 'antd';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { usersApi } from '../../api/users.ts';
@@ -14,6 +14,7 @@ import ResetPasswordModal from '../../features/user/components/ResetPasswordModa
 import UserFormModal from '../../features/user/components/UserFormModal.tsx';
 import { useUserList } from '../../features/user/hooks/useUserList.ts';
 import type { User } from '../../types/user.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 const DEFAULT_PAGE_SIZE = 20;
@@ -214,7 +215,7 @@ export default function UserListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<User>
+        <DataTable<User>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

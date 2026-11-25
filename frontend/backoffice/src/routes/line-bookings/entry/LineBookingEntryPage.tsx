@@ -1,5 +1,5 @@
 import { CheckCircleFilled, EditOutlined, WalletOutlined } from '@ant-design/icons';
-import { App, Button, Card, Result, Spin, Tag, Typography } from 'antd';
+import { App, Button, Card, Result, Skeleton, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { bookingSourcesApi } from '../../../api/bookingSources.ts';
@@ -121,9 +121,9 @@ export default function LineBookingEntryPage() {
         )}
 
         {(step.kind === 'create' || step.kind === 'edit') && !lookups && (
-          <div className="flex justify-center py-16">
-            <Spin size="large" />
-          </div>
+          <Card>
+            <Skeleton active paragraph={{ rows: 10 }} />
+          </Card>
         )}
 
         {step.kind === 'create' && lookups && (
