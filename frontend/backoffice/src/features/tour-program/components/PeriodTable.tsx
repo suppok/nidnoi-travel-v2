@@ -1,5 +1,5 @@
 import { CloseOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, DatePicker, Input, InputNumber, type InputNumberProps, Switch, Table, type TableProps, Tag, Tooltip } from 'antd';
+import { Alert, App, Button, Card, DatePicker, Input, InputNumber, type InputNumberProps, Switch, type TableProps, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { periodsApi } from '../../../api/tourPrograms.ts';
@@ -11,6 +11,7 @@ import { errorMessage } from '../../../lib/errors.ts';
 import { formatBaht } from '../../../lib/format.ts';
 import type { TourProgramPeriod, TourProgramPeriodFields } from '../../../types/tourProgram.ts';
 import { seatsForTotal } from '../lib/seats.ts';
+import DataTable from '../../../components/DataTable.tsx';
 
 const DATE = 'YYYY-MM-DD';
 const NEW_PREFIX = 'new:';
@@ -405,7 +406,7 @@ export default function PeriodTable({ tourProgramId, days, disabled = false }: P
     >
       {loadError !== null && <Alert type="error" showIcon title={errorMessage(loadError)} className="mb-4" />}
       {unsaved > 0 && <Alert type="warning" showIcon title={`มี ${unsaved} แถวที่ยังไม่บันทึก — กด "บันทึก" ทีละแถว`} className="mb-4" />}
-      <Table<Row>
+      <DataTable<Row>
         rowKey="key"
         size="small"
         columns={columns}

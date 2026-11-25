@@ -1,5 +1,5 @@
 import { ApiOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tag, Typography } from 'antd';
+import { Alert, App, Button, Card, Form, Input, InputNumber, Select, Skeleton, Switch, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { aiSettingsApi } from '../../api/aiSettings.ts';
 import PageHeader from '../../components/PageHeader.tsx';
@@ -79,7 +79,7 @@ export default function AISettingsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="ตั้งค่า AI" subtitle="ใช้ Claude อ่านไฟล์ PDF โปรแกรมทัวร์แล้วกรอกฟอร์มสร้างโปรแกรมให้ — พนักงานตรวจและบันทึกเอง" />
       {loadError && <Alert type="error" showIcon message={loadError} />}
-      {!setting && !loadError && <Spin />}
+      {!setting && !loadError && <Skeleton active paragraph={{ rows: 6 }} />}
 
       {setting && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">

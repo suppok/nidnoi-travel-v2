@@ -1,5 +1,5 @@
 import { EditOutlined, MoreOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Table, type TableProps, Tag } from 'antd';
+import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, type TableProps, Tag } from 'antd';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { bookingSourcesApi } from '../../api/bookingSources.ts';
@@ -10,6 +10,7 @@ import BookingSourceFormModal from '../../features/booking-source/components/Boo
 import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import type { BookingSource } from '../../types/bookingSource.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 const DEFAULT_PAGE_SIZE = 20;
@@ -156,7 +157,7 @@ export default function BookingSourceListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<BookingSource>
+        <DataTable<BookingSource>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

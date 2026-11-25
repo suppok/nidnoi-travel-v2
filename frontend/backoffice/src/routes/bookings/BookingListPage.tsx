@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button, Card, Input, Segmented, Switch, Table, type TableProps, Tag } from 'antd';
+import { Alert, Badge, Button, Card, Input, Segmented, Switch, type TableProps, Tag } from 'antd';
 import { useSearchParams } from 'react-router';
 import { bookingsApi } from '../../api/bookings.ts';
 import PageHeader from '../../components/PageHeader.tsx';
@@ -11,6 +11,7 @@ import { useListQuery } from '../../hooks/useListQuery.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { formatBaht, formatDateTime } from '../../lib/format.ts';
 import type { Booking } from '../../types/booking.ts';
+import DataTable from '../../components/DataTable.tsx';
 
 const DEFAULT_PAGE_SIZE = 20;
 const STATES = new Set<number>(BOOKING_STATE_INFO.map((s) => s.value));
@@ -121,7 +122,7 @@ export default function BookingListPage() {
   return (
     <>
       <PageHeader
-        title="ใบจอง"
+        title="ใบจองหน้าเว็บ"
         subtitle="ใบจองที่ลูกค้าส่งจากหน้าเว็บ ยังไม่ได้กันที่นั่ง เจ้าหน้าที่ต้องติดต่อกลับเพื่อยืนยัน"
         actions={
           <Button icon={<ReloadOutlined />} onClick={reloadAll}>
@@ -166,7 +167,7 @@ export default function BookingListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<Booking>
+        <DataTable<Booking>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

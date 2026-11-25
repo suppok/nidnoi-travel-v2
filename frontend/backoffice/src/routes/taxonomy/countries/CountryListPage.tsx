@@ -1,5 +1,5 @@
 import { EditOutlined, MoreOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Dropdown, Input, type MenuProps, Segmented, Table, type TableProps, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Dropdown, Input, type MenuProps, Segmented, type TableProps, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { countriesApi } from '../../../api/taxonomy.ts';
@@ -11,6 +11,7 @@ import { useConfirmCountryStatus } from '../../../features/taxonomy/hooks/useCon
 import { useListQuery } from '../../../hooks/useListQuery.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import type { Country } from '../../../types/taxonomy.ts';
+import DataTable from '../../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 const DEFAULT_PAGE_SIZE = 50;
@@ -158,7 +159,7 @@ export default function CountryListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<Country>
+        <DataTable<Country>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}

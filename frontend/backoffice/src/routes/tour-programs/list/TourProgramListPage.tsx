@@ -1,5 +1,5 @@
 import { EditOutlined, MoreOutlined, PictureOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, Table, type TableProps, Tag } from 'antd';
+import { Alert, App, Button, Card, Dropdown, Input, type MenuProps, Segmented, Select, type TableProps, Tag } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { tourProgramsApi } from '../../../api/tourPrograms.ts';
 import { useAuth } from '../../../auth/useAuth.ts';
@@ -12,6 +12,7 @@ import { useListQuery } from '../../../hooks/useListQuery.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { TourProgramListItem } from '../../../types/tourProgram.ts';
+import DataTable from '../../../components/DataTable.tsx';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
 type ParamKey = 'q' | 'country' | 'wholesale' | 'state' | 'status' | 'page' | 'pageSize';
@@ -249,7 +250,7 @@ export default function TourProgramListPage() {
 
         {error !== null && <Alert type="error" showIcon title={errorMessage(error)} className="mb-4" />}
 
-        <Table<TourProgramListItem>
+        <DataTable<TourProgramListItem>
           rowKey="id"
           columns={columns}
           dataSource={data?.items ?? []}
