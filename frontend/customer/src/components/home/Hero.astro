@@ -1,8 +1,11 @@
 ---
 // Full-screen hero: the campaign photo fills the screen under the header and fades into the copy
-// (from the left on desktop, from the bottom on mobile). The filter jumps to the country or city landing.
+// (from the left on desktop, from the bottom on mobile). The filter jumps to the country or city landing,
+// passing the departure month and price range as ?month=&price= for the landing's tour list to apply.
 import { heroCampaign as hero } from '../../config/home';
-import { formatPrice } from '../../lib/format';
+import { getPublicTour, listPublicTours } from '../../lib/api/tour-programs';
+import { formatMonth, formatPrice } from '../../lib/format';
+import { departureMonths, PRICE_RANGES } from '../../lib/tour-filter';
 import type { CityPublic, CountryPublic } from '../../types/taxonomy';
 import CfImage from '../ui/CfImage.astro';
 import Icon from '../ui/Icon.astro';
@@ -17,6 +20,19 @@ type Props = {
 const { country, countries, cities } = Astro.props;
 const href = country ? `/tours/${country.slug}/` : '#destinations';
 const selected = country ?? countries[0];
+
+// Months with an open departure, each tagged with the countries departing then (the list follows the chosen country).
+// getPublicTour is cached per build (the tour pages fetch the same details), so this adds no API calls.
+const details = await Promise.all((await listPublicTours()).map((t) => getPublicTour(t.code)));
+const monthCountries = new Map<string, Set<string>>();
+for (const d of details) {
+  for (const month of departureMonths(d.periods)) {
+    const set = monthCountries.get(month) ?? new Set<string>();
+    for (const c of d.countries) set.add(c.slug);
+    monthCountries.set(month, set);
+  }
+}
+const months = [...monthCountries].sort(([a], [b]) => a.localeCompare(b));
 ---
 
 <section class="hero relative isolate flex flex-col overflow-hidden" aria-labelledby="hero-title">
@@ -58,7 +74,7 @@ const selected = country ?? countries[0];
 
     {
       selected && (
-        <form id="hero-filter" data-hero-in style="--i: 3" role="search" aria-label="ค้นหาทัวร์" class="hero-filter grid max-w-[780px] gap-1.5 rounded-lg bg-white p-2 sm:grid-cols-[1fr_1fr_auto]">
+        <form id="hero-filter" data-hero-in style="--i: 3" role="search" aria-label="ค้นหาทัวร์" class="hero-filter grid max-w-[1040px] gap-1.5 rounded-lg bg-white p-2 sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_1.1fr_1.15fr_auto]">
           <div class="flex flex-col px-4 py-2">
             <label for="hero-country" class="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
               <Icon name="plane" size={12} /> จะไปไหนดี
@@ -76,7 +92,25 @@ const selected = country ?? countries[0];
               {cities.map((c) => <option value={c.slug} data-country={c.countrySlug}>{c.nameTh}</option>)}
             </select>
           </div>
-          <button type="submit" class="btn btn-primary rounded-md">
+          <div class="flex flex-col px-4 py-2 lg:border-l lg:border-line">
+            <label for="hero-month" class="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+              <Icon name="calendar" size={12} /> ช่วงเดินทาง
+            </label>
+            <select id="hero-month" name="month" class="hero-select">
+              <option value="">ทุกเดือน</option>
+              {months.map(([key, slugs]) => <option value={key} data-countries={[...slugs].join(' ')}>{formatMonth(key)}</option>)}
+            </select>
+          </div>
+          <div class="flex flex-col px-4 py-2 sm:border-l sm:border-line">
+            <label for="hero-price" class="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+              <Icon name="wallet" size={12} /> งบประมาณ / ท่าน
+            </label>
+            <select id="hero-price" name="price" class="hero-select">
+              <option value="">ทุกราคา</option>
+              {PRICE_RANGES.map((r) => <option value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary rounded-md sm:col-span-2 lg:col-span-1">
             <Icon name="search" size={16} /> ค้นหาทัวร์
           </button>
         </form>
@@ -107,23 +141,36 @@ const selected = country ?? countries[0];
     }, 5000);
   }
 
-  // Static site: the filter jumps to the matching landing page (/tours/<country>/[<city>/]).
+  // Static site: the filter jumps to the matching landing page (/tours/<country>/[<city>/]); month and price
+  // travel as query params that the landing's tour list applies (see TourList.astro).
   const form = document.getElementById('hero-filter') as HTMLFormElement | null;
   if (form) {
     const country = form.elements.namedItem('country') as HTMLSelectElement;
     const city = form.elements.namedItem('city') as HTMLSelectElement;
-    // Safari ignores `hidden` on <option>, so the city list is rebuilt for the chosen country.
+    const month = form.elements.namedItem('month') as HTMLSelectElement;
+    const price = form.elements.namedItem('price') as HTMLSelectElement;
+    // Safari ignores `hidden` on <option>, so the city and month lists are rebuilt for the chosen country.
     const allCities = Array.from(city.options).filter((o) => o.dataset.country);
-    const showCities = () => {
+    const allMonths = Array.from(month.options).filter((o) => o.dataset.countries);
+    const showOptions = () => {
       for (const o of allCities) o.remove();
       for (const o of allCities) if (o.dataset.country === country.value) city.add(o);
       city.value = '';
+      const keep = month.value;
+      for (const o of allMonths) o.remove();
+      for (const o of allMonths) if (o.dataset.countries?.split(' ').includes(country.value)) month.add(o);
+      month.value = allMonths.some((o) => o.value === keep && o.parentElement) ? keep : '';
     };
-    showCities();
-    country.addEventListener('change', showCities);
+    showOptions();
+    country.addEventListener('change', showOptions);
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      window.location.href = `/tours/${country.value}/${city.value ? `${city.value}/` : ''}`;
+      const query = new URLSearchParams();
+      if (month.value) query.set('month', month.value);
+      if (price.value) query.set('price', price.value);
+      const path = `/tours/${country.value}/${city.value ? `${city.value}/` : ''}`;
+      // With a filter, land on the tour list itself rather than the landing hero.
+      window.location.href = query.size ? `${path}?${query}#tours` : path;
     });
   }
 </script>
@@ -205,11 +252,20 @@ const selected = country ?? countries[0];
       var(--color-cream) 70%
     );
   }
-  /* Desktop: the photo fades from the left into the copy, and softly into the next section. */
+  /* Desktop: the photo fades from the left into the copy, and softly into the next section.
+     The fade is anchored to the content column (--edge = the container's left edge), not to the
+     viewport width, so on wide screens the photo starts right after the copy instead of a washed-out
+     ghost of it stretching across the empty left margin. */
   @media (min-width: 768px) {
     .hero-fade {
+      --edge: max(0px, (100% - var(--container-site, 1320px)) / 2);
       background:
-        linear-gradient(90deg, var(--color-cream) 0%, rgb(247 250 253 / 0.94) 32%, rgb(247 250 253 / 0) 62%),
+        linear-gradient(
+          90deg,
+          var(--color-cream) calc(var(--edge) + min(16%, 210px)),
+          rgb(247 250 253 / 0.94) calc(var(--edge) + min(32%, 420px)),
+          rgb(247 250 253 / 0) calc(var(--edge) + min(62%, 820px))
+        ),
         linear-gradient(0deg, var(--color-cream) 0%, rgb(247 250 253 / 0) 18%);
     }
   }

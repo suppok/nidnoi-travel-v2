@@ -12,12 +12,12 @@ const { days } = Astro.props;
 {
   days.length > 0 && (
     <section class="mt-16" aria-labelledby="timeline-title">
-      <p class="eyebrow mb-4">ไทม์ไลน์การเดินทาง</p>
-      <h2 id="timeline-title" class="h-section mt-0 mb-8">
+      <p data-reveal class="eyebrow mb-4">ไทม์ไลน์การเดินทาง</p>
+      <h2 data-reveal id="timeline-title" class="h-section mt-0 mb-8">
         {days.length} วัน<em>เที่ยวที่ไหน</em>บ้าง
       </h2>
 
-      <ol class="timeline relative m-0 list-none p-0">
+      <ol data-reveal-stagger class="timeline relative m-0 list-none p-0">
         {days.map((d) => (
           <li class="relative pb-7 pl-14 last:pb-0">
             <span class="absolute top-1.5 left-[17px] h-4 w-4 rounded-full border-2 border-primary bg-white" aria-hidden="true" />

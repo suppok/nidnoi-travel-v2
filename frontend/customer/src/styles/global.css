@@ -70,6 +70,12 @@
     line-height: 1.7;
     text-rendering: optimizeLegibility;
   }
+  /* In-page links (#destinations, #periods, …) glide to their section instead of jumping. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
 
   ::selection {
     @apply bg-primary-deep text-white;
@@ -143,6 +149,55 @@
 
   .section-tight {
     padding-block: clamp(40px, 5vw, 72px);
+  }
+
+  /* Decorated section background: faint diagonal stripes plus a soft blue glow and a soft pink glow.
+     Pure CSS (no images, no filter: blur) so it costs nothing at load. Every decorated section shares the
+     cream base, and the stripes and glows fade out toward the top and bottom edges, so consecutive sections
+     melt into each other with no visible seam. The glows sit top-left (blue) and bottom-right (pink);
+     add .bg-deco-flip to mirror them so stacked sections alternate. */
+  .bg-deco {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    background-color: var(--color-cream);
+  }
+  .bg-deco::before,
+  .bg-deco::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+  }
+  .bg-deco::before {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--color-primary) 7%, transparent) 0 1px,
+      transparent 1px 18px
+    );
+  }
+  .bg-deco::after {
+    background:
+      radial-gradient(min(560px, 80vw) circle at 4% 30%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%),
+      radial-gradient(min(520px, 75vw) circle at 96% 70%, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 70%);
+  }
+  .bg-deco-flip::after {
+    background:
+      radial-gradient(min(560px, 80vw) circle at 96% 30%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%),
+      radial-gradient(min(520px, 75vw) circle at 4% 70%, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 70%);
+  }
+  /* A tinted band (e.g. the promise strip) that fades in from and out to the cream above and below. */
+  .bg-deco-band {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-cream),
+      var(--color-primary-tint) 30%,
+      var(--color-primary-tint) 70%,
+      var(--color-cream)
+    );
   }
 
   .eyebrow {

@@ -73,7 +73,9 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
   ogType="article"
   jsonLd={[touristTripJsonLd(tour, share), breadcrumbJsonLd(crumbs)]}
 >
-  <section class="bg-white pt-8">
+  <!-- One decorated background behind the header and body so the stripes run through without a seam. -->
+  <div class="bg-deco">
+  <section class="pt-8">
     <div class="container-site">
       <Breadcrumb crumbs={crumbs} />
 
@@ -130,10 +132,10 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
     </div>
   </section>
 
-  <section class="bg-white pb-24">
+  <section class="pb-24">
     <div class="container-site detail-grid">
       <div class="min-w-0">
-        <dl class="facts mb-16 grid grid-cols-2 overflow-hidden rounded-md border border-line bg-cream md:grid-cols-4">
+        <dl data-reveal-stagger class="facts mb-16 grid grid-cols-2 overflow-hidden rounded-md border border-line bg-white md:grid-cols-4">
           {
             facts.map((f) => (
               <div class="fact p-5">
@@ -147,15 +149,15 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
           }
         </dl>
 
-        <p class="eyebrow mb-4">รายละเอียดโปรแกรม</p>
-        <h2 class="h-section mt-0 mb-6">ทริปนี้<em>มีอะไรบ้าง</em></h2>
-        <div class="body-lg max-w-3xl space-y-5 text-ink-soft">
+        <p data-reveal class="eyebrow mb-4">รายละเอียดโปรแกรม</p>
+        <h2 data-reveal class="h-section mt-0 mb-6">ทริปนี้<em>มีอะไรบ้าง</em></h2>
+        <div data-reveal class="body-lg max-w-3xl space-y-5 text-ink-soft">
           {paragraphs(tour.description).map((p) => <p>{p}</p>)}
         </div>
 
         {
           tour.pdfFile && (
-            <a href={tour.pdfFile} class="btn btn-ghost mt-8" target="_blank" rel="noopener">
+            <a data-reveal href={tour.pdfFile} class="btn btn-ghost mt-8" target="_blank" rel="noopener">
               <Icon name="file" size={16} /> ดาวน์โหลดโปรแกรมทัวร์ (PDF)
             </a>
           )
@@ -166,22 +168,23 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
         <TourIncludes includedItems={tour.includedItems ?? []} excludedItems={tour.excludedItems ?? []} governmentShopStops={tour.governmentShopStops ?? null} />
       </div>
 
-      <aside id="periods" class="detail-aside scroll-mt-24" aria-label="รอบเดินทางและราคา">
+      <aside data-reveal="right" id="periods" class="detail-aside scroll-mt-24" aria-label="รอบเดินทางและราคา">
         <PeriodTable code={tour.code} tourName={tour.name} periods={tour.periods} />
       </aside>
     </div>
   </section>
+  </div>
 
   {
     related.length > 0 && country && (
-      <section class="section-tight border-t border-line-soft bg-cream">
+      <section class="section-tight bg-deco bg-deco-flip">
         <div class="container-site">
           <SectionHeader
             eyebrow={`ทัวร์${country.nameTh}อื่น ๆ`}
             title="โปรแกรมที่เกี่ยวข้อง"
             cta={{ label: 'ดูทั้งหมด', href: `/tours/${country.slug}/` }}
           />
-          <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          <ul data-reveal-stagger class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {related.map((t) => (
               <li class="flex">
                 <TourCard tour={t} columns={3} />
@@ -233,7 +236,9 @@ const description = metaDescription(`${tour.name} ${duration} ${tour.highlight}$
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 240px 140px 140px;
   }
-  .gallery-main {
+  /* Only the thumbs layout defines a 'main' area. Naming it in the single-image layout would make the
+     grid invent an extra implicit column, pushing the photo right and over the content below. */
+  .detail-gallery.has-thumbs .gallery-main {
     grid-area: main;
   }
   @media (min-width: 900px) {

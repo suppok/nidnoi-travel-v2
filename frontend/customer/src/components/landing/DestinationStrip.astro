@@ -18,7 +18,7 @@ const { eyebrow, title, items, cta, tone = 'white' } = Astro.props;
 
 {
   items.length > 0 && (
-    <section class:list={['section-tight', tone === 'cream' ? 'bg-cream' : 'bg-white']}>
+    <section class:list={['section-tight bg-deco', tone === 'white' && 'bg-deco-flip']}>
       <div class="container-site">
         <SectionHeader eyebrow={eyebrow} title={title} cta={cta} />
         <ul class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

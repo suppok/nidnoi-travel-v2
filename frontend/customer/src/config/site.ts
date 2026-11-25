@@ -54,3 +54,24 @@ export const promises = [
 // Fallback hero for landing pages whose country/city has no heroImage yet (never ship a landing without one).
 // TODO(content): replace with an R2 image (media.*) before launch.
 export const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=2000&q=80';
+
+// Placeholder photos for countries whose heroImage hasn't been uploaded in the backoffice yet, keyed by slug.
+// A real heroImage always wins; countries not listed here fall back to DEFAULT_HERO_IMAGE where a photo is required.
+// TODO(content): upload real hero images in the backoffice, then delete this map before launch.
+const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?w=2000&q=80`;
+export const PLACEHOLDER_COUNTRY_IMAGES: Readonly<Record<string, string>> = {
+  croatia: unsplash('1555990793-da11153b2473'), // Dubrovnik
+  georgia: unsplash('1565008447742-97f6f38c985c'),
+  jordan: unsplash('1579606032821-4e6161c81bd3'), // Petra
+  china: unsplash('1508804185872-d7badad00f7d'),
+  denmark: unsplash('1513622470522-26c3c8a854bc'), // Nyhavn
+  norway: unsplash('1601439678777-b2b3c56fa627'), // Geirangerfjord
+  finland: unsplash('1507272931001-fc06c17e4f43'), // aurora
+  france: unsplash('1499856871958-5b9627545d1a'), // Paris
+  singapore: unsplash('1565967511849-76a60a516170'),
+  japan: unsplash('1493976040374-85c8e12f0c0e'),
+  korea: unsplash('1517154421773-0529f29ea451'),
+  taiwan: unsplash('1470004914212-05527e49370b'),
+  vietnam: unsplash('1528127269322-539801943592'),
+  turkey: unsplash('1524231757912-21f4fe3a7200'),
+};

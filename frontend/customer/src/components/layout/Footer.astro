@@ -12,8 +12,8 @@ const year = new Date().getFullYear() + 543;
 
 <footer id="contact" class="bg-ink pt-20 pb-8 text-white">
   <div class="container-site">
-    <div class="footer-grid mb-16 grid gap-12">
-      <div>
+    <div class="footer-grid mb-16 grid gap-x-12 gap-y-12">
+      <div class="footer-brand">
         <div class="inline-block rounded-md bg-white px-3 py-2"><Logo height={56} /></div>
         <p class="mt-6 max-w-xs text-[15px] text-white/75">
           บริษัทนำเที่ยวต่างประเทศ รวมโปรแกรมทัวร์คุณภาพ ราคาชัดเจน เช็กวันเดินทางและที่นั่งว่างได้ทันที
@@ -34,9 +34,9 @@ const year = new Date().getFullYear() + 543;
         }
       </div>
 
-      <div>
+      <div class="footer-countries">
         <h2 class="footer-title">ทัวร์ต่างประเทศ</h2>
-        <ul class="footer-links grid grid-cols-2 gap-x-6 sm:grid-cols-1">
+        <ul class="footer-links">
           {
             countries.map((c) => (
               <li>
@@ -47,7 +47,7 @@ const year = new Date().getFullYear() + 543;
         </ul>
       </div>
 
-      <div>
+      <div class="footer-contact">
         <h2 class="footer-title">ติดต่อเรา</h2>
         <ul class="flex flex-col gap-3.5 text-[15px] text-white/85">
           <li class="flex items-start gap-2.5">
@@ -77,17 +77,47 @@ const year = new Date().getFullYear() + 543;
 </footer>
 
 <style>
+  /* Phone: brand, contact, then the country list. Tablet: brand and contact side by side, the list
+     full width below. Desktop: the list takes the wide middle column. The list flows top-to-bottom
+     in columns (CSS columns) so ~30 countries stay short instead of one very long column. */
   .footer-grid {
     grid-template-columns: 1fr;
+    grid-template-areas: 'brand' 'contact' 'countries';
+  }
+  .footer-brand {
+    grid-area: brand;
+  }
+  .footer-countries {
+    grid-area: countries;
+  }
+  .footer-contact {
+    grid-area: contact;
+  }
+  .footer-links {
+    columns: 2;
+    column-gap: 24px;
+  }
+  .footer-links li {
+    break-inside: avoid;
   }
   @media (min-width: 640px) {
     .footer-grid {
       grid-template-columns: 1fr 1fr;
+      grid-template-areas: 'brand contact' 'countries countries';
+    }
+    .footer-links {
+      columns: 3;
     }
   }
   @media (min-width: 1000px) {
     .footer-grid {
-      grid-template-columns: 1.5fr 1fr 1.1fr;
+      grid-template-columns: 1.1fr 2.2fr 1fr;
+      grid-template-areas: 'brand countries contact';
+    }
+  }
+  @media (min-width: 1200px) {
+    .footer-links {
+      columns: 4;
     }
   }
   .footer-title {
@@ -100,7 +130,7 @@ const year = new Date().getFullYear() + 543;
   }
   .footer-links a {
     display: inline-block;
-    padding-block: 6px;
+    padding-block: 4px;
     font-size: 15px;
     color: rgb(255 255 255 / 0.8);
     transition: color 0.2s;
