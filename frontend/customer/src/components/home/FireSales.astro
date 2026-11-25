@@ -1,0 +1,137 @@
+---
+// โปรไฟไหม้: up to four departures staff picked in the backoffice (period table "โปรไฟไหม้ · ลำดับ").
+// Prices and dates are baked at build time; seats stay on the tour page's live period table.
+import type { FireSaleEntry } from '../../lib/fire-sales';
+import { discountPercent, formatDateRange, formatDuration, formatPrice } from '../../lib/format';
+import CfImage from '../ui/CfImage.astro';
+import Icon from '../ui/Icon.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+
+type Props = { entries: FireSaleEntry[] };
+const { entries } = Astro.props;
+---
+
+<section class="section bg-white pt-10 md:pt-12" aria-labelledby="fire-sales-title">
+  <div class="container-site">
+    <SectionHeader sub="ราคาพิเศษเฉพาะรอบเดินทางที่กำหนด ที่นั่งมีจำนวนจำกัด">
+      <Fragment slot="title"><span id="fire-sales-title">โปรไฟไหม้ <em>ราคาพิเศษ</em></span></Fragment>
+    </SectionHeader>
+
+    <ul data-reveal-stagger="right" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+      {
+        entries.map(({ tour, sale }) => {
+          const discount = discountPercent(sale.price, sale.priceBeforeDiscount);
+          return (
+            <li class="flex">
+              <article class="promo-card relative flex w-full flex-col overflow-hidden rounded-lg border border-line-soft bg-white">
+                <div class="relative aspect-[4/3] overflow-hidden bg-cream-deep">
+                  {tour.cardImage && (
+                    <CfImage
+                      src={tour.cardImage}
+                      alt=""
+                      preset="card"
+                      width={400}
+                      height={300}
+                      sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 100vw"
+                      class="promo-img absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                  <div class="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-ink/45" />
+                  <span class="promo-tag absolute top-3.5 left-3.5 inline-flex items-center gap-1 rounded-full bg-accent-deep px-3 py-1 text-[12px] font-semibold text-white">
+                    <Icon name="flame" size={13} /> โปรไฟไหม้
+                  </span>
+                  {discount > 0 && (
+                    <div class="promo-badge absolute top-3.5 right-3.5 flex h-12 w-12 flex-col items-center justify-center rounded-full bg-accent-deep text-white">
+                      <span class="text-[9px] leading-none font-semibold tracking-wider">ลด</span>
+                      <span class="mt-0.5 font-display text-sm leading-none font-semibold">{discount}%</span>
+                    </div>
+                  )}
+                </div>
+
+                <div class="flex flex-1 flex-col px-5 pt-4 pb-5">
+                  <div class="mb-2.5 flex items-center gap-2.5 text-[13px] text-ink-muted">
+                    <span class="inline-flex items-center gap-1.5">
+                      <Icon name="calendar" size={13} />
+                      {formatDuration(tour.days, tour.nights)}
+                    </span>
+                    {tour.airline && (
+                      <>
+                        <span class="h-[3px] w-[3px] rounded-full bg-ink-muted" aria-hidden="true" />
+                        <span class="inline-flex items-center gap-1.5" title={tour.airline.name}>
+                          <Icon name="plane" size={13} />
+                          {tour.airline.code}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <h3 class="mb-2 font-display text-[17px] leading-snug font-semibold text-ink">
+                    <a href={`/tour/${tour.code}/#periods`} class="promo-link">{tour.name}</a>
+                  </h3>
+                  <p class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-deep">
+                    <Icon name="plane" size={13} /> ออกเดินทาง {formatDateRange(sale.startDate, sale.endDate)}
+                  </p>
+
+                  <div class="mt-auto flex items-end justify-between border-t border-line-soft pt-3.5">
+                    <div>
+                      {sale.priceBeforeDiscount && (
+                        <div class="text-xs text-ink-muted line-through">{formatPrice(sale.priceBeforeDiscount)} บาท</div>
+                      )}
+                      <div class="flex items-baseline gap-1.5">
+                        <span class="font-display text-2xl leading-none font-semibold text-primary-deep">{formatPrice(sale.price)}</span>
+                        <span class="text-sm font-medium text-ink-muted">บาท</span>
+                      </div>
+                    </div>
+                    <span class="promo-cta flex h-10 w-10 items-center justify-center rounded-full bg-primary-tint text-primary-deep" aria-hidden="true">
+                      <Icon name="arrow-up-right" size={15} />
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .promo-card {
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+  /* The whole card is clickable through the title link's overlay. */
+  .promo-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .promo-card:hover,
+  .promo-card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-line);
+  }
+  .promo-img {
+    transition: transform 0.6s ease;
+  }
+  .promo-card:hover .promo-img {
+    transform: scale(1.05);
+  }
+  .promo-cta {
+    transition:
+      background-color 0.25s,
+      color 0.25s;
+  }
+  .promo-card:hover .promo-cta {
+    background: var(--color-primary-deep);
+    color: var(--color-white);
+  }
+  .promo-badge,
+  .promo-tag {
+    box-shadow: var(--shadow-accent);
+  }
+</style>

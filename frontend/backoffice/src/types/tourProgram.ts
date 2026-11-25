@@ -101,6 +101,8 @@ export type TourProgramPeriod = {
   seatsTotal: number;
   seatsAvailable: number; // 0 = sold out
   note: string; // staff only
+  fireSale: boolean; // โปรไฟไหม้ on the customer home page; needs priceBeforeDiscount
+  fireSaleOrder: number; // 0..9999, lowest first on the home page
   status: boolean;
   createDate: string;
   updateDate: string;

@@ -313,6 +313,7 @@ States (`src/constants/tourProgramStates.ts`, mirrors `tourprogramstate`): ร�
 Editing seats and prices is the most frequent staff task — optimize this screen for speed.
 
 - The tour edit page has a **periods table** (`features/tour-program/components/PeriodTable.tsx`): antd editable `Table` with inline `InputNumber` for prices (adult, before discount, child with bed, child no bed, infant, single supplement, deposit) and seats (ว่าง / ทั้งหมด — typing the total moves ว่าง with it while ว่าง still equals the old total, else keeps it but never above the total: `lib/seats.ts`, also in the create page's draft table), and `DatePicker.RangePicker` for dates (picking the departure fills the return date from the tour's days). Prices are whole baht.
+- **โปรไฟไหม้ · ลำดับ** column: a `Switch` (`fireSale`) plus an order number (`fireSaleOrder`, 0–9999, lowest first) puts the departure in the customer home page's โปรไฟไหม้ section (first 4 across all tours). The switch is disabled until the row has a ราคาก่อนลด (the backend requires it too); new rows start with it off.
 - "เพิ่มรอบ" adds an unsaved row prefilled with the latest active period's prices and seats. Save per row through `POST` / `PUT /tour-program-periods`. Disable the row's save while pending; keep the user on the page. Deleted periods are hidden behind a "แสดงรอบที่ลบแล้ว" switch and can be restored.
 - Dates use `dayjs` (antd's date library, a direct dependency for `DatePicker` values).
 - Feedback after save:

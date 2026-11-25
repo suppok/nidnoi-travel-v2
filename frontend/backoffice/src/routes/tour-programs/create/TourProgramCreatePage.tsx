@@ -141,6 +141,8 @@ export default function TourProgramCreatePage() {
           seatsTotal: p.seatsTotal ?? 0,
           seatsAvailable: p.seatsAvailable ?? 0,
           note: p.note.trim(),
+          fireSale: false,
+          fireSaleOrder: 0,
         });
       } catch {
         failed++;

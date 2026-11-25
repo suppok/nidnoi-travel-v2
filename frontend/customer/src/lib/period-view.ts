@@ -35,7 +35,7 @@ export function rowsHtml(periods: TourPeriodPublic[], selectedId: string | null)
         + `<span class="period-row-main"><span class="period-date">${formatDateRange(p.startDate, p.endDate)}</span>`
         + (seat.text ? `<span class="period-seat ${seat.tone}">${seat.text}</span>` : '') + `</span>`
         + `<span class="period-row-price"><span class="period-amount">${formatPrice(p.price)} <small>บาท</small></span>`
-        + (pct > 0 ? `<span class="period-pct">ลด ${pct}%</span>` : '')
+        + (pct > 0 ? `<span class="period-pct">${p.fireSale ? 'โปรไฟไหม้ · ' : ''}ลด ${pct}%</span>` : '')
         + `</span></button></li>`;
     })
     .join('');

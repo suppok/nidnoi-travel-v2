@@ -58,3 +58,22 @@ func TestPeriodFieldsValidate(t *testing.T) {
 		t.Errorf("span over 90 days accepted")
 	}
 }
+
+func TestPeriodFireSaleValidate(t *testing.T) {
+	f := valid()
+	f.FireSale = true
+	if got := fieldErr(t, fieldsValidate(&f)); !got["fireSale"] {
+		t.Errorf("fire sale without a price before discount accepted: %v", got)
+	}
+
+	f.PriceBeforeDiscount = null.IntFrom(35999)
+	f.FireSaleOrder = 3
+	if err := fieldsValidate(&f); err != nil {
+		t.Errorf("valid fire sale rejected: %v", err)
+	}
+
+	f.FireSaleOrder = 10000
+	if got := fieldErr(t, fieldsValidate(&f)); !got["fireSaleOrder"] {
+		t.Errorf("fire sale order 10000 accepted: %v", got)
+	}
+}

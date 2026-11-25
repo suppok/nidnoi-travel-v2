@@ -1,85 +1,234 @@
 ---
+// Full-screen hero: the campaign photo fills the screen under the header and fades into the copy
+// (from the left on desktop, from the bottom on mobile). The filter jumps to the country or city landing.
 import { heroCampaign as hero } from '../../config/home';
 import { formatPrice } from '../../lib/format';
-import type { CountryPublic } from '../../types/taxonomy';
+import type { CityPublic, CountryPublic } from '../../types/taxonomy';
 import CfImage from '../ui/CfImage.astro';
 import Icon from '../ui/Icon.astro';
 
-// country is undefined when the campaign country has no public tours.
-type Props = { country?: CountryPublic };
-const { country } = Astro.props;
+type Props = {
+  /** The campaign country; undefined when it has no public tours (no price, links to the destinations). */
+  country?: CountryPublic;
+  /** Countries and cities with public tours, for the filter. */
+  countries: CountryPublic[];
+  cities: CityPublic[];
+};
+const { country, countries, cities } = Astro.props;
 const href = country ? `/tours/${country.slug}/` : '#destinations';
+const selected = country ?? countries[0];
 ---
 
-<section class="hero relative overflow-hidden pt-12 pb-40 md:pt-20 md:pb-48">
-  <div class="halo halo-primary -top-[12%] -left-[10%] h-[640px] w-[640px] opacity-75"></div>
-  <div class="halo halo-primary top-[30%] -right-[12%] h-[520px] w-[520px] opacity-50"></div>
-  <div class="halo halo-accent right-[8%] -bottom-[20%] h-80 w-80 opacity-35"></div>
+<section class="hero relative isolate flex flex-col overflow-hidden" aria-labelledby="hero-title">
+  <div class="hero-slides absolute inset-0 -z-10" data-hero-slides>
+    {
+      hero.images.map((img, i) => (
+        <CfImage
+          src={img.src}
+          alt={i === 0 ? img.alt : ''}
+          aria-hidden={i === 0 ? undefined : 'true'}
+          preset="hero"
+          width={1920}
+          height={1080}
+          sizes="100vw"
+          priority={i === 0}
+          class:list={['hero-img absolute inset-0 h-full w-full object-cover', i === 0 && 'is-active']}
+        />
+      ))
+    }
+  </div>
+  <div class="hero-fade absolute inset-0 -z-10" aria-hidden="true"></div>
 
-  <div class="container-site relative grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-    <div class="relative z-[2]">
-      <p class="eyebrow mb-5">{hero.eyebrow}</p>
-      <h1 class="h-display mt-0 mb-7">
+  <div class="container-site flex flex-1 flex-col justify-end py-12 md:justify-center md:py-16">
+    <div class="max-w-[640px]">
+      <h1 id="hero-title" data-hero-in="left" style="--i: 0" class="h-display hero-title mt-0 mb-5">
         {hero.titleLead}<br />{hero.titlePrefix}<em>{hero.titleEmphasis}</em>
       </h1>
-      <p class="body-lg mb-10 max-w-xl text-ink-soft">{hero.sub}</p>
-      <div class="flex flex-wrap items-center gap-3.5">
-        <a href={href} class="btn btn-primary">
-          {country ? `ดูทัวร์${country.nameTh}ทั้งหมด` : 'ดูปลายทางทั้งหมด'} <Icon name="arrow-right" size={16} />
-        </a>
-        <a href="#destinations" class="btn btn-ghost">เลือกปลายทางอื่น</a>
-      </div>
+      <p data-hero-in="left" style="--i: 1" class="mb-6 max-w-xl text-base leading-relaxed text-ink-soft">{hero.sub}</p>
+      {
+        country && country.startingPrice !== null && (
+          <p data-hero-in="left" style="--i: 2" class="mb-7 flex flex-wrap items-baseline gap-x-2.5 text-[15px] text-ink-muted">
+            ราคาเริ่มต้น
+            <span class="font-display text-3xl leading-none font-semibold text-primary-deep">{formatPrice(country.startingPrice)}</span>
+            บาท / ท่าน · {hero.location}
+          </p>
+        )
+      }
     </div>
 
-    <div class="relative ml-auto w-full max-w-[540px]">
-      <div class="hero-photo relative aspect-[4/5] overflow-hidden rounded-xl bg-white">
-        <CfImage
-          src={hero.image}
-          alt={hero.imageAlt}
-          preset="hero"
-          width={960}
-          height={1200}
-          sizes="(min-width: 1024px) 540px, 100vw"
-          priority
-          class="absolute inset-0 h-full w-full object-cover"
-        />
-
-        <span class="chip chip-light absolute top-6 left-6 px-3.5 py-1.5">
-          <Icon name="map-pin" size={13} class="text-primary-deep" />
-          {hero.location}
-        </span>
-
-        {
-          country && country.startingPrice !== null && (
-            <div class="price-chip absolute right-6 bottom-6 left-6 flex items-center justify-between gap-3.5 rounded-md px-4 py-3.5">
-              <div>
-                <div class="mb-0.5 text-xs font-semibold tracking-wider text-ink-muted">ราคาเริ่มต้น / ท่าน</div>
-                <div class="font-display text-2xl leading-none font-semibold text-ink">
-                  {formatPrice(country.startingPrice)} <span class="text-sm font-medium text-ink-muted">บาท</span>
-                </div>
-              </div>
-              <a href={href} class="btn btn-primary btn-sm">
-                ดูทัวร์ <Icon name="arrow-right" size={14} />
-              </a>
-            </div>
-          )
-        }
-      </div>
-    </div>
+    {
+      selected && (
+        <form id="hero-filter" data-hero-in style="--i: 3" role="search" aria-label="ค้นหาทัวร์" class="hero-filter grid max-w-[780px] gap-1.5 rounded-lg bg-white p-2 sm:grid-cols-[1fr_1fr_auto]">
+          <div class="flex flex-col px-4 py-2">
+            <label for="hero-country" class="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+              <Icon name="plane" size={12} /> จะไปไหนดี
+            </label>
+            <select id="hero-country" name="country" class="hero-select">
+              {countries.map((c) => <option value={c.slug} selected={c.slug === selected.slug}>{`ทัวร์${c.nameTh}`}</option>)}
+            </select>
+          </div>
+          <div class="flex flex-col px-4 py-2 sm:border-l sm:border-line">
+            <label for="hero-city" class="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+              <Icon name="map-pin" size={12} /> เมือง
+            </label>
+            <select id="hero-city" name="city" class="hero-select">
+              <option value="">ทุกเมือง</option>
+              {cities.map((c) => <option value={c.slug} data-country={c.countrySlug}>{c.nameTh}</option>)}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary rounded-md">
+            <Icon name="search" size={16} /> ค้นหาทัวร์
+          </button>
+        </form>
+      )
+    }
+    <a href={href} data-hero-in style="--i: 4" class="mt-5 inline-flex items-center gap-1.5 self-start text-[15px] font-semibold text-primary-deep hover:text-primary-darker">
+      {country ? `ดูทัวร์${country.nameTh}ทั้งหมด` : 'ดูปลายทางทั้งหมด'} <Icon name="arrow-right" size={15} />
+    </a>
   </div>
 </section>
 
+<script>
+  // Background slideshow: the next photo wipes in from the right every 5 s. Skipped for reduced motion and paused while the tab is hidden.
+  const slides = Array.from(document.querySelectorAll<HTMLImageElement>('[data-hero-slides] .hero-img'));
+  if (slides.length > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let current = 0;
+    window.setInterval(() => {
+      if (document.hidden) return;
+      const next = (current + 1) % slides.length;
+      // Wait for a slide that hasn't loaded yet instead of fading to a blank frame.
+      if (!slides[next].complete) {
+        slides[next].loading = 'eager';
+        return;
+      }
+      slides[current].classList.remove('is-active');
+      slides[next].classList.add('is-active');
+      current = next;
+    }, 5000);
+  }
+
+  // Static site: the filter jumps to the matching landing page (/tours/<country>/[<city>/]).
+  const form = document.getElementById('hero-filter') as HTMLFormElement | null;
+  if (form) {
+    const country = form.elements.namedItem('country') as HTMLSelectElement;
+    const city = form.elements.namedItem('city') as HTMLSelectElement;
+    // Safari ignores `hidden` on <option>, so the city list is rebuilt for the chosen country.
+    const allCities = Array.from(city.options).filter((o) => o.dataset.country);
+    const showCities = () => {
+      for (const o of allCities) o.remove();
+      for (const o of allCities) if (o.dataset.country === country.value) city.add(o);
+      city.value = '';
+    };
+    showCities();
+    country.addEventListener('change', showCities);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      window.location.href = `/tours/${country.value}/${city.value ? `${city.value}/` : ''}`;
+    });
+  }
+</script>
+
 <style>
+  /* One screen under the sticky header (~57 px), capped so very tall screens don't get a giant hero. */
   .hero {
-    background: linear-gradient(170deg, var(--color-primary-light) 0%, var(--color-cream-deep) 45%, var(--color-white) 100%);
+    min-height: min(calc(100svh - 57px), 1000px);
   }
-  .hero-photo {
+  .hero-title {
+    font-size: clamp(32px, 4.4vw, 56px);
+  }
+  /* Slides stack. The incoming slide is revealed from right to left by sliding a soft-edged mask
+     (a 300 %-wide gradient: transparent on the left third, black on the right third) across it,
+     then slowly settles from a slight zoom. The outgoing slide stays visible underneath until the
+     wipe ends, then hides. */
+  .hero-img {
+    object-position: 70% center;
+    z-index: 0;
+    transform: scale(1.06);
+    -webkit-mask-image: linear-gradient(to left, #000 33.3%, transparent 66.6%);
+    mask-image: linear-gradient(to left, #000 33.3%, transparent 66.6%);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    -webkit-mask-position: 0% 0;
+    mask-position: 0% 0;
+    transition:
+      -webkit-mask-position 0s 1.6s,
+      mask-position 0s 1.6s,
+      transform 0s 1.6s;
+  }
+  .hero-img.is-active {
+    z-index: 1;
+    transform: none;
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    transition:
+      -webkit-mask-position 1.6s cubic-bezier(0.45, 0, 0.25, 1),
+      mask-position 1.6s cubic-bezier(0.45, 0, 0.25, 1),
+      transform 6s ease-out;
+  }
+  /* First load: the copy, price, filter and link rise in one after another; the first photo settles from a slight zoom.
+     The photo is never hidden (it is the LCP element). Gated by html.js-reveal like the scroll reveal. */
+  /* data-hero-in="left" slides in from the left; the default rises from the bottom. */
+  :global(.js-reveal) [data-hero-in] {
+    animation: hero-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 120ms + 100ms);
+  }
+  :global(.js-reveal) .hero-img.is-active:first-child {
+    animation: hero-zoom 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  :global(.js-reveal) [data-hero-in='left'] {
+    animation-name: hero-in-left;
+  }
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+  @keyframes hero-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-48px);
+    }
+  }
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.06);
+    }
+  }
+  /* Mobile: the photo shows on top and fades into the page color under the copy. */
+  .hero-fade {
+    background: linear-gradient(
+      180deg,
+      rgb(247 250 253 / 0.25) 0%,
+      rgb(247 250 253 / 0.1) 22%,
+      rgb(247 250 253 / 0.92) 52%,
+      var(--color-cream) 70%
+    );
+  }
+  /* Desktop: the photo fades from the left into the copy, and softly into the next section. */
+  @media (min-width: 768px) {
+    .hero-fade {
+      background:
+        linear-gradient(90deg, var(--color-cream) 0%, rgb(247 250 253 / 0.94) 32%, rgb(247 250 253 / 0) 62%),
+        linear-gradient(0deg, var(--color-cream) 0%, rgb(247 250 253 / 0) 18%);
+    }
+  }
+  .hero-filter {
     box-shadow:
-      0 30px 80px rgb(21 35 58 / 0.18),
-      0 12px 32px rgb(21 35 58 / 0.1);
+      0 24px 64px rgb(21 35 58 / 0.12),
+      0 6px 16px rgb(21 35 58 / 0.06);
   }
-  .price-chip {
-    background: rgb(255 255 255 / 0.96);
-    backdrop-filter: blur(12px);
+  .hero-select {
+    appearance: none;
+    border: 0;
+    background: transparent
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231670a8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      no-repeat right 2px center;
+    padding: 2px 22px 2px 0;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-ink);
+    cursor: pointer;
   }
 </style>

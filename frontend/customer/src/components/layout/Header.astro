@@ -15,8 +15,8 @@ const [phone] = contact.phones;
 ---
 
 <header class="site-header sticky top-0 z-50 border-b text-ink">
-  <div class="container-site flex items-center justify-between gap-6 py-2.5">
-    <Logo height={56} />
+  <div class="container-site flex items-center justify-between gap-6 py-1.5">
+    <Logo height={44} />
 
     <nav aria-label="เมนูหลัก" class="hidden xl:block">
       <ul class="flex items-center gap-1">
@@ -98,11 +98,12 @@ const [phone] = contact.phones;
   .mobile-menu summary::-webkit-details-marker {
     display: none;
   }
-  .mobile-menu .icon-close,
-  .mobile-menu[open] .icon-open {
+  /* The icons are rendered by Icon.astro, outside this component's scope. */
+  .mobile-menu :global(.icon-close),
+  .mobile-menu[open] :global(.icon-open) {
     display: none;
   }
-  .mobile-menu[open] .icon-close {
+  .mobile-menu[open] :global(.icon-close) {
     display: block;
   }
 </style>

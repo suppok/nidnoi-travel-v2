@@ -41,6 +41,12 @@ const canonical = absoluteUrl(path);
     {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data).replace(/</g, '\\u003c')} />)}
 
     <slot name="head" />
+    <!-- Scroll reveal: content is hidden only when the observer can show it again (no JS or reduced motion → always visible). -->
+    <script is:inline>
+      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('js-reveal');
+      }
+    </script>
   </head>
   <body class="min-h-screen bg-white">
     <a
@@ -49,5 +55,27 @@ const canonical = absoluteUrl(path);
       >ข้ามไปยังเนื้อหา</a
     >
     <slot />
+    <script>
+      // Fades in [data-reveal] blocks and the children of [data-reveal-stagger] lists as they scroll into view.
+      if (document.documentElement.classList.contains('js-reveal')) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add('is-revealed');
+              observer.unobserve(entry.target);
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.12 },
+        );
+        for (const el of document.querySelectorAll<HTMLElement>('[data-reveal]')) observer.observe(el);
+        for (const list of document.querySelectorAll<HTMLElement>('[data-reveal-stagger]')) {
+          Array.from(list.children).forEach((child, i) => {
+            (child as HTMLElement).style.setProperty('--reveal-delay', `${(i % 4) * 90}ms`);
+            observer.observe(child);
+          });
+        }
+      }
+    </script>
   </body>
 </html>

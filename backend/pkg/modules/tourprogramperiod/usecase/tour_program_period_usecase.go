@@ -24,6 +24,7 @@ const (
 	maxSeats     = 999
 	maxSpanDays  = 90
 	maxNoteRunes = 500
+	maxFireOrder = 9999
 )
 
 type tourProgramPeriodUseCase struct {
@@ -79,6 +80,7 @@ func fieldsValidate(f *models.TourProgramPeriodFields) error {
 		validation.Field(&f.SeatsTotal, validation.Min(0), validation.Max(maxSeats)),
 		validation.Field(&f.SeatsAvailable, validation.Min(0), validation.Max(f.SeatsTotal).Error("must not be more than total seats")),
 		validation.Field(&f.Note, validation.RuneLength(0, maxNoteRunes)),
+		validation.Field(&f.FireSaleOrder, validation.Min(0), validation.Max(maxFireOrder)),
 	)
 	if err != nil {
 		return err
@@ -91,6 +93,10 @@ func fieldsValidate(f *models.TourProgramPeriodFields) error {
 	}
 	if end.Sub(start) > maxSpanDays*24*time.Hour {
 		return validation.Errors{"endDate": errors.New("a period can last at most 90 days")}
+	}
+	// A โปรไฟไหม้ card always shows the struck-through price (DB check tour_program_period_fire_sale_discount_check).
+	if f.FireSale && !f.PriceBeforeDiscount.Valid {
+		return validation.Errors{"fireSale": errors.New("needs a price before discount")}
 	}
 	return nil
 }
@@ -109,11 +115,14 @@ func applyFields(p *domain.TourProgramPeriod, f *models.TourProgramPeriodFields)
 	p.SeatsTotal = f.SeatsTotal
 	p.SeatsAvailable = f.SeatsAvailable
 	p.Note = strings.TrimSpace(f.Note)
+	p.FireSale = f.FireSale
+	p.FireSaleOrder = f.FireSaleOrder
 }
 
 var editableColumns = []string{
 	"start_date", "end_date", "price", "price_before_discount", "child_with_bed_price", "child_no_bed_price", "infant_price",
-	"single_supplement", "deposit", "seats_total", "seats_available", "note", "update_date", "update_by",
+	"single_supplement", "deposit", "seats_total", "seats_available", "note", "fire_sale", "fire_sale_order",
+	"update_date", "update_by",
 }
 
 // Customer-site rebuild rules (backend/CLAUDE.md "When to enqueue"), applied once the revalidator

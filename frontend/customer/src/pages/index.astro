@@ -1,6 +1,6 @@
 ---
 import Destinations from '../components/home/Destinations.astro';
-import DestinationPicker from '../components/home/DestinationPicker.astro';
+import FireSales from '../components/home/FireSales.astro';
 import Hero from '../components/home/Hero.astro';
 import PromiseStrip from '../components/home/PromiseStrip.astro';
 import TourCard from '../components/tour/TourCard.astro';
@@ -8,19 +8,23 @@ import Icon from '../components/ui/Icon.astro';
 import LineCta from '../components/ui/LineCta.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { heroCampaign } from '../config/home';
+import { pickFireSales } from '../lib/fire-sales';
 import { byNextDeparture, listPublicTours } from '../lib/api/tour-programs';
-import { listPublicCountries } from '../lib/api/taxonomy';
+import { listPublicCities, listPublicCountries } from '../lib/api/taxonomy';
 import { ogImageUrl } from '../lib/image';
 import { SITE_NAME } from '../lib/seo';
 import PageLayout from '../layouts/PageLayout.astro';
 
 const FEATURED_LIMIT = 8;
 
-const [countries, tours] = await Promise.all([listPublicCountries(), listPublicTours()]);
+const [countries, cities, tours] = await Promise.all([listPublicCountries(), listPublicCities(), listPublicTours()]);
 const activeCountries = countries.filter((c) => c.tourCount > 0);
+const activeCities = cities.filter((c) => c.tourCount > 0 && activeCountries.some((x) => x.slug === c.countrySlug));
 // Without tours in the campaign country the hero drops its price and links to the destination list.
 const heroCountry = activeCountries.find((c) => c.slug === heroCampaign.countrySlug);
-const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
+const fireSales = pickFireSales(tours);
+// โปรไฟไหม้ replaces the upcoming-tours row; that row returns only while staff have no promo switched on.
+const featured = fireSales.length === 0 ? [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT) : [];
 ---
 
 <PageLayout
@@ -30,20 +34,21 @@ const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
     .map((c) => c.nameTh)
     .join(' ')} ราคาชัดเจน เช็กวันเดินทางและที่นั่งว่างได้ทันที สอบถามและจองง่ายผ่าน LINE`}
   path="/"
-  ogImage={ogImageUrl(heroCampaign.image)}
+  ogImage={ogImageUrl(heroCampaign.images[0].src)}
 >
-  <Hero country={heroCountry} />
-  {activeCountries.length > 0 && <DestinationPicker countries={activeCountries} />}
+  <Hero country={heroCountry} countries={activeCountries} cities={activeCities} />
   {activeCountries.length > 0 && <Destinations countries={activeCountries} />}
+
+  {fireSales.length > 0 && <FireSales entries={fireSales} />}
 
   {
     featured.length > 0 && (
-      <section class="section bg-white">
+      <section class="section bg-white pt-10 md:pt-12">
         <div class="container-site">
-          <SectionHeader eyebrow="ออกเดินทางเร็ว ๆ นี้">
+          <SectionHeader>
             <Fragment slot="title">ทัวร์ที่<em>กำลังจะออกเดินทาง</em></Fragment>
           </SectionHeader>
-          <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          <ul data-reveal-stagger class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {
               featured.map((t) => (
                 <li class="flex">
@@ -52,7 +57,7 @@ const featured = [...tours].sort(byNextDeparture).slice(0, FEATURED_LIMIT);
               ))
             }
           </ul>
-          <div class="mt-14 flex justify-center">
+          <div data-reveal class="mt-14 flex justify-center">
             <a href="#destinations" class="btn btn-primary">
               ดูทัวร์ตามประเทศ <Icon name="arrow-right" size={14} />
             </a>
